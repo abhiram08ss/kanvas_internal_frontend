@@ -1,0 +1,42 @@
+.login-form-panel {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #f5f4f8;
+}
+
+.login-form-wrap {
+  width: 100%;
+  max-width: 320px;
+}
+
+.login-form-mobile-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+@media (min-width: 992px) {
+  .login-form-mobile-logo {
+    display: none;
+  }
+}
+.login-form-mobile-logo img {
+  height: 32px;
+  object-fit: contain;
+}
+
+.login-form-title {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #1a1228;
+}
+
+.login-form-subtitle {
+  font-size: 14px;
+  margin: 0 0 32px;
+  color: #7b6b94;
+}

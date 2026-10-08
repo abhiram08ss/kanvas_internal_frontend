@@ -1,0 +1,168 @@
+.login-hero {
+  display: none;
+  width: 60%;
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #5c2d91 0%, #7b3fa0 100%);
+}
+@media (min-width: 992px) {
+  .login-hero {
+    display: flex;
+  }
+}
+
+.login-hero-graphic {
+  position: absolute;
+  bottom: -60px;
+  right: -60px;
+  width: 75%;
+  height: 75%;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.login-hero-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.login-hero-ring-outer {
+  animation: login-hero-spin-cw 130s linear infinite;
+}
+.login-hero-ring-mid {
+  animation: login-hero-spin-ccw 85s linear infinite;
+}
+.login-hero-ring-inner {
+  animation: login-hero-spin-cw 50s linear infinite;
+}
+
+.login-hero-hub {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: login-hero-pulse 4.5s ease-in-out infinite;
+}
+
+.login-hero-twinkle {
+  animation: login-hero-twinkle 3.5s ease-in-out infinite;
+}
+.login-hero-twinkle.t2 {
+  animation-delay: 0.6s;
+}
+.login-hero-twinkle.t3 {
+  animation-delay: 1.4s;
+}
+.login-hero-twinkle.t4 {
+  animation-delay: 2.1s;
+}
+.login-hero-twinkle.t5 {
+  animation-delay: 0.9s;
+}
+
+@keyframes login-hero-spin-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes login-hero-spin-ccw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes login-hero-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+@keyframes login-hero-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.login-hero-top,
+.login-hero-mid,
+.login-hero-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.login-hero-logo {
+  width: 144px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+}
+
+.login-hero-tagline {
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: -4px;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.login-hero-title {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.login-hero-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0;
+}
+
+.login-hero-list {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-hero-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.login-hero-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.login-hero-footer {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}

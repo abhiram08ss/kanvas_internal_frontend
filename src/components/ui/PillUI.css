@@ -1,0 +1,122 @@
+/* Shared "pill" list-page look: rounded card, search + filter-pill toolbar, dense uppercase-header
+   table and circular colored icon buttons. Introduced on the Tenants page; used here by any other
+   list page (LMS Content's tabs, etc.) that should look and behave like it. */
+
+.pill-card {
+  border-radius: 14px;
+  border: 1.5px solid #ede8f5;
+  overflow: hidden;
+}
+
+.pill-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ede8f5;
+  background: #fdfcff;
+}
+
+.pill-search-wrap {
+  position: relative;
+}
+
+.pill-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9b87b5;
+  pointer-events: none;
+}
+
+.pill-search-input {
+  padding: 8px 16px 8px 36px;
+  border-radius: 12px;
+  font-size: 12px;
+  outline: none;
+  background: #f5f4f8;
+  border: 1.5px solid #ede8f5;
+  color: #1a1228;
+  width: 200px;
+}
+
+.pill-filter-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pill-filter-pill {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1.5px solid #ede8f5;
+  background: transparent;
+  color: #7b6b94;
+  transition: all 0.15s;
+}
+.pill-filter-pill.active {
+  background: #5c2d91;
+  color: #fff;
+  border-color: #5c2d91;
+}
+
+.pill-new-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  border: 0;
+  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+  box-shadow: 0 2px 8px rgba(92, 45, 145, 0.3);
+  white-space: nowrap;
+}
+
+.pill-table thead tr {
+  background: #fdfcff;
+}
+
+.pill-table th {
+  padding: 12px 20px !important;
+  font-size: 10px;
+  color: #9b87b5;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.pill-table td {
+  padding: 12px 20px !important;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.pill-table tbody tr {
+  border-top: 1px solid #ede8f5;
+}
+
+.pill-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.pill-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

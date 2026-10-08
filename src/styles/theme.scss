@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
+
+// ---- Kanvas brand palette ----
+$kanvas-50: #f6f4fd;
+$kanvas-100: #eee9fb;
+$kanvas-200: #ded5f7;
+$kanvas-300: #c4b3ef;
+$kanvas-400: #a586e3;
+$kanvas-500: #8b5cf6;
+$kanvas-600: #7c3aed;
+$kanvas-700: #6b2fd4;
+$kanvas-800: #5b26ac;
+$kanvas-900: #4c1d8c;
+$surface: #f7f6fc;
+
+// ---- Bootstrap variable overrides (must precede the Bootstrap import) ----
+$primary: $kanvas-600;
+$body-bg: $surface;
+$body-color: #0f172a;
+
+$font-family-sans-serif: 'Inter', ui-sans-serif, system-ui, sans-serif;
+$font-family-base: $font-family-sans-serif;
+
+$border-radius: 0.75rem; // 12px — matches the app's previous "rounded-xl" (buttons, inputs, badges)
+$border-radius-sm: 0.5rem; // 8px
+$border-radius-lg: 1rem; // 16px — matches "rounded-2xl" (cards, modals)
+$border-radius-xl: 1.25rem;
+$border-radius-pill: 50rem;
+
+$input-focus-border-color: $kanvas-400;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba($kanvas-500, 0.18);
+
+$link-color: $kanvas-600;
+$link-hover-color: $kanvas-700;
+
+$card-border-color: #eef0f5;
+$card-border-radius: $border-radius-lg;
+
+@import 'bootstrap/scss/bootstrap';
+
+// ---- App-wide utility classes (framework-agnostic, kept as-is) ----
+.font-display {
+  font-family: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+.font-value {
+  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: $kanvas-200;
+  border-radius: 9999px;
+}
+
+// ---- Things Bootstrap doesn't provide out of the box ----
+
+// Selectable "card as radio/checkbox" pattern (payment method, plan choice).
+.selectable-card {
+  border: 1.5px solid #e5e0f0;
+  border-radius: $border-radius-lg;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+
+  &.active {
+    border-color: $kanvas-500;
+    background-color: $kanvas-50;
+  }
+}
+
+// Tailwind's animate-spin equivalent, for lucide icons used as inline spinners
+// (Bootstrap's .spinner-border is used instead wherever a plain spinner will do).
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.stat-card {
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}

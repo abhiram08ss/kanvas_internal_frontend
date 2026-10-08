@@ -1,0 +1,66 @@
+.ct-wizard-card {
+  overflow: hidden;
+}
+
+.ct-wizard-header {
+  padding: 1.5rem 1.5rem 1.25rem;
+  background: #fdfcff;
+  border-bottom: 1.5px solid #ede8f5;
+}
+
+.ct-wizard-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1228;
+  margin-bottom: 1.25rem;
+}
+
+.ct-wizard-footer {
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1.5px solid #ede8f5;
+}
+
+.ct-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ct-wizard-header .ant-steps-item-title {
+  font-weight: 500;
+  color: #1a1228;
+}
+
+.ct-wizard-header .ant-steps-item-wait .ant-steps-item-title {
+  color: #9b87b5;
+}
+
+.ct-wizard-header .ant-steps-item-tail::after {
+  background-color: #ede8f5;
+}
+
+.ct-wizard-header .ant-steps-item-finish .ant-steps-item-tail::after {
+  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+}
+
+.ct-wizard-card .ant-form-item-label > label {
+  color: #3d2260;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.ct-wizard-card .ant-input,
+.ct-wizard-card .ant-select:not(.ant-select-disabled) .ant-select-selector,
+.ct-wizard-card .ant-input-affix-wrapper {
+  border-color: #e2d9f0 !important;
+  color: #1a1228;
+}
+
+.ct-wizard-card .ant-input::placeholder {
+  color: #9b9099;
+}
