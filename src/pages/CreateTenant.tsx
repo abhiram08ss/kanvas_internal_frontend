@@ -1,52 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Steps, Form, Input, Select, Button, Checkbox, Descriptions, Empty } from 'antd'
 import './CreateTenant.css'
 import {
   ArrowLeft,
+  Building2,
   Check,
   CheckCircle2,
   XCircle,
   Loader2,
   Copy,
   Search,
-  Users,
   ShieldCheck,
   BookOpen,
-  LayoutGrid,
-  FileText,
-  BarChart3,
-  HeartHandshake,
-  LifeBuoy,
-  Network,
-  Bell,
-  ExternalLink,
   Mail,
   RefreshCw,
 } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Card } from '../components/ui/Card'
+import { COUNTRIES } from '../data/countries'
+import { ReviewCard, ReviewRow } from '../components/tenants/ReviewParts'
 import { useData, useDataNeeds } from '../context/DataContext'
-import { api, errorMessage, type Credentials, type ProvisioningRecord } from '../api'
+import { api, errorMessage, API_ORIGIN, type Credentials, type ProvisioningRecord } from '../api'
 
 const KANVAS_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
 
 const formSteps = ['Organization', 'Select Courses', 'Review & Proceed']
 
-type Phase = 'form' | 'provisioning' | 'credentials' | 'active'
-
-const tenantCapabilities = [
-  { icon: Users, label: 'Manage Users' },
-  { icon: ShieldCheck, label: 'Manage Roles' },
-  { icon: BookOpen, label: 'Manage Courses' },
-  { icon: LayoutGrid, label: 'Content & Quiz' },
-  { icon: FileText, label: 'Learning & Enrollments' },
-  { icon: BarChart3, label: 'Reports' },
-  { icon: HeartHandshake, label: 'HR Policies' },
-  { icon: LifeBuoy, label: 'Helpdesk' },
-  { icon: Network, label: 'Org Chart' },
-  { icon: Bell, label: 'Notifications' },
-]
+type Phase = 'form' | 'provisioning' | 'credentials'
 
 const industries = ['IT Services', 'Manufacturing', 'Healthcare', 'Education', 'Retail', 'Finance', 'Other']
 
@@ -56,6 +37,22 @@ const normalizeCode = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '')
     .slice(0, 40)
+
+const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/
+const PHONE_RE = /^[0-9]{10}$/
+
+type OrgField =
+  | 'orgName'
+  | 'tenantCode'
+  | 'userLimit'
+  | 'country'
+  | 'billingContactName'
+  | 'billingEmail'
+  | 'billingPhone'
+  | 'lmsAdminName'
+  | 'lmsAdminEmail'
+type OrgErrors = Partial<Record<OrgField, string>>
 
 export default function CreateTenant() {
   const navigate = useNavigate()
@@ -78,6 +75,40 @@ export default function CreateTenant() {
   const [lmsAdminName, setLmsAdminName] = useState('')
   const [lmsAdminEmail, setLmsAdminEmail] = useState('')
   const [orgError, setOrgError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<OrgErrors>({})
+  // Clears one field's error as soon as the user edits it.
+  const clearField = (key: OrgField) => {
+    setOrgError('')
+    setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev))
+  }
+  const validateOrg = (): OrgErrors => {
+    const e: OrgErrors = {}
+    const limit = Number(userLimit)
+    if (!orgName.trim()) e.orgName = 'Organization name is required.'
+    else if (orgName.trim().length < 2) e.orgName = 'Organization name must be at least 2 characters.'
+    else if (orgName.trim().length > 200) e.orgName = 'Organization name must be 200 characters or fewer.'
+
+    if (!tenantCode) e.tenantCode = 'Tenant code is required.'
+    else if (tenantCode.length < 2) e.tenantCode = 'Tenant code must be at least 2 letters or digits.'
+
+    if (!userLimit.trim()) e.userLimit = 'User limit is required.'
+    else if (!Number.isInteger(limit) || limit < 1) e.userLimit = 'Enter a whole number of 1 or more.'
+    else if (limit > 1000000) e.userLimit = 'User limit is too large.'
+
+    if (billingContactName.trim() && !NAME_RE.test(billingContactName.trim())) e.billingContactName = 'Name can only contain letters, spaces, . - and \'.'
+
+    if (!billingEmail.trim()) e.billingEmail = 'Billing email is required.'
+    else if (!EMAIL_RE.test(billingEmail.trim())) e.billingEmail = 'Enter a valid email address.'
+
+    if (billingPhone.trim() && !PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Phone number must be exactly 10 digits.'
+
+    if (!lmsAdminName.trim()) e.lmsAdminName = 'Admin name is required.'
+    else if (!NAME_RE.test(lmsAdminName.trim())) e.lmsAdminName = 'Name can only contain letters, spaces, . - and \'.'
+
+    if (!lmsAdminEmail.trim()) e.lmsAdminEmail = 'Admin email is required.'
+    else if (!EMAIL_RE.test(lmsAdminEmail.trim())) e.lmsAdminEmail = 'Enter a valid email address.'
+    return e
+  }
 
   // Step 2 — course selection
   const [courseQuery, setCourseQuery] = useState('')
@@ -91,30 +122,32 @@ export default function CreateTenant() {
   const [copied, setCopied] = useState(false)
   const [ticked, setTicked] = useState(0)
 
-  const availableCourses = courses.filter((c) => c.status === 'Active' && c.name.toLowerCase().includes(courseQuery.toLowerCase()))
+  const [courseCategory, setCourseCategory] = useState('All')
+  const categoryTypes = Array.from(new Set(courses.filter((c) => c.status === 'Active').map((c) => c.category)))
+  const visibleCourses = courses.filter(
+    (c) =>
+      c.status === 'Active' &&
+      (courseCategory === 'All' || c.category === courseCategory) &&
+      (c.name.toLowerCase().includes(courseQuery.toLowerCase()) || c.code.toLowerCase().includes(courseQuery.toLowerCase())),
+  )
+  const selectAllVisible = () => setSelectedCourseIds((prev) => Array.from(new Set([...prev, ...visibleCourses.map((c) => c.id)])))
   const selectedCourses = courses.filter((c) => selectedCourseIds.includes(c.id))
   const provSteps = provisioning?.steps ?? []
 
   const goNext = async () => {
     if (step === 1) {
-      const limit = Number(userLimit)
-      if (!orgName.trim() || !tenantCode.trim() || !billingEmail.trim() || !lmsAdminName.trim() || !lmsAdminEmail.trim()) {
-        setOrgError('Organization Name, Tenant Code, Billing Email, and LMS Admin Name/Email are required.')
-        return
-      }
-      if (tenantCode.length < 2) {
-        setOrgError('Tenant Code must be at least 2 letters or digits.')
-        return
-      }
-      if (!Number.isInteger(limit) || limit < 1) {
-        setOrgError('User Limit must be a positive whole number.')
+      const errs = validateOrg()
+      setFieldErrors(errs)
+      if (Object.keys(errs).length > 0) {
+        setOrgError('Please fix the highlighted fields.')
         return
       }
       setBusy(true)
       try {
         const { available } = await api.checkTenantCode(tenantCode)
         if (!available) {
-          setOrgError(`Tenant Code "${tenantCode}" is already in use — choose another.`)
+          setFieldErrors((prev) => ({ ...prev, tenantCode: `Tenant code "${tenantCode}" is already in use - choose another.` }))
+          setOrgError('Please fix the highlighted fields.')
           return
         }
       } catch (e) {
@@ -316,79 +349,10 @@ export default function CreateTenant() {
                 <Button size="large" className="flex-grow-1" icon={<Copy size={15} />} onClick={() => void copyCredentials()}>
                   {copied ? 'Copied!' : 'Copy Details'}
                 </Button>
-                <Button
-                  type="primary"
-                  size="large"
-                  className="flex-grow-1"
-                  iconPlacement="end"
-                  icon={<ExternalLink size={15} />}
-                  onClick={() => setPhase('active')}
-                >
-                  Open LMS
+                <Button type="primary" size="large" className="flex-grow-1" onClick={() => navigate('/tenants')}>
+                  Done
                 </Button>
               </div>
-            </Card>
-          )}
-
-          {phase === 'active' && (
-            <Card className="p-4">
-              <div className="mb-4 d-flex align-items-center gap-3">
-                <div
-                  className="d-flex align-items-center justify-content-center rounded-2 bg-success-subtle text-success flex-shrink-0"
-                  style={{ width: 44, height: 44 }}
-                >
-                  <CheckCircle2 size={20} />
-                </div>
-                <div>
-                  <h3 className="font-display fs-5 fw-bold text-dark mb-0">Tenant Active in LMS</h3>
-                  <p className="small text-secondary mb-0">
-                    {credentials?.username} now manages {orgName} within the existing LMS.
-                  </p>
-                </div>
-              </div>
-
-              <div className="row row-cols-3 g-3">
-                <div className="col">
-                  <MiniStat label="User Limit" value={userLimit} />
-                </div>
-                <div className="col">
-                  <MiniStat label="Courses Assigned" value={selectedCourses.length.toString()} />
-                </div>
-                <div className="col">
-                  <MiniStat label="Active Users" value="0" />
-                </div>
-              </div>
-
-              <p className="mb-2 mt-4 small fw-semibold text-dark">Recent Activity</p>
-              <div className="d-flex flex-column gap-2 small text-secondary">
-                <div className="d-flex justify-content-between">
-                  <span>Tenant provisioned in existing LMS</span>
-                  <span className="text-secondary">Just now</span>
-                </div>
-                <div className="d-flex justify-content-between">
-                  <span>Admin account created</span>
-                  <span className="text-secondary">Just now</span>
-                </div>
-                <div className="d-flex justify-content-between">
-                  <span>{selectedCourses.length} courses assigned</span>
-                  <span className="text-secondary">Just now</span>
-                </div>
-              </div>
-
-              <p className="mb-2 mt-4 small fw-semibold text-dark">Available Modules</p>
-              <div className="row row-cols-2 row-cols-sm-3 g-3">
-                {tenantCapabilities.map(({ icon: Icon, label }) => (
-                  <div key={label} className="col">
-                    <div className="d-flex align-items-center gap-2 rounded-2 border px-3 py-2 small text-dark h-100">
-                      <Icon size={16} className="flex-shrink-0 text-primary" /> {label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button type="primary" block size="large" className="mt-4" onClick={() => navigate('/tenants')}>
-                Finish
-              </Button>
             </Card>
           )}
         </div>
@@ -430,16 +394,32 @@ export default function CreateTenant() {
 
           <div className="p-4">
             {step === 1 && (
-              <Form layout="vertical" className="mx-auto" style={{ maxWidth: 512 }}>
+              <Form layout="vertical" className="mx-auto" style={{ maxWidth: 560 }} noValidate>
                 <div className="d-flex flex-column gap-1">
                   <h3 className="font-display fs-6 fw-bold text-dark mb-2">Organization Information</h3>
-                  <Form.Item label="Organization Name *">
-                    <Input size="large" value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="SagarSoft" />
+                  <Form.Item label="Organization Name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
+                    <Input
+                      size="large"
+                      value={orgName}
+                      maxLength={200}
+                      onChange={(e) => { setOrgName(e.target.value); clearField('orgName') }}
+                      placeholder="Enter organization name"
+                    />
                   </Form.Item>
                   <div className="row g-3">
                     <div className="col-6">
-                      <Form.Item label="Tenant Code *">
-                        <Input size="large" value={tenantCode} onChange={(e) => setTenantCode(normalizeCode(e.target.value))} placeholder="sagarsoft" />
+                      <Form.Item
+                        label="Tenant Code"
+                        required
+                        validateStatus={fieldErrors.tenantCode ? 'error' : ''}
+                        help={fieldErrors.tenantCode ?? 'Lowercase letters and digits only.'}
+                      >
+                        <Input
+                          size="large"
+                          value={tenantCode}
+                          onChange={(e) => { setTenantCode(normalizeCode(e.target.value)); clearField('tenantCode') }}
+                          placeholder="Enter tenant code"
+                        />
                       </Form.Item>
                     </div>
                     <div className="col-6">
@@ -456,42 +436,70 @@ export default function CreateTenant() {
                   </div>
                   <div className="row g-3">
                     <div className="col-6">
-                      <Form.Item label="User Limit *">
-                        <Input size="large" type="number" value={userLimit} onChange={(e) => setUserLimit(e.target.value)} placeholder="100" />
+                      <Form.Item label="User Limit" required validateStatus={fieldErrors.userLimit ? 'error' : ''} help={fieldErrors.userLimit}>
+                        <Input
+                          size="large"
+                          type="number"
+                          min={1}
+                          value={userLimit}
+                          onChange={(e) => { setUserLimit(e.target.value); clearField('userLimit') }}
+                          placeholder="Enter user limit"
+                        />
                       </Form.Item>
                     </div>
                     <div className="col-6">
-                      <Form.Item label="Country">
-                        <Input size="large" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="India" />
+                      <Form.Item label="Country" validateStatus={fieldErrors.country ? 'error' : ''} help={fieldErrors.country}>
+                        <Select
+                          size="large"
+                          showSearch
+                          value={country || undefined}
+                          onChange={(v) => { setCountry(v); clearField('country') }}
+                          options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+                          placeholder="Select country"
+                          optionFilterProp="label"
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
                     </div>
                   </div>
                   <Form.Item label="Address">
-                    <Input.TextArea rows={3} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Hyderabad, Telangana" />
+                    <Input.TextArea rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
                   </Form.Item>
                 </div>
 
                 <div className="d-flex flex-column gap-1 border-top pt-4 mt-2">
                   <h3 className="font-display fs-6 fw-bold text-dark mb-2">Billing Contact Details</h3>
-                  <Form.Item label="Billing Contact Name">
-                    <Input size="large" value={billingContactName} onChange={(e) => setBillingContactName(e.target.value)} placeholder="Ravi Kumar" />
+                  <Form.Item label="Billing Contact Name" validateStatus={fieldErrors.billingContactName ? 'error' : ''} help={fieldErrors.billingContactName}>
+                    <Input
+                      size="large"
+                      value={billingContactName}
+                      maxLength={120}
+                      onChange={(e) => { setBillingContactName(e.target.value); clearField('billingContactName') }}
+                      placeholder="Enter contact name"
+                    />
                   </Form.Item>
                   <div className="row g-3">
                     <div className="col-6">
-                      <Form.Item label="Billing Email *">
+                      <Form.Item label="Billing Email" required validateStatus={fieldErrors.billingEmail ? 'error' : ''} help={fieldErrors.billingEmail}>
                         <Input
                           size="large"
                           type="email"
                           value={billingEmail}
-                          onChange={(e) => setBillingEmail(e.target.value)}
-                          placeholder="billing@sagarsoft.com"
+                          onChange={(e) => { setBillingEmail(e.target.value); clearField('billingEmail') }}
+                          placeholder="Enter billing email"
                         />
                       </Form.Item>
                     </div>
                     <div className="col-6">
-                      <Form.Item label="Phone">
-                        <Input size="large" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+91 98765 43210" />
-                      
+                      <Form.Item label="Phone" validateStatus={fieldErrors.billingPhone ? 'error' : ''} help={fieldErrors.billingPhone}>
+                        <Input
+                          size="large"
+                          inputMode="tel"
+                          value={billingPhone}
+                          maxLength={10}
+                          onChange={(e) => { setBillingPhone(e.target.value.replace(/\D/g, '')); clearField('billingPhone') }}
+                          placeholder="Enter 10-digit phone number"
+                        />
                       </Form.Item>
                     </div>
                   </div>
@@ -501,18 +509,24 @@ export default function CreateTenant() {
                   <h3 className="font-display fs-6 fw-bold text-dark mb-2">LMS Admin Details</h3>
                   <div className="row g-3">
                     <div className="col-6">
-                      <Form.Item label="Admin Name *">
-                        <Input size="large" value={lmsAdminName} onChange={(e) => setLmsAdminName(e.target.value)} placeholder="Sneha Reddy" />
+                      <Form.Item label="Admin Name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
+                        <Input
+                          size="large"
+                          value={lmsAdminName}
+                          maxLength={120}
+                          onChange={(e) => { setLmsAdminName(e.target.value); clearField('lmsAdminName') }}
+                          placeholder="Enter admin name"
+                        />
                       </Form.Item>
                     </div>
                     <div className="col-6">
-                      <Form.Item label="Admin Email *">
+                      <Form.Item label="Admin Email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
                         <Input
                           size="large"
                           type="email"
                           value={lmsAdminEmail}
-                          onChange={(e) => setLmsAdminEmail(e.target.value)}
-                          placeholder="admin@sagarsoft.com"
+                          onChange={(e) => { setLmsAdminEmail(e.target.value); clearField('lmsAdminEmail') }}
+                          placeholder="Enter admin email"
                         />
                       </Form.Item>
                     </div>
@@ -525,68 +539,139 @@ export default function CreateTenant() {
 
             {step === 2 && (
               <div>
-                <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
-                <p className="mb-3 small text-secondary">Choose which published courses this tenant should have access to.</p>
+                <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+                  <div>
+                    <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
+                    <p className="mb-0 small text-secondary">Choose which published courses this tenant should have access to.</p>
+                  </div>
+                  <span className="ct-selected-pill">
+                    <Check size={14} /> {selectedCourseIds.length} selected
+                  </span>
+                </div>
 
-                <div className="mb-3" style={{ maxWidth: 384 }}>
-                  <Input
-                    size="large"
-                    value={courseQuery}
-                    onChange={(e) => setCourseQuery(e.target.value)}
-                    placeholder="Search courses..."
-                    prefix={<Search size={14} color="#9b87b5" />}
-                  />
+                <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+                  <div style={{ width: 320, maxWidth: '100%' }}>
+                    <Input
+                      size="large"
+                      allowClear
+                      value={courseQuery}
+                      onChange={(e) => setCourseQuery(e.target.value)}
+                      placeholder="Search courses"
+                      prefix={<Search size={14} color="#9b87b5" />}
+                    />
+                  </div>
+                  <div className="d-flex flex-wrap gap-2">
+                    {['All', ...categoryTypes].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`ct-chip${courseCategory === cat ? ' is-active' : ''}`}
+                        onClick={() => setCourseCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="ms-auto d-flex gap-2">
+                    <Button onClick={selectAllVisible} disabled={visibleCourses.length === 0}>
+                      Select all{courseCategory !== 'All' || courseQuery ? ' shown' : ''}
+                    </Button>
+                    <Button onClick={() => setSelectedCourseIds([])} disabled={selectedCourseIds.length === 0}>
+                      Clear
+                    </Button>
+                  </div>
                 </div>
-                <div className="rounded-2 border">
-                  {availableCourses.map((c, i) => (
-                    <label key={c.id} className={`d-flex align-items-center gap-3 px-3 py-2 mb-0 ${i > 0 ? 'border-top' : ''}`} style={{ cursor: 'pointer' }}>
-                      <Checkbox checked={selectedCourseIds.includes(c.id)} onChange={() => toggleCourse(c.id)} />
-                      <span className="flex-grow-1 small fw-medium text-dark">{c.name}</span>
-                      <span className="text-secondary" style={{ fontSize: 12 }}>
-                        {c.category}
-                      </span>
-                    </label>
-                  ))}
-                  {availableCourses.length === 0 && (
-                    <div className="py-4">
-                      <Empty description="No courses match your search." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                    </div>
-                  )}
-                </div>
-                <p className="mt-3 small text-secondary mb-0">
-                  Selected: {selectedCourseIds.length} course{selectedCourseIds.length === 1 ? '' : 's'}
-                </p>
+
+                {visibleCourses.length === 0 ? (
+                  <div className="py-5">
+                    <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  </div>
+                ) : (
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+                    {visibleCourses.map((c) => {
+                      const checked = selectedCourseIds.includes(c.id)
+                      return (
+                        <div key={c.id} className="col">
+                          <div
+                            role="checkbox"
+                            aria-checked={checked}
+                            tabIndex={0}
+                            className={`ct-course-card${checked ? ' is-selected' : ''}`}
+                            onClick={() => toggleCourse(c.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                toggleCourse(c.id)
+                              }
+                            }}
+                          >
+                            {c.coverImage ? (
+                              <img src={`${API_ORIGIN}/courses/covers/${c.coverImage}`} alt="" className="ct-course-thumb" />
+                            ) : (
+                              <div className="ct-course-thumb ct-course-thumb-empty">
+                                <BookOpen size={20} color="#fff" />
+                              </div>
+                            )}
+                            <div className="flex-grow-1 min-w-0">
+                              <div className="ct-course-name text-truncate" title={c.name}>
+                                {c.name}
+                              </div>
+                              <div className="ct-course-meta text-truncate">
+                                {c.code} · {c.category}
+                              </div>
+                            </div>
+                            <span className="ct-course-check">{checked && <Check size={14} />}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
             {step === 3 && (
-              <div className="mx-auto" style={{ maxWidth: 512 }}>
-                <h3 className="mb-3 font-display fs-5 fw-bold text-dark">Review & Proceed</h3>
-                <Descriptions column={1} bordered size="small" styles={{ label: { width: 160, color: '#7b6b94' } }}>
-                  <Descriptions.Item label="Organization">{orgName}</Descriptions.Item>
-                  <Descriptions.Item label="Tenant Code">
-                    <span style={{ fontFamily: 'monospace' }}>{tenantCode}</span>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Industry">{industry}</Descriptions.Item>
-                  <Descriptions.Item label="User Limit">{userLimit}</Descriptions.Item>
-                  <Descriptions.Item label="LMS Admin">
-                    {lmsAdminName} ({lmsAdminEmail})
-                  </Descriptions.Item>
-                </Descriptions>
+              <div className="mx-auto" style={{ maxWidth: 920 }}>
+                <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Review &amp; Proceed</h3>
+                <p className="mb-4 small text-secondary">Check the details below. Click Create Tenant to provision it.</p>
 
-                <div className="mt-3">
-                  <p className="mb-2 small fw-semibold text-dark">Courses ({selectedCourses.length})</p>
-                  {selectedCourses.length === 0 ? (
-                    <p className="small text-secondary mb-0">No courses selected — you can assign courses later from the Tenants page.</p>
-                  ) : (
-                    <div className="d-flex flex-column gap-2 small">
-                      {selectedCourses.map((c) => (
-                        <div key={c.id} className="d-flex align-items-center gap-2 text-secondary">
-                          <Check size={13} className="text-success" /> {c.name}
+                <div className="row g-3">
+                  <div className="col-12 col-lg-6">
+                    <ReviewCard icon={<Building2 size={18} />} title="Organization">
+                      <ReviewRow label="Name" value={orgName} />
+                      <ReviewRow label="Tenant code" value={tenantCode} mono />
+                      <ReviewRow label="Industry" value={industry} />
+                      <ReviewRow label="Country" value={country} />
+                      <ReviewRow label="User limit" value={userLimit} />
+                      <ReviewRow label="Address" value={address} />
+                    </ReviewCard>
+                  </div>
+                  <div className="col-12 col-lg-6 d-flex flex-column gap-3">
+                    <ReviewCard icon={<Mail size={18} />} title="Billing contact">
+                      <ReviewRow label="Name" value={billingContactName} />
+                      <ReviewRow label="Email" value={billingEmail} />
+                      <ReviewRow label="Phone" value={billingPhone} />
+                    </ReviewCard>
+                    <ReviewCard icon={<ShieldCheck size={18} />} title="LMS admin">
+                      <ReviewRow label="Name" value={lmsAdminName} />
+                      <ReviewRow label="Email" value={lmsAdminEmail} />
+                    </ReviewCard>
+                  </div>
+                  <div className="col-12">
+                    <ReviewCard icon={<BookOpen size={18} />} title={`Courses (${selectedCourses.length})`}>
+                      {selectedCourses.length === 0 ? (
+                        <p className="small text-secondary mb-0">No courses selected - you can assign courses later from the Tenants page.</p>
+                      ) : (
+                        <div className="d-flex flex-wrap gap-2">
+                          {selectedCourses.map((c) => (
+                            <span key={c.id} className="ct-review-chip">
+                              <Check size={13} /> {c.name}
+                            </span>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      )}
+                    </ReviewCard>
+                  </div>
                 </div>
 
                 {flowError && <p className="mt-3 small text-danger mb-0">{flowError}</p>}
@@ -621,17 +706,6 @@ function Row({ label, value, mono = false }: { label: string; value: string; mon
       <span className="text-end fw-medium text-dark" style={mono ? { fontFamily: 'monospace' } : undefined}>
         {value}
       </span>
-    </div>
-  )
-}
-
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2 border p-3 text-center h-100">
-      <p className="font-display fs-6 fw-bold text-dark mb-0">{value}</p>
-      <p className="text-secondary mb-0" style={{ fontSize: 12 }}>
-        {label}
-      </p>
     </div>
   )
 }

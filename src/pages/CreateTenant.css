@@ -61,6 +61,168 @@
   color: #1a1228;
 }
 
-.ct-wizard-card .ant-input::placeholder {
-  color: #9b9099;
+.ct-wizard-card .ant-input::placeholder,
+.ct-wizard-card textarea::placeholder {
+  color: #b5aac4;
+  font-weight: 400;
 }
+
+.ct-wizard-card .ant-form-item {
+  margin-bottom: 1.25rem;
+}
+
+.ct-wizard-card .ant-form-item .ant-form-item-explain-error {
+  font-size: 12px;
+}
+
+.ct-wizard-card .ant-input-status-error,
+.ct-wizard-card .ant-input-status-error:hover {
+  border-color: #dc2626 !important;
+}
+
+/* Step 2: course picker */
+.ct-selected-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c2d91;
+  background: #f1e9fb;
+}
+
+.ct-chip {
+  border: 1px solid #e2d9f0;
+  background: #fff;
+  color: #6b5b84;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  transition: all 140ms ease;
+}
+.ct-chip:hover { border-color: #b89be0; color: #5c2d91; }
+.ct-chip.is-active { background: #5c2d91; border-color: #5c2d91; color: #fff; }
+
+.ct-course-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  height: 100%;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid #ede8f5;
+  border-radius: 14px;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.ct-course-card:hover { border-color: #c9b3e6; box-shadow: 0 6px 16px rgba(92, 45, 145, 0.1); }
+.ct-course-card:focus-visible { outline: 2px solid #5c2d91; outline-offset: 2px; }
+.ct-course-card.is-selected { border-color: #5c2d91; background: #faf6ff; }
+
+.ct-course-thumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #ede8f5;
+}
+.ct-course-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+}
+
+.ct-course-name { font-size: 14.5px; font-weight: 600; color: #1a1228; }
+.ct-course-meta { font-size: 12.5px; color: #8b78a6; margin-top: 2px; }
+
+.ct-course-check {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid #d8cdeb;
+  color: #fff;
+  background: #fff;
+  transition: all 140ms ease;
+}
+.ct-course-card.is-selected .ct-course-check { background: #5c2d91; border-color: #5c2d91; }
+
+/* Step 3: review */
+.ct-review-card {
+  height: 100%;
+  background: #fff;
+  border: 1.5px solid #ede8f5;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.ct-review-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1228;
+  background: #faf7fe;
+  border-bottom: 1px solid #f1edf8;
+}
+.ct-review-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #5c2d91;
+  background: #f1e9fb;
+}
+.ct-review-card-body { padding: 8px 18px 14px; }
+.ct-review-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px dashed #f1edf8;
+  font-size: 14px;
+}
+.ct-review-row:last-child { border-bottom: 0; }
+.ct-review-label { color: #8b78a6; flex-shrink: 0; }
+.ct-review-value { color: #1a1228; font-weight: 600; text-align: right; word-break: break-word; }
+.ct-review-value.is-empty { color: #b5aac4; font-weight: 400; font-style: italic; }
+.ct-review-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3d2260;
+  background: #f1e9fb;
+}
+.ct-review-chip svg { color: #16a34a; }
+
+/* Edit-tenant wizard (inside a modal): step bar sticks to the top of the scrolling body; the Back/Next bar is the
+   modal's own footer, outside the scroll area. */
+.ct-edit .ct-edit-steps {
+  position: sticky;
+  top: -24px;
+  z-index: 3;
+  margin: -24px -24px 20px;
+  padding: 20px 24px 16px;
+  background: #fff;
+  border-bottom: 1.5px solid #ede8f5;
+}
+.ct-edit .ant-steps-item-title { font-weight: 500; color: #1a1228; }
+.ct-edit .ant-steps-item-wait .ant-steps-item-title { color: #9b87b5; }
+.ct-course-card.is-locked { cursor: not-allowed; background: #f6f4fa; }
+.ct-course-card.is-locked .ct-course-check { background: #9b87b5; border-color: #9b87b5; }

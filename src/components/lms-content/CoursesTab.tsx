@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Award,
   BookOpen,
@@ -13,10 +14,16 @@ import {
   Pencil,
   ImageOff,
   Eye,
+  Check,
+  Clock,
+  Globe2,
+  Briefcase,
+  UserCog,
+  Factory,
+  FolderOpen,
 } from 'lucide-react'
 import { Select } from 'antd'
 import { Badge } from '../ui/Badge'
-import { Card } from '../ui/Card'
 import { ListCard } from '../ui/ListCard'
 import { StatCard } from '../ui/StatCard'
 import { Toolbar } from '../ui/Toolbar'
@@ -24,18 +31,27 @@ import { IconButton } from '../ui/IconButton'
 import { ManualCourseModal } from '../courses/ManualCourseModal'
 import { CoursePreviewModal } from './CoursePreviewModal'
 import { useData, useDataNeeds } from '../../context/DataContext'
-import { API_ORIGIN, type CategoryType, type Course, type CourseInput } from '../../api'
+import { API_ORIGIN, type CategoryType, type Course, type CourseInput, type CourseModule } from '../../api'
+
+// Per-category look: accent colour, icon and a one-line description for the group header.
+const GROUP_STYLE: Record<string, { color: string; bg: string; icon: ReactNode; blurb: string }> = {
+  'Organization-wide': { color: '#5c2d91', bg: '#f1e9fb', icon: <Globe2 size={20} />, blurb: 'Core learning for every employee' },
+  'Function-based': { color: '#2563eb', bg: '#e8f0fe', icon: <Briefcase size={20} />, blurb: 'Skills for specific business functions' },
+  'Role-based': { color: '#d97706', bg: '#fef3e2', icon: <UserCog size={20} />, blurb: 'Learning paths tied to job roles' },
+  'Industry and sector': { color: '#059669', bg: '#e3f7ef', icon: <Factory size={20} />, blurb: 'Domain knowledge for your industry' },
+}
+const DEFAULT_GROUP_STYLE = { color: '#5c2d91', bg: '#f1e9fb', icon: <FolderOpen size={20} />, blurb: '' }
 
 const statusFilters = ['All', 'Active', 'Inactive'] as const
 
 function CoverThumb({ cover }: { cover: string | null }) {
   if (cover) {
-    return <img src={`${API_ORIGIN}/courses/covers/${cover}`} alt="" className="rounded-2 border flex-shrink-0" style={{ width: 40, height: 40, objectFit: 'cover' }} />
+    return <img src={`${API_ORIGIN}/courses/covers/${cover}`} alt="" className="rounded-2 border flex-shrink-0" style={{ width: 52, height: 52, objectFit: 'cover' }} />
   }
   return (
     <div
       className="d-inline-flex align-items-center justify-content-center rounded-2 border bg-light text-secondary flex-shrink-0"
-      style={{ width: 40, height: 40 }}
+      style={{ width: 52, height: 52 }}
     >
       <ImageOff size={14} />
     </div>
@@ -44,40 +60,150 @@ function CoverThumb({ cover }: { cover: string | null }) {
 
 function CourseGridCard({
   course,
+  modules,
+  questionCount,
   onEdit,
   onToggleStatus,
   onPreview,
 }: {
   course: Course
+  modules: CourseModule[]
+  questionCount: number
   onEdit: () => void
   onToggleStatus: () => void
   onPreview: () => void
 }) {
-  return (
-    <div className="rounded-3 overflow-hidden h-100 d-flex flex-column" style={{ border: '1.5px solid #ede8f5', background: '#fff' }}>
-      {course.coverImage ? (
-        <img
-          src={`${API_ORIGIN}/courses/covers/${course.coverImage}`}
-          alt=""
-          style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div className="d-flex align-items-center justify-content-center" style={{ height: 130, background: 'linear-gradient(135deg, #5c2d91, #7b3fa0)' }}>
-          <ImageOff size={28} color="#fff" style={{ opacity: 0.5 }} />
+  const outcomes = (course.learningOutcomes ?? []).filter(Boolean)
+  const meta = [
+    course.durationHours != null ? `${course.durationHours} total hours` : null,
+    course.level,
+    `${modules.length} ${modules.length === 1 ? 'module' : 'modules'}`,
+    `${questionCount} ${questionCount === 1 ? 'question' : 'questions'}`,
+    `Pass score ${course.passScore}%`,
+  ].filter(Boolean)
+  // Hover details sit beside the card. Positioned with `fixed` from the card's rect (and clamped under the
+  // page header), so it works inside the grid's own scroll container, which a normal popover can't.
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [popup, setPopup] = useState<{ top: number; left: number; maxHeight: number } | null>(null)
+  const POPUP_W = 320
+  const showPopup = () => {
+    const el = cardRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    // The grid scrolls inside its own area; the popup must stay within it, never over the toolbar above.
+    const area = el.closest('.course-scroll-area')?.getBoundingClientRect()
+    const areaTop = area?.top ?? 0
+    const areaBottom = area?.bottom ?? window.innerHeight
+    if (r.bottom <= areaTop || r.top >= areaBottom) {
+      setPopup(null) // card scrolled out of view
+      return
+    }
+    const vh = window.innerHeight
+    const left = r.right + 12 + POPUP_W <= window.innerWidth ? r.right + 12 : Math.max(8, r.left - 12 - POPUP_W)
+    const top = Math.min(Math.max(r.top, areaTop), Math.max(areaTop, areaBottom - 160))
+    setPopup({ top, left, maxHeight: Math.max(160, areaBottom - top - 8) })
+  }
+  // Keep the popup attached to its card while any ancestor scrolls (capture catches the grid's own scroller).
+  const open = popup !== null
+  useEffect(() => {
+    if (!open) return
+    window.addEventListener('scroll', showPopup, true)
+    window.addEventListener('resize', showPopup)
+    return () => {
+      window.removeEventListener('scroll', showPopup, true)
+      window.removeEventListener('resize', showPopup)
+    }
+  }, [open])
+  const details = (
+    <div style={{ width: POPUP_W - 32 }}>
+      <div className="fw-bold mb-2" style={{ fontSize: 16, color: '#1a1228' }}>
+        {course.name}
+      </div>
+      <div className="d-flex align-items-center gap-2 mb-2">
+        <Badge tone="purple">{course.category}</Badge>
+        <Badge>{course.status}</Badge>
+      </div>
+      <div className="small mb-2" style={{ color: '#9b87b5' }}>
+        {meta.join(' · ')}
+      </div>
+      {course.description && (
+        <div className="mb-2" style={{ color: '#3d3450', fontSize: 14 }}>
+          {course.description}
         </div>
       )}
-      <div className="p-3 d-flex flex-column flex-grow-1">
-        <div className="d-flex align-items-center gap-2 mb-2">
-          <Badge tone="purple">{course.category}</Badge>
-          <Badge>{course.status}</Badge>
+      {modules.length > 0 && (
+        <div className="mb-2">
+          <div className="fw-semibold mb-1" style={{ fontSize: 13, color: '#1a1228' }}>
+            Inside this course
+          </div>
+          <ol className="mb-0 ps-3" style={{ fontSize: 13, color: '#3d3450' }}>
+            {modules.map((m) => (
+              <li key={m.id}>
+                {m.title}
+                {m.duration ? <span style={{ color: '#9b87b5' }}> · {m.duration}</span> : null}
+              </li>
+            ))}
+          </ol>
         </div>
-        <div className="fw-semibold mb-1" style={{ color: '#1a1228' }}>
+      )}
+      {outcomes.length > 0 && (
+        <ul className="list-unstyled mb-0 d-flex flex-column gap-2">
+          {outcomes.map((o, i) => (
+            <li key={i} className="d-flex gap-2" style={{ fontSize: 13, color: '#3d3450' }}>
+              <Check size={14} className="flex-shrink-0 mt-1" />
+              <span>{o}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+
+  return (
+    <div
+      ref={cardRef}
+      className="course-grid-card h-100 d-flex flex-column"
+      onMouseEnter={showPopup}
+      onMouseLeave={() => setPopup(null)}
+    >
+      <div className="course-grid-cover position-relative">
+        {course.coverImage ? (
+          <img src={`${API_ORIGIN}/courses/covers/${course.coverImage}`} alt="" />
+        ) : (
+          <div className="course-grid-cover-empty">
+            <ImageOff size={28} color="#fff" style={{ opacity: 0.6 }} />
+          </div>
+        )}
+        <span className={`course-grid-status ${course.status === 'Active' ? 'is-active' : 'is-inactive'}`}>
+          <span className="dot" />
+          {course.status}
+        </span>
+      </div>
+      <div className="p-3 d-flex flex-column flex-grow-1">
+        <span className="course-grid-category align-self-start mb-2">{course.category}</span>
+        <div className="course-grid-title mb-1" title={course.name}>
           {course.name}
         </div>
         <div className="small mb-3" style={{ color: '#9b87b5' }}>
           {course.code}
         </div>
-        <div className="d-flex align-items-center gap-2 mt-auto pt-2" style={{ borderTop: '1px solid #ede8f5' }}>
+        <div className="course-grid-stats mb-3">
+          <span title="Modules">
+            <Layers size={14} /> {modules.length}
+          </span>
+          <span title="Quiz questions">
+            <HelpCircle size={14} /> {questionCount}
+          </span>
+          {course.durationHours != null && (
+            <span title="Duration">
+              <Clock size={14} /> {course.durationHours}h
+            </span>
+          )}
+          <span title="Pass score">
+            <Award size={14} /> {course.passScore}%
+          </span>
+        </div>
+        <div className="d-flex align-items-center gap-2 mt-auto pt-3" style={{ borderTop: '1px solid #ede8f5' }}>
           <IconButton icon={<Pencil size={14} />} onClick={onEdit} title="Edit course" tone="blue" />
           <IconButton
             icon={course.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
@@ -88,6 +214,16 @@ function CourseGridCard({
           <IconButton icon={<Eye size={14} />} onClick={onPreview} title="Full preview" tone="purple" />
         </div>
       </div>
+      {popup &&
+        createPortal(
+          <div
+            className="course-hover-popup scrollbar-thin"
+            style={{ top: popup.top, left: popup.left, width: POPUP_W, maxHeight: popup.maxHeight }}
+          >
+            {details}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
@@ -103,6 +239,14 @@ export function CoursesTab() {
   const [editing, setEditing] = useState<Course | undefined>(undefined)
   const [previewing, setPreviewing] = useState<Course | undefined>(undefined)
   const [collapsedTypes, setCollapsedTypes] = useState<Set<CategoryType>>(new Set())
+  // On first load only the first category is open; the rest start collapsed.
+  const collapsedInit = useRef(false)
+  useEffect(() => {
+    const types = courseOptions.categoryTypes
+    if (collapsedInit.current || !types.length) return
+    collapsedInit.current = true
+    setCollapsedTypes(new Set(types.slice(1)))
+  }, [courseOptions.categoryTypes])
   const toggleCollapsed = (type: CategoryType) =>
     setCollapsedTypes((prev) => {
       const next = new Set(prev)
@@ -215,39 +359,48 @@ export function CoursesTab() {
       </ListCard>
 
       <div className="flex-grow-1" style={{ minHeight: 0 }}>
-        <div className="d-flex flex-column gap-3 h-100" style={{ overflowY: 'auto', overflowX: 'hidden' }}>
+        <div className="course-scroll-area d-flex flex-column gap-3 h-100" style={{ overflowY: 'auto', overflowX: 'hidden' }}>
           {groupTypes.map((type) => {
             const groupCourses = filtered.filter((c) => c.category === type)
             const collapsed = collapsedTypes.has(type)
+            const gs = GROUP_STYLE[type] ?? DEFAULT_GROUP_STYLE
             return (
-              <Card key={type} className="p-3">
+              <div key={type} className="course-group flex-shrink-0" style={{ ['--accent' as string]: gs.color, ['--accent-bg' as string]: gs.bg }}>
                 <div
                   role="button"
                   tabIndex={0}
                   onClick={() => toggleCollapsed(type)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleCollapsed(type) }}
-                  className="d-flex align-items-center justify-content-between mb-2"
-                  style={{ cursor: 'pointer' }}
+                  className="course-group-header d-flex align-items-center justify-content-between"
                 >
-                  <div className="d-flex align-items-center gap-2">
-                    {collapsed ? <ChevronRight size={16} color="#9b87b5" /> : <ChevronDown size={16} color="#9b87b5" />}
-                    <h3 className="mb-0 fw-bold" style={{ color: '#1a1228', fontSize: 16 }}>
-                      {type}
-                    </h3>
+                  <div className="d-flex align-items-center gap-3 min-w-0">
+                    <span className="course-group-icon">{gs.icon}</span>
+                    <div className="min-w-0">
+                      <h3 className="course-group-title mb-0">{type}</h3>
+                      {gs.blurb && <div className="course-group-blurb">{gs.blurb}</div>}
+                    </div>
                   </div>
-                  <span className="small" style={{ color: '#7b6b94' }}>{groupCourses.length} course{groupCourses.length === 1 ? '' : 's'}</span>
+                  <div className="d-flex align-items-center gap-3 flex-shrink-0">
+                  <span className="course-group-count">
+                      {groupCourses.length} course{groupCourses.length === 1 ? '' : 's'}
+                    </span>
+                    <span className="course-group-chevron">
+                      {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                    </span>
+                  </div>
                 </div>
-                {!collapsed && <hr style={{ borderColor: '#ede8f5' }} />}
                 {collapsed ? null : groupCourses.length === 0 ? (
-                  <p className="small mb-0 mt-3" style={{ color: '#9b87b5' }}>
+                  <p className="small mb-0 p-3" style={{ color: '#9b87b5' }}>
                     No courses match your filters in this layer.
                   </p>
                 ) : view === 'grid' ? (
-                  <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+                  <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3 p-3">
                     {groupCourses.map((c) => (
                       <div key={c.id} className="col">
                         <CourseGridCard
                           course={c}
+                          modules={courseModules.filter((m) => m.courseId === c.id).sort((a, b) => a.order - b.order)}
+                          questionCount={quizQuestions.filter((q) => q.courseId === c.id).length}
                           onEdit={() => openEdit(c)}
                           onToggleStatus={() => void toggleStatus(c)}
                           onPreview={() => setPreviewing(c)}
@@ -256,33 +409,35 @@ export function CoursesTab() {
                     ))}
                   </div>
                 ) : (
-                  <div className="d-flex flex-column">
+                  <div className="d-flex flex-column px-2 pb-2">
                     {groupCourses.map((c, i) => {
                       const courseExpanded = expandedCourseIds.has(c.id)
                       const modules = courseModules.filter((m) => m.courseId === c.id).sort((a, b) => a.order - b.order)
                       const questions = quizQuestions.filter((q) => q.courseId === c.id)
                       const template = certificateTemplates.find((t) => t.name === c.certificateTemplate)
                       return (
-                        <div key={c.id} style={{ borderTop: i > 0 ? '1px solid #ede8f5' : undefined }}>
+                        <div key={c.id} className="course-row-wrap" style={{ borderTop: i > 0 ? '1px solid #f1edf8' : undefined }}>
                           <div
                             role="button"
                             tabIndex={0}
                             onClick={() => toggleExpanded(c.id)}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleExpanded(c.id) }}
-                            className="d-flex align-items-center gap-3 py-2 px-2 rounded-3"
-                            style={{ cursor: 'pointer' }}
+                            className="course-row d-flex align-items-center gap-3 py-2 px-3 rounded-3"
                           >
                             {courseExpanded ? <ChevronDown size={14} color="#9b87b5" /> : <ChevronRight size={14} color="#9b87b5" />}
                             <CoverThumb cover={c.coverImage} />
                             <div className="flex-grow-1 min-w-0">
-                              <div className="fw-semibold text-truncate" style={{ color: '#1a1228' }}>
+                              <div className="course-row-title text-truncate">
                                 {c.name}
                               </div>
-                              <div className="small text-truncate" style={{ color: '#9b87b5' }}>
+                              <div className="course-row-code text-truncate">
                                 {c.code}
                               </div>
                             </div>
-                            <Badge>{c.status}</Badge>
+                            <span className={`course-status-pill ${c.status === 'Active' ? 'is-active' : 'is-inactive'}`}>
+                              <span className="dot" />
+                              {c.status}
+                            </span>
                             <div className="d-flex align-items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(c)} title="Edit course" tone="blue" />
                               <IconButton
@@ -296,7 +451,7 @@ export function CoursesTab() {
                           </div>
 
                           {courseExpanded && (
-                            <div className="ps-4 pb-3 d-flex flex-column gap-3">
+                            <div className="course-row-detail d-flex flex-column gap-3">
                               {c.description && (
                                 <p className="small mb-0" style={{ color: '#7b6b94' }}>
                                   {c.description}
@@ -345,7 +500,7 @@ export function CoursesTab() {
                     })}
                   </div>
                 )}
-              </Card>
+              </div>
             )
           })}
         </div>

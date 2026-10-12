@@ -9,28 +9,6 @@
   background: linear-gradient(135deg, #6b36a6, #8a4bb0);
 }
 
-/* Filter pills: a row of separate bordered chips rather than one joined control. */
-.pill-filters.ant-segmented {
-  background: transparent;
-}
-.pill-filters .ant-segmented-item {
-  border: 1.5px solid #ede8f5;
-  border-radius: 8px;
-  margin-right: 4px;
-  color: #7b6b94;
-  font-weight: 500;
-}
-/* antd fills the selected item's background from a CSS custom property (--ant-segmented-item-selected-bg)
-   rather than a plain color, so a plain (non-!important) override here can lose to it depending on
-   stylesheet injection order - !important on the literal color guarantees it always wins. */
-.pill-filters .ant-segmented-item-selected {
-  background: #5c2d91 !important;
-  border-color: #5c2d91 !important;
-}
-.pill-filters .ant-segmented-item-selected-text {
-  color: #fff !important;
-}
-
 /* Table sits flush inside its rounded list card; header uppercase like the rest of the app. */
 .list-card .ant-table-wrapper .ant-table {
   background: transparent;
@@ -57,4 +35,19 @@
 }
 .rotate-180 {
   transform: rotate(180deg);
+}
+
+/* Make the dropdown arrow clearly visible on every Select (antd 6 names it "suffix"; older "arrow"). */
+.ant-select .ant-select-suffix,
+.ant-select .ant-select-suffix .anticon,
+.ant-select .ant-select-suffix svg,
+.ant-select .ant-select-arrow,
+.ant-select .ant-select-arrow .anticon,
+.ant-select .ant-select-arrow svg {
+  color: #1a1228 !important;
+  opacity: 1 !important;
+}
+.ant-select .ant-select-suffix svg,
+.ant-select .ant-select-arrow svg {
+  font-size: 13px;
 }

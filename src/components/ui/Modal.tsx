@@ -19,6 +19,7 @@ export function Modal({
   size,
   icon,
   tone = 'default',
+  footer,
 }: {
   title: string
   subtitle?: string
@@ -29,6 +30,8 @@ export function Modal({
   icon?: ReactNode
   /** 'default' (plain white header) or 'brand' (Kanvas-purple header, for a popup that should stand out). */
   tone?: 'default' | 'brand'
+  /** Fixed action bar below the scrolling body (e.g. wizard Back / Next). Omit for no footer. */
+  footer?: ReactNode
 }) {
   const branded = tone === 'brand'
 
@@ -36,7 +39,7 @@ export function Modal({
     <AntModal
       open
       centered
-      footer={null}
+      footer={footer ?? null}
       onCancel={onClose}
       width={WIDTH[size ?? 'default']}
       title={
@@ -70,7 +73,13 @@ export function Modal({
           borderBottom: branded ? 'none' : '1px solid #ede8f5',
         },
         close: { color: branded ? '#ffffff' : undefined },
-        body: { padding: 24, maxHeight: size === 'full' ? 'calc(100vh - 100px)' : 'calc(100vh - 190px)', overflowY: 'auto' },
+        footer: { margin: 0, padding: '14px 24px', background: '#faf9fc', borderTop: '1px solid #e8e5ef' },
+        body: {
+          padding: 24,
+          // leave room for the header, and for the footer bar when there is one
+          maxHeight: size === 'full' ? `calc(100vh - ${footer ? 170 : 100}px)` : `calc(100vh - ${footer ? 260 : 190}px)`,
+          overflowY: 'auto',
+        },
       }}
     >
       {children}

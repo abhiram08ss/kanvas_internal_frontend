@@ -35,6 +35,8 @@ import type {
   Tenant,
   TenantCreateInput,
   TenantCreateResult,
+  TenantDetail,
+  TenantProfileUpdate,
   TenantStatus,
   TokenResponse,
   UsageData,
@@ -61,7 +63,8 @@ export const api = {
   checkTenantCode: (code: string) => request<{ code: string; available: boolean }>('/tenants/check-code', { params: { code } }),
   /** Direct tenant creation — no plan, no payment step. */
   createTenant: (body: TenantCreateInput) => request<TenantCreateResult>('/tenants', { method: 'POST', body }),
-  updateTenant: (id: number, body: Partial<Pick<Tenant, 'planId' | 'userLimit' | 'status'>>) => request<Tenant>(`/tenants/${id}`, { method: 'PATCH', body }),
+  tenantDetail: (id: number) => request<TenantDetail>(`/tenants/${id}`),
+  updateTenant: (id: number, body: TenantProfileUpdate) => request<Tenant>(`/tenants/${id}`, { method: 'PATCH', body }),
   setTenantStatus: (id: number, status: Exclude<TenantStatus, 'Expired'>) =>
     request<Tenant>(`/tenants/${id}/${status === 'Suspended' ? 'suspend' : 'activate'}`, { method: 'POST' }),
 

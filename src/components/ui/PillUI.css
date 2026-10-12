@@ -14,8 +14,8 @@
   gap: 8px;
   align-items: center;
   padding: 12px 20px;
-  border-bottom: 1px solid #ede8f5;
-  background: #fdfcff;
+  border-bottom: 1px solid #e8e5ef;
+  background: #fff;
 }
 
 .pill-search-wrap {
@@ -120,3 +120,65 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Filter segmented control: soft bordered tray, lavender selected item with purple bold text. */
+.pill-filters.ant-segmented {
+  background: #faf9fc;
+  padding: 4px;
+  border: 1px solid #ece9f2;
+  border-radius: 12px;
+}
+.pill-filters .ant-segmented-item {
+  border-radius: 8px;
+  color: #6b6f82;
+  font-size: 14px;
+  font-weight: 400;
+}
+.pill-filters .ant-segmented-item-label {
+  min-height: 34px;
+  line-height: 34px;
+  padding: 0 18px;
+}
+.pill-filters .ant-segmented-item:hover:not(.ant-segmented-item-selected) {
+  color: #5c2d91;
+  background: transparent;
+}
+/* antd's sliding thumb can lag or lose its colour; paint the selected item itself and hide the thumb. */
+.pill-filters .ant-segmented-thumb {
+  display: none !important;
+}
+/* rc-segmented only adds `-item-selected` while no thumb is shown, but `-item-selected-text` is always on the
+   selected item, so key the highlight off that one. */
+.pill-filters .ant-segmented-item-selected-text {
+  background: #f1ebfa !important;
+  color: #62309c !important;
+  font-weight: 700;
+  box-shadow: none;
+}
+.pill-filters .ant-segmented-item-selected-text .ant-segmented-item-label {
+  color: #62309c !important;
+}
+
+/* Toolbar to match the reference: roomy white row, bordered white search, solid purple New button. */
+.pill-toolbar {
+  gap: 12px;
+  padding: 12px 20px;
+  background: #fff;
+}
+.pill-toolbar .ant-input-affix-wrapper {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e8e5ef;
+  background: #fff;
+  box-shadow: none;
+}
+.pill-toolbar .ant-input-affix-wrapper input::placeholder { color: #727587; }
+.pill-toolbar .ant-btn-primary {
+  height: 36px;
+  padding: 0 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: #62309c !important;
+  box-shadow: 0 2px 6px rgba(98, 48, 156, 0.25);
+}
+.pill-toolbar .ant-btn-primary:hover { background: #764aa8 !important; }

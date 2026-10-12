@@ -93,3 +93,432 @@ $card-border-radius: $border-radius-lg;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }
+
+// Hide placeholder text while a field is focused.
+input:focus::placeholder,
+textarea:focus::placeholder,
+.ant-select-focused .ant-select-selection-placeholder {
+  color: transparent !important;
+}
+
+// Course grid cards (Udemy-style): 16:9 cover, status chip, lift on hover.
+.course-grid-card {
+  background: #fff;
+  border: 1.5px solid #ede8f5;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  &:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: #c9b3e6;
+    box-shadow: 0 16px 32px rgba(92, 45, 145, 0.2);
+  }
+  .course-grid-cover {
+    aspect-ratio: 16 / 9;
+    background: #f5f4f8;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 300ms ease;
+    }
+  }
+  &:hover .course-grid-cover img { transform: scale(1.06); }
+  .course-grid-cover-empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+  }
+  .course-grid-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    &.is-active { color: #15803d; .dot { background: #22c55e; } }
+    &.is-inactive { color: #64748b; .dot { background: #94a3b8; } }
+  }
+  .course-grid-category {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    color: #5c2d91;
+    background: #f1e9fb;
+  }
+  .course-grid-title {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.35;
+    color: #1a1228;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.7em;
+  }
+  .course-grid-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 12px;
+    color: #6b5b84;
+    span { display: inline-flex; align-items: center; gap: 4px; }
+    svg { color: #9b87b5; }
+  }
+}
+
+// Course picker (Modules / Quiz Questions sidebar).
+.course-picker {
+  box-shadow: 0 2px 12px rgba(92, 45, 145, 0.06);
+  .course-picker-list { display: flex; flex-direction: column; gap: 4px; }
+  .course-picker-item {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    text-align: left;
+    padding: 9px 12px 9px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 140ms ease, transform 140ms ease;
+    .name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #3d3450;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .code { font-size: 11px; color: #9b87b5; }
+    &:hover { background: #f8f4fd; transform: translateX(2px); }
+    &.is-active {
+      background: linear-gradient(90deg, #f1e9fb, #f8f4fd);
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        border-radius: 3px;
+        background: #5c2d91;
+      }
+      .name { color: #5c2d91; font-weight: 700; }
+    }
+  }
+}
+
+// LMS Courses tab: category groups + list rows.
+.course-group {
+  background: #fff;
+  border: 1px solid #ede8f5;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(92, 45, 145, 0.05);
+  .course-group-header {
+    padding: 14px 18px;
+    cursor: pointer;
+    background: linear-gradient(90deg, #faf7fe, #fff);
+    border-bottom: 1px solid #f1edf8;
+    transition: background 140ms ease;
+    &:hover { background: #f5effe; }
+  }
+  .course-group-chevron {
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #5c2d91;
+    background: #f1e9fb;
+  }
+  .course-group-count {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 999px;
+    color: #5c2d91;
+    background: #f1e9fb;
+  }
+}
+.course-row {
+  cursor: pointer;
+  transition: background 140ms ease;
+  &:hover { background: #faf7fe; }
+}
+.course-row-detail {
+  margin: 0 12px 12px 64px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #faf9fc;
+  border: 1px solid #f1edf8;
+}
+.course-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  &.is-active { color: #15803d; background: #e8f8ee; .dot { background: #22c55e; } }
+  &.is-inactive { color: #64748b; background: #f1f5f9; .dot { background: #94a3b8; } }
+}
+
+// Typography for the LMS Courses tab.
+.course-group-title {
+  font-family: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1a1228;
+}
+.course-row-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #1a1228;
+}
+.course-row-code {
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #8b78a6;
+}
+.course-group .course-group-count,
+.course-status-pill { font-size: 12px; }
+.course-grid-card .course-grid-title { font-size: 16px; font-weight: 600; letter-spacing: -0.005em; }
+.course-grid-card .course-grid-stats { font-size: 13px; }
+.course-grid-card .course-grid-category { font-size: 12px; }
+.course-row-detail { font-size: 14px; line-height: 1.55; }
+
+// Category group header: accent colour per category.
+.course-group {
+  .course-group-header {
+    padding: 16px 20px;
+    background: #fff;
+    &:hover { background: var(--accent-bg, #f5effe); }
+  }
+  .course-group-icon {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: var(--accent, #5c2d91);
+    background: var(--accent-bg, #f1e9fb);
+  }
+  .course-group-blurb { font-size: 13px; color: #8b78a6; margin-top: 2px; }
+  .course-group-count { color: var(--accent, #5c2d91); background: var(--accent-bg, #f1e9fb); }
+  .course-group-chevron { color: var(--accent, #5c2d91); background: transparent; }
+  &:hover { box-shadow: 0 6px 18px rgba(92, 45, 145, 0.1); }
+}
+
+// Course hover details, shown beside the card (positioned in JS; z-index kept below the page header's dropdowns).
+.course-hover-popup {
+  position: fixed;
+  z-index: 900;
+  padding: 16px;
+  overflow-y: auto;
+  pointer-events: none;
+  background: #fff;
+  border: 1px solid #ede8f5;
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(26, 18, 40, 0.18);
+  animation: course-popup-in 140ms ease;
+}
+@keyframes course-popup-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+// Tenants table.
+.list-card .tenant-table {
+  .ant-table-thead > tr > th {
+    background: #faf9fc;
+    color: #727587;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    padding: 10px 16px;
+    text-align: left;
+  }
+  .ant-table-tbody > tr > td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #202333;
+    border-bottom: 1px solid #e8e5ef;
+    text-align: left;
+  }
+  .ant-table-tbody > tr:hover > td { background: #faf9fc; }
+  .tenant-name { font-weight: 700; color: #62309c; }
+  .tenant-muted { color: #727587; }
+  .tenant-usage { min-width: 160px; font-size: 14px; }
+  .tenant-usage strong { font-weight: 500; color: #202333; }
+  .tenant-usage .is-hot, .tenant-usage .is-hot strong { color: #d33b48; }
+  .tenant-usage-pct { font-size: 12.5px; color: #727587; }
+  .tenant-usage-pct.is-hot { color: #d33b48; }
+  .tenant-bar { height: 5px; margin-top: 4px; border-radius: 999px; background: #eeeaf3; overflow: hidden; }
+  .tenant-bar-fill { height: 100%; border-radius: 999px; background: #62309c; }
+  .tenant-bar-fill.is-hot { background: #d33b48; }
+}
+.tenant-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 999px;
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  &.is-active { color: #16804a; background: #edf8f1; }
+  &.is-suspended { color: #a96a09; background: #fff6e5; }
+  &.is-expired { color: #d33b48; background: #fdeff0; }
+}
+.tenant-action {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e8e5ef;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 140ms ease, box-shadow 140ms ease;
+  &:hover:not(:disabled) { background: #faf8fe; box-shadow: 0 2px 8px rgba(92, 45, 145, 0.12); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &.is-view { color: #62309c; }
+  &.is-pause { color: #a96a09; }
+  &.is-play { color: #16804a; }
+  &.is-delete { color: #d33b48; }
+}
+.tenant-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid #e8e5ef;
+  .tenant-muted { color: #727587; font-size: 14px; }
+}
+.tenant-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #727587;
+  background: #fff;
+  border: 1px solid #e8e5ef;
+  border-radius: 10px;
+  &:hover:not(:disabled) { border-color: #c9b3e6; color: #5c2d91; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &.is-num { padding: 0; font-weight: 600; }
+  &.is-active { color: #62309c; background: #f1ebfa; border-color: #f1ebfa; }
+}
+
+// Stat cards: soft lift on hover.
+.stat-card {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  &:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(92, 45, 145, 0.1); }
+}
+
+// Tenants table empty state: centered message. Selector is deliberately specific so it beats the generic
+// row/cell rules above in every state (normal and hover).
+.list-card .tenant-table .ant-table-tbody > tr.ant-table-placeholder > td,
+.list-card .tenant-table .ant-table-tbody > tr.ant-table-placeholder:hover > td {
+  text-align: center !important;
+  padding: 40px 16px !important;
+  color: #727587;
+  background: #fff !important;
+}
+.list-card .tenant-table .ant-table-placeholder .ant-empty-description { color: #727587; }
+
+// Tenant details popup.
+.td-table {
+  border: 1px solid #e8e5ef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.td-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #e8e5ef;
+  &:last-child { border-bottom: 0; }
+}
+.td-label {
+  flex: 0 0 200px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #727587;
+  background: #faf9fc;
+  border-right: 1px solid #e8e5ef;
+}
+.td-value {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: #202333;
+  > div { width: 100%; }
+}
+.td-heading { font-size: 16px; font-weight: 700; color: #202333; margin: 20px 0 10px; }
+.td-groups { display: flex; flex-direction: column; border: 1px solid #f1edf8; border-radius: 12px; overflow: hidden; }
+.td-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #202333;
+  background: #faf9fc;
+  border-bottom: 1px solid #f1edf8;
+  &:last-child { border-bottom: 0; }
+}
+.td-count {
+  min-width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #727587;
+  background: #fff;
+  border: 1px solid #e8e5ef;
+  border-radius: 999px;
+}
+.td-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 24px -24px -24px;
+  padding: 16px 24px;
+  background: #faf9fc;
+  border-top: 1px solid #e8e5ef;
+}
+@media (max-width: 575px) { .td-label { flex-basis: 130px; } }
