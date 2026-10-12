@@ -12,10 +12,10 @@ const COVER_ACCEPT = { 'image/png': 'PNG', 'image/jpeg': 'JPG', 'image/gif': 'GI
 const CODE_RE = /^[A-Za-z0-9_-]+$/
 const QUIZ_COUNT_RE = /^(all|\d+)$/i
 
-type Errors = Partial<Record<'title' | 'code' | 'category' | 'passScore' | 'durationHours' | 'quizQuestionCount' | 'certValidMonths' | 'cover', string>>
+type Errors = Partial<Record<'title' | 'code' | 'category' | 'description' | 'completionMessage' | 'passScore' | 'durationHours' | 'quizQuestionCount' | 'certValidMonths' | 'cover', string>>
 
 // Top-to-bottom form order, so a failed submit scrolls to whichever invalid field appears first.
-const FIELD_ORDER: (keyof Errors)[] = ['title', 'code', 'category', 'cover', 'passScore', 'durationHours', 'quizQuestionCount', 'certValidMonths']
+const FIELD_ORDER: (keyof Errors)[] = ['title', 'code', 'category', 'cover', 'description', 'passScore', 'durationHours', 'quizQuestionCount', 'certValidMonths', 'completionMessage']
 
 function SectionTitle({ children }: { children: string }) {
   return (
@@ -68,6 +68,9 @@ export function ManualCourseModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Clears a field's validation error as soon as the user edits it.
+  const clearError = (key: keyof Errors) => setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev))
+
   const validate = (): Errors => {
     const next: Errors = {}
     if (!title.trim()) next.title = 'Title is required.'
@@ -80,6 +83,9 @@ export function ManualCourseModal({
     }
 
     if (!category) next.category = 'Please select a category.'
+
+    if (!description.trim()) next.description = 'Description is required.'
+    if (!completionMessage.trim()) next.completionMessage = 'Completion message is required.'
 
     const ps = Number(passScore)
     if (passScore.trim() === '' || Number.isNaN(ps) || ps < 0 || ps > 100) next.passScore = 'Enter a whole number between 0 and 100.'
@@ -195,7 +201,7 @@ export function ManualCourseModal({
               <Field label="Title" required error={errors.title}>
                 <Input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => { setTitle(e.target.value); clearError('title') }}
                   placeholder="Enter your title"
                   maxLength={200}
                   status={errors.title ? 'error' : undefined}
@@ -211,7 +217,7 @@ export function ManualCourseModal({
               >
                 <Input
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => { setCode(e.target.value); clearError('code') }}
                   disabled={!!course}
                   maxLength={20}
                   placeholder="Enter your course code"
@@ -226,7 +232,7 @@ export function ManualCourseModal({
               <Field label="Category" required error={errors.category}>
                 <Select
                   value={category}
-                  onChange={setCategory}
+                  onChange={(v) => { setCategory(v); clearError('category') }}
                   options={courseOptions.categoryTypes.map((c) => ({ value: c, label: c }))}
                   placeholder="Select a category"
                   status={errors.category ? 'error' : undefined}
@@ -318,14 +324,17 @@ export function ManualCourseModal({
             </Field>
           </div>
 
-          <Field label="Description">
+          <div id="field-description">
+          <Field label="Description" required error={errors.description}>
             <Input.TextArea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => { setDescription(e.target.value); clearError('description') }}
+              status={errors.description ? 'error' : undefined}
               rows={3}
               placeholder="What will learners take away from this course?"
             />
           </Field>
+          </div>
         </div>
 
         <div className="d-flex flex-column gap-3">
@@ -360,7 +369,7 @@ export function ManualCourseModal({
                   min={0}
                   max={100}
                   value={passScore}
-                  onChange={(e) => setPassScore(e.target.value)}
+                  onChange={(e) => { setPassScore(e.target.value); clearError('passScore') }}
                   status={errors.passScore ? 'error' : undefined}
                 />
               </Field>
@@ -372,7 +381,7 @@ export function ManualCourseModal({
                   min={0}
                   step="0.5"
                   value={durationHours}
-                  onChange={(e) => setDurationHours(e.target.value)}
+                  onChange={(e) => { setDurationHours(e.target.value); clearError('durationHours') }}
                   placeholder="Optional"
                   status={errors.durationHours ? 'error' : undefined}
                 />
@@ -382,7 +391,7 @@ export function ManualCourseModal({
               <Field label="Quiz Question Count" error={errors.quizQuestionCount} hint='Blank or "all" = every question.'>
                 <Input
                   value={quizQuestionCount}
-                  onChange={(e) => setQuizQuestionCount(e.target.value)}
+                  onChange={(e) => { setQuizQuestionCount(e.target.value); clearError('quizQuestionCount') }}
                   placeholder="all"
                   maxLength={20}
                   status={errors.quizQuestionCount ? 'error' : undefined}
@@ -395,7 +404,7 @@ export function ManualCourseModal({
                   type="number"
                   min={0}
                   value={certValidMonths}
-                  onChange={(e) => setCertValidMonths(e.target.value)}
+                  onChange={(e) => { setCertValidMonths(e.target.value); clearError('certValidMonths') }}
                   placeholder="Never expires"
                   status={errors.certValidMonths ? 'error' : undefined}
                 />
@@ -415,17 +424,22 @@ export function ManualCourseModal({
 
         <div className="d-flex flex-column gap-3">
           <SectionTitle>Completion Message</SectionTitle>
+          <div id="field-completionMessage">
           <Field
             label="Message"
-            hint='Shown under "Congratulations! You&apos;ve successfully completed {Course Title}". Leave blank for a generic default message.'
+            required
+            error={errors.completionMessage}
+            hint='Shown under "Congratulations! You&apos;ve successfully completed {Course Title}". Required.'
           >
             <Input.TextArea
               value={completionMessage}
-              onChange={(e) => setCompletionMessage(e.target.value)}
+              onChange={(e) => { setCompletionMessage(e.target.value); clearError('completionMessage') }}
+              status={errors.completionMessage ? 'error' : undefined}
               rows={3}
               placeholder={'Shown to employees once they finish the course, e.g. "Thank you for completing the … programme. By taking this course…"'}
             />
           </Field>
+          </div>
         </div>
 
         <div className="d-flex justify-content-end gap-3 pt-3 border-top">

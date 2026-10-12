@@ -40,7 +40,7 @@ export function Toolbar<F extends string>({
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder={searchPlaceholder}
         prefix={<Search size={14} color="#9b87b5" />}
-        style={{ width: 220 }}
+        style={{ width: 300 }}
       />
       {filters && filters.length > 0 && (
         <Segmented className="pill-filters" options={[...filters]} value={activeFilter} onChange={(v) => onFilterChange?.(v as F)} />

@@ -20,7 +20,40 @@ export interface Tenant {
   billingPhone: string
   lmsAdminName: string
   lmsAdminEmail: string
+  /** Number of courses assigned to the tenant. */
+  courseCount: number
 }
+
+export interface TenantCourse {
+  id: number
+  code: string
+  name: string
+  source: 'included' | 'purchased' | 'assigned'
+}
+
+/** GET /tenants/:id - the tenant plus its assigned courses and latest subscription. */
+export interface TenantDetail extends Tenant {
+  courses: TenantCourse[]
+  subscription: Subscription | null
+}
+
+export type TenantProfileUpdate = Partial<
+  Pick<
+    Tenant,
+    | 'name'
+    | 'industry'
+    | 'country'
+    | 'address'
+    | 'billingContactName'
+    | 'billingEmail'
+    | 'billingPhone'
+    | 'lmsAdminName'
+    | 'lmsAdminEmail'
+    | 'planId'
+    | 'userLimit'
+    | 'status'
+  >
+>
 
 export interface Plan {
   id: number
@@ -216,6 +249,17 @@ export interface CertificateTemplate {
   colors: string[]
   signatures: string[]
   status: 'Active' | 'Inactive'
+  titleText: string
+  introText: string
+  showPassScore: boolean
+  /** The two signature slots; `signatures` is just the enabled titles. */
+  signatureDetails: SignatureSlot[]
+}
+
+export interface SignatureSlot {
+  enabled: boolean
+  title: string
+  name: string
 }
 
 export type CertificateTemplateInput = Omit<CertificateTemplate, 'id'>

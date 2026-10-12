@@ -60,10 +60,10 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
   }
 
   return (
-    <div className="d-flex gap-3 align-items-start">
+    <div className="d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
       <CoursePicker courses={editableCourses} selectedId={selectedCourseId} onSelect={onSelectCourse} />
 
-      <div className="flex-grow-1">
+      <div className="flex-grow-1" style={{ minWidth: 0, overflowY: 'auto' }}>
         <p className="mb-2 fw-bold text-dark">Course Modules ({rows.length} records)</p>
 
         {error && <p className="small text-danger">{error}</p>}

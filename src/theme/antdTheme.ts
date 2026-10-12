@@ -36,8 +36,8 @@ export const antdTheme: ThemeConfig = {
     },
     Input: { colorBgContainer: '#ffffff' },
     InputNumber: { colorBgContainer: '#ffffff' },
-    Select: { colorBgContainer: '#ffffff' },
-    Segmented: { itemSelectedBg: '#5c2d91', itemSelectedColor: '#ffffff', trackBg: 'transparent', trackPadding: 0 },
+    Select: { colorBgContainer: '#ffffff', colorTextQuaternary: '#1a1228' },
+    Segmented: { itemSelectedBg: '#f1ebfa', itemSelectedColor: '#62309c', trackBg: '#faf9fc', trackPadding: 4 },
     Modal: { headerBg: '#ffffff', titleFontSize: 16 },
     Tag: { defaultBg: '#f5f4f8', defaultColor: '#3d2260' },
     Menu: {
