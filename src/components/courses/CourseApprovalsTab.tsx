@@ -8,6 +8,7 @@ import { StatCard } from '../ui/StatCard'
 import { IconButton } from '../ui/IconButton'
 import { ErrorBlock, LoadingBlock, Notice } from '../ui/State'
 import { Modal } from '../ui/Modal'
+import { confirmDialog } from '../ui/confirmOptions'
 import { Field } from '../ui/Field'
 import { ManualCourseModal } from './ManualCourseModal'
 import { CoursePreviewModal } from '../lms-content/CoursePreviewModal'
@@ -42,7 +43,7 @@ function RejectReasonModal({ course, onClose, onRejected }: { course: Course; on
       <div className="d-flex flex-column gap-3">
         {error && <Notice tone="error">{error}</Notice>}
         <Field label="Reason" required hint="Shown to the creator so they can fix and resubmit.">
-          <Input.TextArea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Missing SCORM package" />
+          <Input.TextArea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter rejection reason" />
         </Field>
         <div className="d-flex justify-content-end gap-3 pt-2 border-top">
           <Button onClick={onClose}>Cancel</Button>
@@ -63,7 +64,7 @@ function RejectReasonModal({ course, onClose, onRejected }: { course: Course; on
 export function CourseApprovalsTab() {
   const { user } = useAuth()
   const isSuper = user?.role === 'Super Admin'
-  const { modal } = App.useApp()
+  const { notification } = App.useApp()
   // CoursePreviewModal reads these from useData() itself - loaded here so Preview has them ready.
   useDataNeeds('courseModules', 'quizQuestions', 'certificateTemplates')
 
@@ -90,6 +91,7 @@ export function CourseApprovalsTab() {
     setActionError('')
     try {
       await api.approveCourse(course.id)
+      notification.success({ title: 'Course approved', description: course.name })
       load()
     } catch (e) {
       setActionError(`${course.name}: ${errorMessage(e)}`)
@@ -98,17 +100,25 @@ export function CourseApprovalsTab() {
     }
   }
 
+  const confirmApprove = (course: Course) =>
+    confirmDialog({
+      title: 'Approve course?',
+      content: `Are you sure you want to approve ${course.name}?`,
+      okText: 'Approve Course',
+      onOk: () => approve(course),
+    })
+
   const remove = (course: Course) =>
-    modal.confirm({
-      title: `Delete "${course.name}"?`,
-      content: 'This submission has never gone live, so nothing else references it.',
-      okText: 'Delete',
+    confirmDialog({
+      title: 'Delete course?',
+      content: `Are you sure you want to delete ${course.name}?`,
+      okText: 'Delete Course',
       okButtonProps: { danger: true },
-      centered: true,
       onOk: async () => {
         setActionError('')
         try {
           await api.deleteCourse(course.id)
+          notification.success({ title: 'Course deleted', description: course.name })
           load()
         } catch (e) {
           setActionError(`${course.name}: ${errorMessage(e)}`)
@@ -119,6 +129,7 @@ export function CourseApprovalsTab() {
   const saveEdit = async (data: Partial<CourseInput>) => {
     if (!editing) return
     await api.updateCourse(editing.id, data)
+    notification.success({ title: 'Course updated', description: editing.name })
     load()
   }
 
@@ -131,8 +142,8 @@ export function CourseApprovalsTab() {
 
   return (
     <div>
-      <div className={`row row-cols-2 ${isSuper ? '' : 'row-cols-md-3'} g-3 mb-4`}>
-        {!isSuper && (
+      <div className={`row row-cols-2 ${isSuper && draftCount === 0 ? '' : 'row-cols-md-3'} g-3 mb-4`}>
+        {(!isSuper || draftCount > 0) && (
           <div className="col">
             <StatCard icon={<Pencil size={20} />} label="Draft" value={draftCount} tone="slate" />
           </div>
@@ -159,12 +170,12 @@ export function CourseApprovalsTab() {
             emptyText: isSuper ? 'Nothing is waiting for approval right now.' : 'You have no draft, pending, or rejected course submissions.',
           }}
           columns={[
-            { title: 'Course', dataIndex: 'name', render: (n: string) => <span className="fw-semibold">{n}</span> },
-            { title: 'Category', dataIndex: 'category' },
-            { title: 'Price', dataIndex: 'price', render: (p: number) => (p > 0 ? `₹${p.toLocaleString('en-IN')}` : 'Free') },
-            ...(isSuper ? [{ title: 'Submitted By', dataIndex: 'createdByName', render: (n: string | null) => n ?? '—' }] : []),
+            { title: 'Course', dataIndex: 'name', render: (n: string) => <span className="tenant-name">{n}</span> },
+            { title: 'Category', width: 190, dataIndex: 'category' },
+            { title: 'Price', width: 110, dataIndex: 'price', render: (p: number) => (p > 0 ? `₹${p.toLocaleString('en-IN')}` : 'Free') },
+            ...(isSuper ? [{ title: 'Submitted By', width: 170, dataIndex: 'createdByName', render: (n: string | null) => n ?? '—' }] : []),
             {
-              title: 'Status',
+              title: 'Status', width: 220,
               dataIndex: 'approvalStatus',
               render: (st: Course['approvalStatus'], c: Course) => (
                 <div>
@@ -178,17 +189,17 @@ export function CourseApprovalsTab() {
               ),
             },
             {
-              title: 'Actions',
+              title: 'Actions', width: 140,
               key: 'actions',
               render: (_: unknown, c: Course) =>
-                isSuper ? (
-                  <div className="d-flex align-items-center justify-content-center gap-2">
+                isSuper && c.approvalStatus !== 'draft' ? (
+                  <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Preview course" tone="purple" />
-                    <IconButton icon={<CheckCircle2 size={14} />} onClick={() => void approve(c)} title="Approve" tone="green" disabled={busyId === c.id} />
+                    <IconButton icon={<CheckCircle2 size={14} />} onClick={() => confirmApprove(c)} title="Approve" tone="green" disabled={busyId === c.id} />
                     <IconButton icon={<XCircle size={14} />} onClick={() => setRejecting(c)} title="Reject" tone="red" disabled={busyId === c.id} />
                   </div>
                 ) : (
-                  <div className="d-flex align-items-center justify-content-center gap-2">
+                  <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Preview course" tone="purple" />
                     <IconButton icon={<Pencil size={14} />} onClick={() => setEditing(c)} title="Edit and resubmit" tone="blue" />
                     <IconButton icon={<Trash2 size={14} />} onClick={() => remove(c)} title="Delete" tone="red" />
@@ -206,6 +217,7 @@ export function CourseApprovalsTab() {
           course={rejecting}
           onClose={() => setRejecting(null)}
           onRejected={() => {
+            notification.success({ title: 'Course rejected', description: rejecting.name })
             setRejecting(null)
             load()
           }}

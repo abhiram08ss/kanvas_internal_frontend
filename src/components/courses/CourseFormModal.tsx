@@ -109,7 +109,7 @@ export function CourseFormModal({ course, onClose, onSave }: { course?: Course; 
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your title"
+              placeholder="Enter course title"
               status={errors.name ? 'error' : undefined}
             />
           </Field>
@@ -122,7 +122,7 @@ export function CourseFormModal({ course, onClose, onSave }: { course?: Course; 
                 value={category}
                 onChange={setCategory}
                 options={courseOptions.categoryTypes.map((c) => ({ value: c, label: c }))}
-                placeholder="Select a category"
+                placeholder="Select category"
                 status={errors.category ? 'error' : undefined}
                 style={{ width: '100%' }}
               />
@@ -131,7 +131,7 @@ export function CourseFormModal({ course, onClose, onSave }: { course?: Course; 
         </div>
 
         <Field label="Description">
-          <Input.TextArea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="A short summary of the course" />
+          <Input.TextArea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Enter course summary" />
         </Field>
 
         <div className="row g-3">
@@ -162,7 +162,7 @@ export function CourseFormModal({ course, onClose, onSave }: { course?: Course; 
           </div>
           <div className="col-6">
             <Field label="Mapping to Existing LMS Course ID">
-              <Input value={lmsCourseId} onChange={(e) => setLmsCourseId(e.target.value)} placeholder="Leave blank to auto-generate" />
+              <Input value={lmsCourseId} onChange={(e) => setLmsCourseId(e.target.value)} placeholder="Enter LMS course ID (auto-generated if blank)" />
             </Field>
           </div>
         </div>

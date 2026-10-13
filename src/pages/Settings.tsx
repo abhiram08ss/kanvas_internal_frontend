@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { App, Button, Col, Input, InputNumber, Row } from 'antd'
+import { Button, Col, Input, InputNumber, Row } from 'antd'
+import { confirmDialog } from '../components/ui/confirmOptions'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -11,7 +12,6 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Settings() {
   const { user, logout } = useAuth()
-  const { modal } = App.useApp()
   const { data, error, loading, reload } = useApi(api.settings)
   const [form, setForm] = useState<PlatformConfig | null>(null)
   const [toggles, setToggles] = useState<Record<string, boolean>>({})
@@ -45,9 +45,10 @@ export default function Settings() {
     }
   }
 
-  const dangerAction = (title: string, okText: string, run: () => Promise<void>, successText: string) =>
-    modal.confirm({
+  const dangerAction = (title: string, content: string, okText: string, run: () => Promise<void>, successText: string) =>
+    confirmDialog({
       title,
+      content,
       okText,
       okButtonProps: { danger: true },
       centered: true,
@@ -64,8 +65,9 @@ export default function Settings() {
 
   const resetAll = () =>
     dangerAction(
-      'Revert ALL platform settings to factory defaults?',
-      'Reset settings',
+      'Reset settings?',
+      'Are you sure you want to reset all platform settings to factory defaults?',
+      'Reset Settings',
       async () => applyServerState(await api.resetSettings()),
       'Settings reverted to defaults.',
     )
@@ -73,8 +75,9 @@ export default function Settings() {
   // Flushing invalidates every token including ours, so we are signed out right after.
   const flushSessions = () =>
     dangerAction(
-      'Force ALL admin users (including you) to sign in again?',
-      'Flush sessions',
+      'Flush sessions?',
+      'Are you sure you want all admin users, including you, to sign in again?',
+      'Flush Sessions',
       async () => {
         await api.flushSessions()
         logout()

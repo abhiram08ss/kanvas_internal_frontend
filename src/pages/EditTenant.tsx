@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Building2, BookOpen, Check, Lock, Mail, Search, ShieldCheck } from 'lucide-react'
-import { Button, Empty, Input, Select, Spin, Steps } from 'antd'
-import { Modal } from '../ui/Modal'
-import { Field } from '../ui/Field'
-import { Notice } from '../ui/State'
-import { ReviewCard, ReviewRow } from './ReviewParts'
-import { COUNTRIES } from '../../data/countries'
-import { useData } from '../../context/DataContext'
-import { api, errorMessage, API_ORIGIN, type Tenant, type TenantCourse } from '../../api'
-import '../../pages/CreateTenant.css'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Building2, BookOpen, Check, Mail, Search, ShieldCheck, Receipt, UserCog } from 'lucide-react'
+import { App, Button, Empty, Input, Select, Spin } from 'antd'
+import { AppLayout } from '../components/layout/AppLayout'
+import { Card } from '../components/ui/Card'
+import { Field } from '../components/ui/Field'
+import { Notice } from '../components/ui/State'
+import { ReviewCard, ReviewRow } from '../components/tenants/ReviewParts'
+import { CourseGroupPicker, ReviewCourseGroups } from '../components/tenants/CourseGroupPicker'
+import { COUNTRIES } from '../data/countries'
+import { useData, useDataNeeds } from '../context/DataContext'
+import { api, errorMessage, type Tenant, type TenantCourse } from '../api'
+import './CreateTenant.css'
+import { WizardSteps, WizardTitleRow, FormSection } from '../components/tenants/WizardSteps'
 
 const INDUSTRIES = ['IT Services', 'Manufacturing', 'Healthcare', 'Education', 'Retail', 'Finance', 'Other']
 const UNLIMITED = 999_999
@@ -16,15 +20,18 @@ const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/
 const PHONE_RE = /^[0-9]{10}$/
 const STEP_LABELS = ['Organization', 'Select Courses', 'Review & Proceed']
-const KANVAS_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
 
 type Key = 'name' | 'userLimit' | 'billingContactName' | 'billingEmail' | 'billingPhone' | 'lmsAdminName' | 'lmsAdminEmail'
 type Errors = Partial<Record<Key, string>>
 
 /** Edit a tenant in the same three steps as creating one: Organization -> Courses -> Review. The tenant code
- *  can't change, and courses that came with the tenant's plan or a purchase stay locked on. */
-export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; onClose: () => void; onSaved: () => Promise<void> }) {
-  const { courses } = useData()
+ *  can't change; every course, whatever its source, can be added or removed. */
+function EditTenantForm({ tenant }: { tenant: Tenant }) {
+  const navigate = useNavigate()
+  const { courses, refresh } = useData()
+  const onClose = () => navigate('/tenants')
+  const onSaved = refresh
+  const { notification } = App.useApp()
   const [step, setStep] = useState(1)
 
   // Step 1
@@ -64,8 +71,14 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
     }
   }, [tenant.id])
 
-  const lockedIds = new Set((current ?? []).filter((c) => c.source !== 'assigned').map((c) => c.id))
+  // Courses this tenant already had when the page opened; anything selected beyond these is new and gets a star.
+  const originalIds = new Set((current ?? []).map((c) => c.id))
+  const isNew = (id: number) => current !== null && selected.includes(id) && !originalIds.has(id)
+  const newCount = selected.filter((id) => isNew(id)).length
+  // Courses the tenant already has are shown ticked but disabled (they stay assigned); only courses that are
+  // not yet assigned can be ticked, and ones added during this edit can be unticked again.
   const activeCourses = courses.filter((c) => c.status === 'Active' || selected.includes(c.id))
+  const hiddenCount = originalIds.size
   const categoryTypes = Array.from(new Set(activeCourses.map((c) => c.category)))
   const visible = activeCourses.filter(
     (c) =>
@@ -75,11 +88,12 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
   const selectedCourses = courses.filter((c) => selected.includes(c.id))
 
   const toggle = (id: number) => {
-    if (lockedIds.has(id)) return
+    if (originalIds.has(id)) return // already assigned: shown disabled
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
   const selectAllVisible = () => setSelected((prev) => Array.from(new Set([...prev, ...visible.map((c) => c.id)])))
-  const clearAssigned = () => setSelected((prev) => prev.filter((id) => lockedIds.has(id)))
+  // Clear only undoes what was added in this edit; the tenant's existing courses stay.
+  const clearAll = () => setSelected((prev) => prev.filter((id) => originalIds.has(id)))
 
   const clear = (key: Key) => setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev))
   const status = (key: Key) => (errors[key] ? 'error' : undefined)
@@ -135,6 +149,7 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
         courseIds: selected,
       })
       await onSaved()
+      notification.success({ title: 'Tenant updated', description: `${name.trim()} was updated successfully.` })
       onClose()
     } catch (err) {
       setError(errorMessage(err))
@@ -142,18 +157,6 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
     }
   }
 
-  const stepItems = STEP_LABELS.map((label, i) => {
-    const n = i + 1
-    const filled = n <= step
-    return {
-      title: label,
-      icon: (
-        <span className="ct-step-dot" style={{ background: filled ? KANVAS_GRADIENT : '#f0e8fa', color: filled ? '#fff' : '#9b87b5' }}>
-          {n < step ? <Check size={16} /> : n}
-        </span>
-      ),
-    }
-  })
 
   const footer = (
     <div className="d-flex justify-content-between">
@@ -173,13 +176,17 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
   )
 
   return (
-    <Modal title="Edit tenant" subtitle={`${tenant.name} · ${tenant.code}`} onClose={onClose} size="xl" tone="brand" icon={<Building2 size={20} />} footer={footer}>
-      <div className="ct-wizard-card ct-edit">
-        <div className="ct-edit-steps">
-          <Steps current={step - 1} items={stepItems} titlePlacement="vertical" />
-        </div>
+    <AppLayout title="Edit Tenant" subtitle={`${tenant.name} · ${tenant.code}`}>
+      <Button type="text" className="mb-3" icon={<ArrowLeft size={16} />} onClick={onClose} style={{ color: '#7b6b94', fontWeight: 600 }}>
+        Back to Tenants
+      </Button>
+      <WizardTitleRow title="Edit Tenant" />
+      <div className="wz-stepper-card">
+        <WizardSteps steps={STEP_LABELS} current={step} />
+      </div>
 
-        <div>
+      <Card className="p-0 ct-wizard-card">
+        <div className={step === 1 ? '' : 'p-4'}>
         {error && (
           <div className="mb-3">
             <Notice tone="error">{error}</Notice>
@@ -187,28 +194,28 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
         )}
 
         {step === 1 && (
-          <div className="mx-auto" style={{ maxWidth: 640 }}>
-            <h3 className="font-display fs-6 fw-bold text-dark mb-3">Organization Information</h3>
-            <div className="row g-3">
+          <div>
+            <FormSection icon={<Building2 size={22} />} title="Organization Information" description="Organization profile and tenant settings.">
+            <div className="row">
               <div className="col-12 col-md-6">
                 <Field label="Organization Name" required error={errors.name}>
-                  <Input size="large" value={name} maxLength={200} status={status('name')} onChange={(e) => { setName(e.target.value); clear('name') }} placeholder="Enter organization name" />
+                  <Input size="middle" value={name} maxLength={200} status={status('name')} onChange={(e) => { setName(e.target.value); clear('name') }} placeholder="Enter organization name" />
                 </Field>
               </div>
               <div className="col-12 col-md-6">
                 <Field label="Tenant Code" hint="Can't be changed after creation.">
-                  <Input size="large" value={tenant.code} disabled />
+                  <Input size="middle" value={tenant.code} disabled />
                 </Field>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="Industry">
-                  <Select size="large" value={industry} onChange={setIndustry} options={[...new Set([...INDUSTRIES, industry])].map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
+                  <Select size="middle" value={industry} onChange={setIndustry} options={[...new Set([...INDUSTRIES, industry])].map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
                 </Field>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="Country">
                   <Select
-                    size="large"
+                    size="middle"
                     showSearch
                     value={country || undefined}
                     onChange={setCountry}
@@ -219,50 +226,53 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
                   />
                 </Field>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="User Limit" error={errors.userLimit} hint={tenant.userLimit >= UNLIMITED ? 'Currently unlimited. Leave blank to keep it.' : `${tenant.users} users active now.`}>
-                  <Input size="large" type="number" min={1} value={userLimit} status={status('userLimit')} onChange={(e) => { setUserLimit(e.target.value); clear('userLimit') }} placeholder="Enter user limit" />
+                  <Input size="middle" type="number" min={1} value={userLimit} status={status('userLimit')} onChange={(e) => { setUserLimit(e.target.value); clear('userLimit') }} placeholder="Enter user limit" />
                 </Field>
               </div>
               <div className="col-12">
                 <Field label="Address">
-                  <Input.TextArea rows={2} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
+                  <Input.TextArea rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
                 </Field>
               </div>
             </div>
+            </FormSection>
 
-            <h3 className="font-display fs-6 fw-bold text-dark mt-4 mb-3 pt-3 border-top">Billing Contact Details</h3>
-            <div className="row g-3">
+            <FormSection icon={<Receipt size={22} />} title="Billing Contact Details" description="Contact information for billing.">
+            <div className="row">
               <div className="col-12 col-md-4">
                 <Field label="Contact Name" error={errors.billingContactName}>
-                  <Input size="large" value={billingContactName} maxLength={120} status={status('billingContactName')} onChange={(e) => { setBillingContactName(e.target.value); clear('billingContactName') }} placeholder="Enter contact name" />
+                  <Input size="middle" value={billingContactName} maxLength={120} status={status('billingContactName')} onChange={(e) => { setBillingContactName(e.target.value); clear('billingContactName') }} placeholder="Enter contact name" />
                 </Field>
               </div>
               <div className="col-12 col-md-4">
                 <Field label="Billing Email" required error={errors.billingEmail}>
-                  <Input size="large" type="email" value={billingEmail} status={status('billingEmail')} onChange={(e) => { setBillingEmail(e.target.value); clear('billingEmail') }} placeholder="Enter billing email" />
+                  <Input size="middle" type="email" value={billingEmail} status={status('billingEmail')} onChange={(e) => { setBillingEmail(e.target.value); clear('billingEmail') }} placeholder="Enter billing email" />
                 </Field>
               </div>
               <div className="col-12 col-md-4">
                 <Field label="Phone" error={errors.billingPhone}>
-                  <Input size="large" inputMode="tel" maxLength={10} value={billingPhone} status={status('billingPhone')} onChange={(e) => { setBillingPhone(e.target.value.replace(/\D/g, '')); clear('billingPhone') }} placeholder="Enter 10-digit phone number" />
+                  <Input size="middle" inputMode="tel" maxLength={10} value={billingPhone} status={status('billingPhone')} onChange={(e) => { setBillingPhone(e.target.value.replace(/\D/g, '')); clear('billingPhone') }} placeholder="Enter 10-digit phone number" />
                 </Field>
               </div>
             </div>
+            </FormSection>
 
-            <h3 className="font-display fs-6 fw-bold text-dark mt-4 mb-3 pt-3 border-top">LMS Admin Details</h3>
-            <div className="row g-3">
+            <FormSection icon={<UserCog size={22} />} title="LMS Admin Details" description="Primary administrator for the tenant's LMS.">
+            <div className="row">
               <div className="col-12 col-md-6">
                 <Field label="Admin Name" required error={errors.lmsAdminName}>
-                  <Input size="large" value={lmsAdminName} maxLength={120} status={status('lmsAdminName')} onChange={(e) => { setLmsAdminName(e.target.value); clear('lmsAdminName') }} placeholder="Enter admin name" />
+                  <Input size="middle" value={lmsAdminName} maxLength={120} status={status('lmsAdminName')} onChange={(e) => { setLmsAdminName(e.target.value); clear('lmsAdminName') }} placeholder="Enter admin name" />
                 </Field>
               </div>
               <div className="col-12 col-md-6">
                 <Field label="Admin Email" required error={errors.lmsAdminEmail}>
-                  <Input size="large" type="email" value={lmsAdminEmail} status={status('lmsAdminEmail')} onChange={(e) => { setLmsAdminEmail(e.target.value); clear('lmsAdminEmail') }} placeholder="Enter admin email" />
+                  <Input size="middle" type="email" value={lmsAdminEmail} status={status('lmsAdminEmail')} onChange={(e) => { setLmsAdminEmail(e.target.value); clear('lmsAdminEmail') }} placeholder="Enter admin email" />
                 </Field>
               </div>
             </div>
+            </FormSection>
           </div>
         )}
 
@@ -271,10 +281,13 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
             <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
               <div>
                 <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
-                <p className="mb-0 small text-secondary">Choose which published courses this tenant should have access to.</p>
+                <p className="mb-0 small text-secondary">
+                  Choose more published courses for this tenant.
+                  {hiddenCount > 0 && ` The ${hiddenCount} course${hiddenCount === 1 ? '' : 's'} it already has ${hiddenCount === 1 ? 'is' : 'are'} ticked and can't be changed here.`}
+                </p>
               </div>
               <span className="ct-selected-pill">
-                <Check size={14} /> {selected.length} selected
+                <Check size={14} /> {selected.length} selected{newCount > 0 ? ` · ${newCount} new` : ''}
               </span>
             </div>
 
@@ -299,62 +312,17 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
                     <Button onClick={selectAllVisible} disabled={visible.length === 0}>
                       Select all{category !== 'All' || query ? ' shown' : ''}
                     </Button>
-                    <Button onClick={clearAssigned}>Clear</Button>
+                    <Button onClick={clearAll}>Clear</Button>
                   </div>
                 </div>
 
-                {lockedIds.size > 0 && (
-                  <p className="small mb-3" style={{ color: '#727587' }}>
-                    <Lock size={12} className="me-1" /> Courses that came with the tenant's plan or a purchase are locked and can't be removed here.
-                  </p>
-                )}
 
                 {visible.length === 0 ? (
                   <div className="py-5">
                     <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>
                 ) : (
-                  <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
-                    {visible.map((c) => {
-                      const checked = selected.includes(c.id)
-                      const locked = lockedIds.has(c.id)
-                      return (
-                        <div key={c.id} className="col">
-                          <div
-                            role="checkbox"
-                            aria-checked={checked}
-                            aria-disabled={locked}
-                            tabIndex={0}
-                            className={`ct-course-card${checked ? ' is-selected' : ''}${locked ? ' is-locked' : ''}`}
-                            onClick={() => toggle(c.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                toggle(c.id)
-                              }
-                            }}
-                          >
-                            {c.coverImage ? (
-                              <img src={`${API_ORIGIN}/courses/covers/${c.coverImage}`} alt="" className="ct-course-thumb" />
-                            ) : (
-                              <div className="ct-course-thumb ct-course-thumb-empty">
-                                <BookOpen size={20} color="#fff" />
-                              </div>
-                            )}
-                            <div className="flex-grow-1 min-w-0">
-                              <div className="ct-course-name text-truncate" title={c.name}>
-                                {c.name}
-                              </div>
-                              <div className="ct-course-meta text-truncate">
-                                {c.code} · {c.category}
-                              </div>
-                            </div>
-                            <span className="ct-course-check">{locked ? <Lock size={12} /> : checked && <Check size={14} />}</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <CourseGroupPicker courses={visible} selected={selected} lockedIds={originalIds} isNew={isNew} onToggle={toggle} />
                 )}
               </>
             )}
@@ -392,13 +360,7 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
                   {selectedCourses.length === 0 ? (
                     <p className="small text-secondary mb-0">No courses selected.</p>
                   ) : (
-                    <div className="d-flex flex-wrap gap-2">
-                      {selectedCourses.map((c) => (
-                        <span key={c.id} className="ct-review-chip">
-                          <Check size={13} /> {c.name}
-                        </span>
-                      ))}
-                    </div>
+                    <ReviewCourseGroups courses={selectedCourses} isNew={isNew} />
                   )}
                 </ReviewCard>
               </div>
@@ -407,7 +369,29 @@ export function EditTenantModal({ tenant, onClose, onSaved }: { tenant: Tenant; 
         )}
 
         </div>
-      </div>
-    </Modal>
+        <div className="ct-wizard-footer">{footer}</div>
+      </Card>
+    </AppLayout>
   )
+}
+
+export default function EditTenant() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { tenants } = useData()
+  useDataNeeds('tenants', 'courses', 'courseOptions')
+  const tenant = tenants.find((t) => String(t.id) === id)
+  if (!tenant) {
+    return (
+      <AppLayout title="Edit Tenant" subtitle="">
+        <Button type="text" icon={<ArrowLeft size={16} />} onClick={() => navigate('/tenants')}>
+          Back to Tenants
+        </Button>
+        <div className="py-5 text-center">
+          <Spin />
+        </div>
+      </AppLayout>
+    )
+  }
+  return <EditTenantForm key={tenant.id} tenant={tenant} />
 }

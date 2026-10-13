@@ -91,19 +91,18 @@ function UsageBody({ data }: { data: UsageData }) {
           dataSource={byTenant}
           locale={{ emptyText: 'No tenant usage to show yet.' }}
           columns={[
-            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="fw-semibold">{t}</span> },
-            { title: 'Plan', dataIndex: 'plan' },
-            { title: 'Active Users', dataIndex: 'activeUsers' },
-            { title: 'Limit', key: 'limit', render: (_: unknown, row) => (row.unlimited ? 'Unlimited' : row.limit) },
-            { title: 'Available', dataIndex: 'available', render: (a: number | null) => a ?? '—' },
+            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="tenant-name">{t}</span> },
+            { title: 'Active Users', width: 140, dataIndex: 'activeUsers' },
+            { title: 'Limit', width: 130, key: 'limit', render: (_: unknown, row) => (row.unlimited ? 'Unlimited' : row.limit) },
+            { title: 'Available', width: 130, dataIndex: 'available', render: (a: number | null) => a ?? '—' },
             {
-              title: 'Utilization',
+              title: 'Utilization', width: 220,
               key: 'utilization',
               render: (_: unknown, row) =>
                 row.unlimited ? (
                   <span style={{ fontSize: 12, color: '#9b87b5' }}>n/a</span>
                 ) : (
-                  <div className="d-flex align-items-center justify-content-center gap-2" style={{ minWidth: 150 }}>
+                  <div className="d-flex align-items-center gap-2" style={{ minWidth: 150 }}>
                     <Progress
                       percent={Math.min(row.utilization, 100)}
                       showInfo={false}

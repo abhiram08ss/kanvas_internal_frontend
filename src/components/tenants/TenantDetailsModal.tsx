@@ -7,14 +7,6 @@ import { api, errorMessage, type Tenant, type TenantDetail } from '../../api'
 
 const UNLIMITED = 999_999
 
-/** "01 Jan 2027" (the API's date format) -> "01-January-2027". Falls back to the original text. */
-function longDate(value: string | undefined | null): string {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return `${String(d.getDate()).padStart(2, '0')}-${d.toLocaleString('en-GB', { month: 'long' })}-${d.getFullYear()}`
-}
-
 function withContact(name: string, email: string): string {
   if (name && email) return `${name} (${email})`
   return name || email || '—'
@@ -34,13 +26,11 @@ export function TenantDetailsModal({
   tenant,
   canManage,
   onClose,
-  onUpdatePlan,
   onEdit,
 }: {
   tenant: Tenant
   canManage: boolean
   onClose: () => void
-  onUpdatePlan: () => void
   onEdit: () => void
 }) {
   const { courses: allCourses } = useData()
@@ -85,19 +75,6 @@ export function TenantDetailsModal({
         <Row label="User Limit">{unlimited ? 'Unlimited' : t.userLimit}</Row>
         <Row label="LMS Admin">{withContact(t.lmsAdminName, t.lmsAdminEmail)}</Row>
         <Row label="Billing Email">{withContact(t.billingContactName, t.billingEmail)}</Row>
-        <Row label="Subscription Plan">
-          <div className="d-flex align-items-center justify-content-between gap-3">
-            <span>{t.plan ?? '—'}</span>
-            {canManage && (
-              <Button type="primary" onClick={onUpdatePlan}>
-                Update Plan
-              </Button>
-            )}
-          </div>
-        </Row>
-        <Row label="Subscription End Date">
-          <strong>{longDate(detail?.subscription?.renewalDate)}</strong>
-        </Row>
         <Row label="Status">{t.status}</Row>
       </div>
 

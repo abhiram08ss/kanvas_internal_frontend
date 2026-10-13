@@ -23,6 +23,7 @@ import {
   FolderOpen,
 } from 'lucide-react'
 import { Select } from 'antd'
+import { confirmDialog } from '../ui/confirmOptions'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
 import { StatCard } from '../ui/StatCard'
@@ -34,13 +35,13 @@ import { useData, useDataNeeds } from '../../context/DataContext'
 import { API_ORIGIN, type CategoryType, type Course, type CourseInput, type CourseModule } from '../../api'
 
 // Per-category look: accent colour, icon and a one-line description for the group header.
-const GROUP_STYLE: Record<string, { color: string; bg: string; icon: ReactNode; blurb: string }> = {
+export const GROUP_STYLE: Record<string, { color: string; bg: string; icon: ReactNode; blurb: string }> = {
   'Organization-wide': { color: '#5c2d91', bg: '#f1e9fb', icon: <Globe2 size={20} />, blurb: 'Core learning for every employee' },
   'Function-based': { color: '#2563eb', bg: '#e8f0fe', icon: <Briefcase size={20} />, blurb: 'Skills for specific business functions' },
   'Role-based': { color: '#d97706', bg: '#fef3e2', icon: <UserCog size={20} />, blurb: 'Learning paths tied to job roles' },
   'Industry and sector': { color: '#059669', bg: '#e3f7ef', icon: <Factory size={20} />, blurb: 'Domain knowledge for your industry' },
 }
-const DEFAULT_GROUP_STYLE = { color: '#5c2d91', bg: '#f1e9fb', icon: <FolderOpen size={20} />, blurb: '' }
+export const DEFAULT_GROUP_STYLE = { color: '#5c2d91', bg: '#f1e9fb', icon: <FolderOpen size={20} />, blurb: '' }
 
 const statusFilters = ['All', 'Active', 'Inactive'] as const
 
@@ -57,6 +58,9 @@ function CoverThumb({ cover }: { cover: string | null }) {
     </div>
   )
 }
+
+// Only one hover popup is open at a time: opening one closes whichever card's popup is still showing.
+let activePopup: { owner: HTMLElement | null; close: () => void } | null = null
 
 function CourseGridCard({
   course,
@@ -78,15 +82,30 @@ function CourseGridCard({
     course.durationHours != null ? `${course.durationHours} total hours` : null,
     course.level,
     `${modules.length} ${modules.length === 1 ? 'module' : 'modules'}`,
-    `${questionCount} ${questionCount === 1 ? 'question' : 'questions'}`,
-    `Pass score ${course.passScore}%`,
+    // Without quiz questions there is nothing to score, so neither the question count nor a pass score is shown.
+    ...(questionCount > 0 ? [`${questionCount} ${questionCount === 1 ? 'question' : 'questions'}`, `Pass score ${course.passScore}%`] : []),
   ].filter(Boolean)
   // Hover details sit beside the card. Positioned with `fixed` from the card's rect (and clamped under the
   // page header), so it works inside the grid's own scroll container, which a normal popover can't.
   const cardRef = useRef<HTMLDivElement>(null)
   const [popup, setPopup] = useState<{ top: number; left: number; maxHeight: number } | null>(null)
   const POPUP_W = 320
+  // Closing is delayed so the pointer can cross the gap onto the popup (to select/copy its text).
+  const closeTimer = useRef<number | undefined>(undefined)
+  const scheduleClose = () => {
+    window.clearTimeout(closeTimer.current)
+    closeTimer.current = window.setTimeout(() => setPopup(null), 200)
+  }
+  const keepOpen = () => window.clearTimeout(closeTimer.current)
+  useEffect(() => () => window.clearTimeout(closeTimer.current), [])
+  const hidePopup = () => {
+    window.clearTimeout(closeTimer.current)
+    setPopup(null)
+  }
   const showPopup = () => {
+    keepOpen()
+    if (activePopup && activePopup.owner !== cardRef.current) activePopup.close()
+    activePopup = { owner: cardRef.current, close: hidePopup }
     const el = cardRef.current
     if (!el) return
     const r = el.getBoundingClientRect()
@@ -98,7 +117,6 @@ function CourseGridCard({
       setPopup(null) // card scrolled out of view
       return
     }
-    const vh = window.innerHeight
     const left = r.right + 12 + POPUP_W <= window.innerWidth ? r.right + 12 : Math.max(8, r.left - 12 - POPUP_W)
     const top = Math.min(Math.max(r.top, areaTop), Math.max(areaTop, areaBottom - 160))
     setPopup({ top, left, maxHeight: Math.max(160, areaBottom - top - 8) })
@@ -164,7 +182,7 @@ function CourseGridCard({
       ref={cardRef}
       className="course-grid-card h-100 d-flex flex-column"
       onMouseEnter={showPopup}
-      onMouseLeave={() => setPopup(null)}
+      onMouseLeave={scheduleClose}
     >
       <div className="course-grid-cover position-relative">
         {course.coverImage ? (
@@ -191,17 +209,21 @@ function CourseGridCard({
           <span title="Modules">
             <Layers size={14} /> {modules.length}
           </span>
-          <span title="Quiz questions">
-            <HelpCircle size={14} /> {questionCount}
-          </span>
+          {questionCount > 0 && (
+            <span title="Quiz questions">
+              <HelpCircle size={14} /> {questionCount}
+            </span>
+          )}
           {course.durationHours != null && (
             <span title="Duration">
               <Clock size={14} /> {course.durationHours}h
             </span>
           )}
-          <span title="Pass score">
-            <Award size={14} /> {course.passScore}%
-          </span>
+          {questionCount > 0 && (
+            <span title="Pass score">
+              <Award size={14} /> {course.passScore}%
+            </span>
+          )}
         </div>
         <div className="d-flex align-items-center gap-2 mt-auto pt-3" style={{ borderTop: '1px solid #ede8f5' }}>
           <IconButton icon={<Pencil size={14} />} onClick={onEdit} title="Edit course" tone="blue" />
@@ -219,6 +241,8 @@ function CourseGridCard({
           <div
             className="course-hover-popup scrollbar-thin"
             style={{ top: popup.top, left: popup.left, width: POPUP_W, maxHeight: popup.maxHeight }}
+            onMouseEnter={keepOpen}
+            onMouseLeave={scheduleClose}
           >
             {details}
           </div>,
@@ -239,13 +263,13 @@ export function CoursesTab() {
   const [editing, setEditing] = useState<Course | undefined>(undefined)
   const [previewing, setPreviewing] = useState<Course | undefined>(undefined)
   const [collapsedTypes, setCollapsedTypes] = useState<Set<CategoryType>>(new Set())
-  // On first load only the first category is open; the rest start collapsed.
+  // On first load every category starts collapsed.
   const collapsedInit = useRef(false)
   useEffect(() => {
     const types = courseOptions.categoryTypes
     if (collapsedInit.current || !types.length) return
     collapsedInit.current = true
-    setCollapsedTypes(new Set(types.slice(1)))
+    setCollapsedTypes(new Set(types))
   }, [courseOptions.categoryTypes])
   const toggleCollapsed = (type: CategoryType) =>
     setCollapsedTypes((prev) => {
@@ -288,6 +312,16 @@ export function CoursesTab() {
     updateCourse(course.id, {
       status: course.status === 'Active' ? 'Inactive' : 'Active',
     })
+  const confirmToggle = (course: Course) => {
+    const deactivating = course.status === 'Active'
+    confirmDialog({
+      title: deactivating ? 'Deactivate course?' : 'Activate course?',
+      content: `Are you sure you want to ${deactivating ? 'deactivate' : 'activate'} ${course.name}?`,
+      okText: deactivating ? 'Deactivate Course' : 'Activate Course',
+      okButtonProps: { danger: deactivating },
+      onOk: () => toggleStatus(course),
+    })
+  }
 
   return (
     <div className="d-flex flex-column h-100">
@@ -402,7 +436,7 @@ export function CoursesTab() {
                           modules={courseModules.filter((m) => m.courseId === c.id).sort((a, b) => a.order - b.order)}
                           questionCount={quizQuestions.filter((q) => q.courseId === c.id).length}
                           onEdit={() => openEdit(c)}
-                          onToggleStatus={() => void toggleStatus(c)}
+                          onToggleStatus={() => confirmToggle(c)}
                           onPreview={() => setPreviewing(c)}
                         />
                       </div>
@@ -442,7 +476,7 @@ export function CoursesTab() {
                               <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(c)} title="Edit course" tone="blue" />
                               <IconButton
                                 icon={c.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
-                                onClick={() => void toggleStatus(c)}
+                                onClick={() => confirmToggle(c)}
                                 title={c.status === 'Active' ? 'Deactivate' : 'Activate'}
                                 tone={c.status === 'Active' ? 'amber' : 'green'}
                               />

@@ -36,11 +36,11 @@ export default function Subscription() {
           dataSource={rows}
           locale={{ emptyText: 'No subscriptions match your search.' }}
           columns={[
-            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="fw-semibold">{t}</span> },
-            { title: 'Plan', dataIndex: 'plan' },
-            { title: 'Status', dataIndex: 'status', render: (status: SubscriptionRow['status']) => <Badge>{status}</Badge> },
-            { title: 'Start Date', dataIndex: 'startDate', render: (d: string) => <span style={{ color: '#9b87b5' }}>{d}</span> },
-            { title: 'Renewal Date', dataIndex: 'renewalDate', render: (d: string) => <span style={{ color: '#9b87b5' }}>{d}</span> },
+            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="tenant-name">{t}</span> },
+            { title: 'Plan', width: 160, dataIndex: 'plan' },
+            { title: 'Status', width: 130, dataIndex: 'status', render: (status: SubscriptionRow['status']) => <Badge>{status}</Badge> },
+            { title: 'Start Date', width: 150, dataIndex: 'startDate', render: (d: string) => <span className="tenant-muted">{d}</span> },
+            { title: 'Renewal Date', width: 150, dataIndex: 'renewalDate', render: (d: string) => <span className="tenant-muted">{d}</span> },
           ]}
         />
       </ListCard>

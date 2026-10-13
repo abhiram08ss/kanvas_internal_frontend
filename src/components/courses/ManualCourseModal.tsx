@@ -202,7 +202,7 @@ export function ManualCourseModal({
                 <Input
                   value={title}
                   onChange={(e) => { setTitle(e.target.value); clearError('title') }}
-                  placeholder="Enter your title"
+                  placeholder="Enter course title"
                   maxLength={200}
                   status={errors.title ? 'error' : undefined}
                 />
@@ -220,7 +220,7 @@ export function ManualCourseModal({
                   onChange={(e) => { setCode(e.target.value); clearError('code') }}
                   disabled={!!course}
                   maxLength={20}
-                  placeholder="Enter your course code"
+                  placeholder="Enter course code"
                   status={errors.code ? 'error' : undefined}
                 />
               </Field>
@@ -234,7 +234,7 @@ export function ManualCourseModal({
                   value={category}
                   onChange={(v) => { setCategory(v); clearError('category') }}
                   options={courseOptions.categoryTypes.map((c) => ({ value: c, label: c }))}
-                  placeholder="Select a category"
+                  placeholder="Select category"
                   status={errors.category ? 'error' : undefined}
                   style={{ width: '100%' }}
                 />
@@ -331,7 +331,7 @@ export function ManualCourseModal({
               onChange={(e) => { setDescription(e.target.value); clearError('description') }}
               status={errors.description ? 'error' : undefined}
               rows={3}
-              placeholder="What will learners take away from this course?"
+              placeholder="Enter what learners will take away from this course"
             />
           </Field>
           </div>
@@ -382,7 +382,7 @@ export function ManualCourseModal({
                   step="0.5"
                   value={durationHours}
                   onChange={(e) => { setDurationHours(e.target.value); clearError('durationHours') }}
-                  placeholder="Optional"
+                  placeholder="Enter duration in hours (optional)"
                   status={errors.durationHours ? 'error' : undefined}
                 />
               </Field>
@@ -392,7 +392,7 @@ export function ManualCourseModal({
                 <Input
                   value={quizQuestionCount}
                   onChange={(e) => { setQuizQuestionCount(e.target.value); clearError('quizQuestionCount') }}
-                  placeholder="all"
+                  placeholder="Enter number of questions (blank = all)"
                   maxLength={20}
                   status={errors.quizQuestionCount ? 'error' : undefined}
                 />
@@ -405,7 +405,7 @@ export function ManualCourseModal({
                   min={0}
                   value={certValidMonths}
                   onChange={(e) => { setCertValidMonths(e.target.value); clearError('certValidMonths') }}
-                  placeholder="Never expires"
+                  placeholder="Enter months (blank = never expires)"
                   status={errors.certValidMonths ? 'error' : undefined}
                 />
               </Field>
@@ -436,7 +436,7 @@ export function ManualCourseModal({
               onChange={(e) => { setCompletionMessage(e.target.value); clearError('completionMessage') }}
               status={errors.completionMessage ? 'error' : undefined}
               rows={3}
-              placeholder={'Shown to employees once they finish the course, e.g. "Thank you for completing the … programme. By taking this course…"'}
+              placeholder="Enter the message shown to employees when they finish the course"
             />
           </Field>
           </div>

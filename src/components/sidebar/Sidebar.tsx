@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Button, Layout, Menu } from 'antd'
-import { LayoutDashboard, Building2, ClipboardCheck, FileText, RefreshCcw, CreditCard, BarChart3, Users, FileClock, ChevronsLeft } from 'lucide-react'
+import { LayoutDashboard, Building2, ClipboardCheck, FileText, RefreshCcw, Users, FileClock, ChevronsLeft } from 'lucide-react'
 import { useSidebarCollapse } from './hooks/useSidebarCollapse'
 import { useAuth } from '../../context/AuthContext'
 
@@ -16,8 +16,8 @@ const navItems = [
   // the route/page still exists (unlinked, not deleted).
   // The rest are platform/billing-operations screens - a Content User only ever works the 4 items above.
   { to: '/provisioning', label: 'Provisioning', icon: RefreshCcw, superOnly: true },
-  { to: '/subscription', label: 'Subscription', icon: CreditCard, superOnly: true },
-  { to: '/usage-analytics', label: 'Usage & Analytics', icon: BarChart3, superOnly: true },
+  // '/subscription' is intentionally not linked here - the route/page still exists (unlinked, not deleted).
+  // '/usage-analytics' is intentionally not linked here - the route/page still exists (unlinked, not deleted).
   { to: '/platform-users', label: 'Platform Users', icon: Users, superOnly: true },
   { to: '/audit-logs', label: 'Audit Logs', icon: FileClock, superOnly: true },
 ]

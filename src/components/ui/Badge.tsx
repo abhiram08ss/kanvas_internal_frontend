@@ -29,6 +29,15 @@ const statusTone: Record<string, Tone> = {
 /** A status/type pill (Ant Design Tag). Pass `tone`, or let common status words pick their own colour. */
 export function Badge({ children, tone }: { children: ReactNode; tone?: Tone }) {
   const resolvedTone = tone ?? statusTone[String(children)] ?? 'slate'
+  // Status words (Active, Suspended, ...) render as the dot pill used across the tables.
+  if (!tone && statusTone[String(children)]) {
+    return (
+      <span className={`tenant-status is-${resolvedTone}`}>
+        <span className="dot" />
+        {children}
+      </span>
+    )
+  }
   return (
     <Tag variant="filled" style={{ ...toneStyle[resolvedTone], borderRadius: 999, fontWeight: 600, fontSize: 11, margin: 0, paddingInline: 10 }}>
       {children}

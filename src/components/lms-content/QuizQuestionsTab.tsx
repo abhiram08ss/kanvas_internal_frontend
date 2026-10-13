@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { confirmDialog } from '../ui/confirmOptions'
 import { Plus, Trash2, CheckCircle2, Pencil } from 'lucide-react'
 import { ListCard } from '../ui/ListCard'
 import { Badge } from '../ui/Badge'
@@ -28,15 +29,21 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
     setModalOpen(true)
   }
   const handleSave = (data: Parameters<typeof addQuizQuestion>[0]) => (editing ? updateQuizQuestion(editing.id, data) : addQuizQuestion(data))
-  const handleDelete = async (q: QuizQuestion) => {
-    if (!window.confirm('Delete this question? This cannot be undone.')) return
-    setError('')
-    try {
-      await deleteQuizQuestion(q.id)
-    } catch (e) {
-      setError(errorMessage(e))
-    }
-  }
+  const handleDelete = (q: QuizQuestion) =>
+    confirmDialog({
+      title: 'Delete question?',
+      content: 'Are you sure you want to delete this question?',
+      okText: 'Delete Question',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setError('')
+        try {
+          await deleteQuizQuestion(q.id)
+        } catch (e) {
+          setError(errorMessage(e))
+        }
+      },
+    })
 
   return (
     <div className="d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
