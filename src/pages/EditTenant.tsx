@@ -177,6 +177,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
 
   return (
     <AppLayout title="Edit Tenant" subtitle={`${tenant.name} · ${tenant.code}`}>
+      <div className="wz-page">
       <Button type="text" className="mb-3" icon={<ArrowLeft size={16} />} onClick={onClose} style={{ color: '#7b6b94', fontWeight: 600 }}>
         Back to Tenants
       </Button>
@@ -197,12 +198,12 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
           <div>
             <FormSection icon={<Building2 size={22} />} title="Organization Information" description="Organization profile and tenant settings.">
             <div className="row">
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="Organization Name" required error={errors.name}>
                   <Input size="middle" value={name} maxLength={200} status={status('name')} onChange={(e) => { setName(e.target.value); clear('name') }} placeholder="Enter organization name" />
                 </Field>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="Tenant Code" hint="Can't be changed after creation.">
                   <Input size="middle" value={tenant.code} disabled />
                 </Field>
@@ -231,9 +232,9 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                   <Input size="middle" type="number" min={1} value={userLimit} status={status('userLimit')} onChange={(e) => { setUserLimit(e.target.value); clear('userLimit') }} placeholder="Enter user limit" />
                 </Field>
               </div>
-              <div className="col-12">
+              <div className="col-12 col-md-4">
                 <Field label="Address">
-                  <Input.TextArea rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
+                  <Input size="middle" maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
                 </Field>
               </div>
             </div>
@@ -261,12 +262,12 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
 
             <FormSection icon={<UserCog size={22} />} title="LMS Admin Details" description="Primary administrator for the tenant's LMS.">
             <div className="row">
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="Admin Name" required error={errors.lmsAdminName}>
                   <Input size="middle" value={lmsAdminName} maxLength={120} status={status('lmsAdminName')} onChange={(e) => { setLmsAdminName(e.target.value); clear('lmsAdminName') }} placeholder="Enter admin name" />
                 </Field>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <Field label="Admin Email" required error={errors.lmsAdminEmail}>
                   <Input size="middle" type="email" value={lmsAdminEmail} status={status('lmsAdminEmail')} onChange={(e) => { setLmsAdminEmail(e.target.value); clear('lmsAdminEmail') }} placeholder="Enter admin email" />
                 </Field>
@@ -371,6 +372,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
         </div>
         <div className="ct-wizard-footer">{footer}</div>
       </Card>
+      </div>
     </AppLayout>
   )
 }

@@ -25,9 +25,9 @@ export function DataTable<T extends object>({
   const showSerial = serial ?? (paged && props.size !== 'small')
 
   const serialColumn = {
-    title: '#',
+    title: 'S.No',
     key: '__serial',
-    width: 60,
+    width: 92,
     render: (_: unknown, __: T, i: number) => <span className="tenant-muted">{(current - 1) * size + i + 1}</span>,
   }
 

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { formatDate } from '../courses/courseResult'
 import {
   Award,
+  CalendarDays,
   BookOpen,
   CheckCircle2,
   Ban,
@@ -78,13 +80,17 @@ function CourseGridCard({
   onPreview: () => void
 }) {
   const outcomes = (course.learningOutcomes ?? []).filter(Boolean)
-  const meta = [
-    course.durationHours != null ? `${course.durationHours} total hours` : null,
-    course.level,
-    `${modules.length} ${modules.length === 1 ? 'module' : 'modules'}`,
-    // Without quiz questions there is nothing to score, so neither the question count nor a pass score is shown.
-    ...(questionCount > 0 ? [`${questionCount} ${questionCount === 1 ? 'question' : 'questions'}`, `Pass score ${course.passScore}%`] : []),
-  ].filter(Boolean)
+  // Without quiz questions there is nothing to score, so neither the question count nor a pass score is shown.
+  const facts: [string, string][] = (
+    [
+      ['Level', course.level],
+      ['Duration', course.durationHours != null ? `${course.durationHours} hours` : null],
+      ['Modules', String(modules.length)],
+      ['Questions', questionCount > 0 ? String(questionCount) : null],
+      ['Pass score', questionCount > 0 ? `${course.passScore}%` : null],
+      ['Published', course.approvedAt ? formatDate(course.approvedAt) : null],
+    ] as [string, string | null][]
+  ).filter((f): f is [string, string] => !!f[1])
   // Hover details sit beside the card. Positioned with `fixed` from the card's rect (and clamped under the
   // page header), so it works inside the grid's own scroll container, which a normal popover can't.
   const cardRef = useRef<HTMLDivElement>(null)
@@ -141,8 +147,16 @@ function CourseGridCard({
         <Badge tone="purple">{course.category}</Badge>
         <Badge>{course.status}</Badge>
       </div>
-      <div className="small mb-2" style={{ color: '#9b87b5' }}>
-        {meta.join(' · ')}
+      <div
+        className="mb-3"
+        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 10, borderRadius: 10, background: '#f8f5fd', border: '1px solid #eee7f8' }}
+      >
+        {facts.map(([label, value]) => (
+          <div key={label} style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 10.5, letterSpacing: 0.4, textTransform: 'uppercase', color: '#9b87b5', fontWeight: 600 }}>{label}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1228' }}>{value}</div>
+          </div>
+        ))}
       </div>
       {course.description && (
         <div className="mb-2" style={{ color: '#3d3450', fontSize: 14 }}>
@@ -202,8 +216,13 @@ function CourseGridCard({
         <div className="course-grid-title mb-1" title={course.name}>
           {course.name}
         </div>
-        <div className="small mb-3" style={{ color: '#9b87b5' }}>
-          {course.code}
+        <div className="small mb-3 d-flex align-items-center justify-content-between gap-2" style={{ color: '#9b87b5' }}>
+          <span>{course.code}</span>
+          {course.approvedAt && (
+            <span className="d-inline-flex align-items-center gap-1" style={{ whiteSpace: 'nowrap' }}>
+              <CalendarDays size={12} /> {formatDate(course.approvedAt)}
+            </span>
+          )}
         </div>
         <div className="course-grid-stats mb-3">
           <span title="Modules">
@@ -256,8 +275,8 @@ export function CoursesTab() {
   const { courses, courseOptions, courseModules, quizQuestions, certificateTemplates, addCourse, updateCourse } = useData()
   useDataNeeds('courseOptions')
   const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>('All')
-  const [layerFilter, setLayerFilter] = useState<CategoryType | 'All layers'>('All layers')
+  const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>('Active')
+  const [layerFilter, setLayerFilter] = useState<CategoryType | 'All categories'>('All categories')
   const [view, setView] = useState<'list' | 'grid'>('list')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Course | undefined>(undefined)
@@ -297,7 +316,7 @@ export function CoursesTab() {
     [courses, query, statusFilter],
   )
 
-  const groupTypes = layerFilter === 'All layers' ? courseOptions.categoryTypes : [layerFilter]
+  const groupTypes = layerFilter === 'All categories' ? courseOptions.categoryTypes : [layerFilter]
 
   const openCreate = () => {
     setEditing(undefined)
@@ -352,7 +371,7 @@ export function CoursesTab() {
               <Select
                 value={layerFilter}
                 onChange={setLayerFilter}
-                options={[{ value: 'All layers', label: 'All layers' }, ...courseOptions.categoryTypes.map((t) => ({ value: t, label: t }))]}
+                options={[{ value: 'All categories', label: 'All categories' }, ...courseOptions.categoryTypes.map((t) => ({ value: t, label: t }))]}
                 style={{ width: 180 }}
               />
               <div className="d-flex align-items-center gap-1 rounded-2" style={{ border: '1px solid #ede8f5', padding: 2 }}>

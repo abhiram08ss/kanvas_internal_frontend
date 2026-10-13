@@ -234,3 +234,61 @@
 .pill-toolbar .ant-picker .ant-picker-suffix { font-size: 13px; }
 .pill-toolbar .ant-btn-default { height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
 .audit-duration { height: 32px; padding: 0 10px; font-size: 13px; border-radius: 8px; }
+
+/* Module image / video / document picker: a big drop area instead of a small button */
+.media-drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  min-height: 150px; padding: 18px; text-align: center; cursor: pointer;
+  border: 1.5px dashed #cfbfe8; border-radius: 14px; background: #faf8fd; color: #5c2d91;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.media-drop:hover, .media-drop.is-over { background: #f3ecfb; border-color: #8a56c4; }
+.media-drop.has-file { min-height: 0; align-items: stretch; padding: 12px 14px; cursor: default; border-style: solid; border-color: #e2d9f0; background: #fff; }
+.media-drop-icon { color: #8a56c4; }
+.media-drop-title { font-size: 14px; font-weight: 600; color: #3d2260; }
+.media-drop-hint { font-size: 12px; color: #9b87b5; }
+.media-drop-file { display: flex; align-items: center; gap: 14px; text-align: left; }
+.media-drop-preview { width: 96px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid #ede8f5; flex-shrink: 0; background: #f6f2fc; }
+.media-drop-meta { min-width: 0; flex: 1; }
+.media-drop.has-file { cursor: pointer; }
+.media-drop { min-height: 270px; gap: 12px; }
+.media-drop .media-drop-icon { width: 38px; height: 38px; }
+.media-drop-title { font-size: 15px; }
+.media-drop.has-file { min-height: 0; }
+
+/* SCORM ZIP picker: same tall dashed drop area as the image / video / document picker */
+.scorm-dragger.ant-upload-wrapper .ant-upload-drag {
+  min-height: 270px; display: flex; align-items: center; justify-content: center;
+  border: 1.5px dashed #cfbfe8; border-radius: 14px; background: #faf8fd;
+}
+.scorm-dragger.ant-upload-wrapper .ant-upload-drag:hover, .scorm-dragger.ant-upload-wrapper .ant-upload-drag.ant-upload-drag-hover { background: #f3ecfb; border-color: #8a56c4; }
+.scorm-dragger .ant-upload-btn { display: flex !important; align-items: center; justify-content: center; min-height: 270px; }
+
+.module-preview-body { font-size: 15px; line-height: 1.7; }
+.module-preview-body img, .module-preview-body video { max-width: 100%; height: auto; border-radius: 8px; margin: 6px 0; }
+.module-preview-body iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; }
+.module-preview-body table { border-collapse: collapse; width: 100%; }
+.module-preview-body th, .module-preview-body td { border: 1px solid #ede8f5; padding: 6px 8px; }
+.module-preview-body .small { font-size: 15px !important; }
+
+/* Document viewer: Word pages rendered inline, and the file card for other types */
+.doc-pages { border: 1px solid #ede8f5; border-radius: 12px; background: #f6f4fa; padding: 12px; max-height: 520px; overflow: auto; }
+.doc-pages .docx-wrapper { background: transparent; padding: 0; }
+.doc-pages .docx-wrapper > section.docx { box-shadow: 0 2px 10px rgba(60, 29, 112, 0.12); margin-bottom: 12px; padding: 28px 32px; width: 100% !important; min-height: 0 !important; background: #fff; }
+.doc-loading { display: flex; align-items: center; gap: 8px; padding: 18px; color: #7b6b94; font-size: 14px; }
+.doc-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #e2d9f0; border-radius: 14px; background: #faf8fd; }
+.doc-card-badge { flex: none; width: 46px; height: 46px; border-radius: 12px; background: #5c2d91; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.doc-card-meta { flex: 1; min-width: 0; }
+.doc-card-name { font-weight: 700; font-size: 15px; color: #1a1228; }
+.doc-card-note { font-size: 12.5px; color: #7b6b94; margin-top: 2px; }
+
+.doc-pages .pdf-page { display: block; margin: 0 auto 12px; background: #fff; box-shadow: 0 2px 10px rgba(60, 29, 112, 0.12); }
+/* kept in the layout (so its width can be measured) but invisible until the pages are drawn */
+.doc-pages.is-hidden { visibility: hidden; height: 0; padding: 0; border: 0; overflow: hidden; }
+/* no sideways scroll bar in the document frame - pages are scaled to fit its width */
+.doc-pages { overflow-x: hidden; }
+.doc-pages .docx-wrapper, .doc-pages .docx-wrapper > section.docx { max-width: 100%; box-sizing: border-box; overflow-x: hidden; }
+.doc-pages .docx-wrapper > section.docx img, .doc-pages .docx-wrapper > section.docx table { max-width: 100%; }
+.module-preview-body, .module-html { display: flow-root; }
+/* video modules have two extra fields (link, size), so their drop area is a little shorter to keep the form on one screen */
+.media-drop.is-compact:not(.has-file) { min-height: 150px; }

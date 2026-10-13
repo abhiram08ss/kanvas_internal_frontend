@@ -9,6 +9,7 @@ import { IconButton } from '../ui/IconButton'
 import { CoursePicker } from './CoursePicker'
 import { ModuleFormModal } from './ModuleFormModal'
 import { ScormPreviewModal } from '../courses/ScormPreviewModal'
+import { ModulePreviewModal } from './ModulePreviewModal'
 import { useData } from '../../context/DataContext'
 import { errorMessage, type CourseModule } from '../../api'
 
@@ -31,6 +32,7 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
   const [previewing, setPreviewing] = useState<CourseModule | null>(null)
   const [error, setError] = useState('')
 
+  const selectedCourse = editableCourses.find((c) => c.id === selectedCourseId)
   const scoped = selectedCourseId ? courseModules.filter((m) => m.courseId === selectedCourseId) : courseModules
   const rows = useMemo(
     () =>
@@ -71,7 +73,23 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
       <CoursePicker courses={editableCourses} selectedId={selectedCourseId} onSelect={onSelectCourse} />
 
       <div className="flex-grow-1" style={{ minWidth: 0, overflowY: 'auto' }}>
-        <p className="mb-2 fw-bold text-dark">Course Modules ({rows.length} records)</p>
+        <div className="d-flex align-items-center flex-wrap gap-2 mb-3">
+          {selectedCourse && (
+            <>
+              <span className="d-inline-flex align-items-center px-3 rounded-pill fw-semibold" style={{ height: 30, fontSize: 13, lineHeight: 1, background: '#f3effb', color: '#6b3fa0', border: '1px solid #e4d9f5' }}>
+                {selectedCourse.category}
+              </span>
+              <span style={{ color: '#a8a3b3' }}>›</span>
+            </>
+          )}
+          <span className="d-inline-flex align-items-center px-3 rounded-pill fw-semibold" style={{ height: 30, fontSize: 13, lineHeight: 1, background: '#fff', color: '#1f1b2d', border: '1px solid #e2e0ea' }}>
+            {selectedCourse ? selectedCourse.name : 'All courses'}
+          </span>
+          <span style={{ color: '#a8a3b3' }}>·</span>
+          <span className="d-inline-flex align-items-center px-3 rounded-pill fw-semibold" style={{ height: 30, fontSize: 13, lineHeight: 1, background: '#eef2f7', color: '#475569', border: '1px solid #e2e8f0' }}>
+            {scoped.length} {scoped.length === 1 ? 'module' : 'modules'}
+          </span>
+        </div>
 
         {error && <p className="small text-danger">{error}</p>}
 
@@ -87,13 +105,12 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
             onNew={openCreate}
           />
           <DataTable<CourseModule>
+            serial={false}
             rowKey="id"
             dataSource={rows}
             locale={{ emptyText: 'No modules yet for this course.' }}
             columns={[
-              { title: 'Order', width: 90, dataIndex: 'order', render: (order: number) => <span className="tenant-muted">{order}</span> },
-              { title: 'Course', width: 200, dataIndex: 'course' },
-              { title: 'Title', dataIndex: 'title', render: (title: string) => <span className="tenant-name">{title}</span> },
+              { title: 'Title', dataIndex: 'title', render: (title: string) => <span>{title}</span> },
               { title: 'Type', width: 120, dataIndex: 'type', render: (type: CourseModule['type']) => <Badge tone={typeTone[type]}>{type}</Badge> },
               { title: 'Duration', width: 120, dataIndex: 'duration', render: (d: string | null) => <span className="tenant-muted">{d ?? '—'}</span> },
               { title: 'Status', width: 130, dataIndex: 'status', render: (status: CourseModule['status']) => <Badge>{status}</Badge> },
@@ -103,7 +120,7 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
                 render: (_: unknown, m: CourseModule) => (
                   <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(m)} title="Edit module" tone="blue" />
-                    {m.scormPackage && <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(m)} title="Preview SCORM" tone="purple" />}
+                    <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(m)} title={m.type === 'scorm' ? 'Preview SCORM' : 'View module'} tone="purple" disabled={m.type === 'scorm' && !m.scormPackage} />
                     <IconButton icon={<Trash2 size={14} />} onClick={() => void handleDelete(m)} title="Delete module" tone="red" />
                   </div>
                 ),
@@ -123,7 +140,8 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
           onSave={handleSave}
         />
       )}
-      {previewing && (
+      {previewing && previewing.type !== 'scorm' && <ModulePreviewModal module={previewing} onClose={() => setPreviewing(null)} />}
+      {previewing && previewing.type === 'scorm' && (
         <ScormPreviewModal
           course={{
             scormPackage: previewing.scormPackage,

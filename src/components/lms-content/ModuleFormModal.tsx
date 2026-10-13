@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { FileText, ImagePlus, Film, FileUp, X } from 'lucide-react'
+import { FileText, ImagePlus, Film, FileUp, X, Loader2 } from 'lucide-react'
 import { Button, Input, Select } from 'antd'
 import { Modal } from '../ui/Modal'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
 import { RichTextEditor } from '../ui/RichTextEditor'
+import { DISPLAY_SIZES, displaySizeMarker, parseDisplaySize, parseVideoUrl, videoUrlMarker } from './displaySize'
+import { isDirectVideoUrl, toEmbedUrl } from '../ui/embedUrl'
 import { ScormUpload, type ScormSelection } from '../courses/ScormUpload'
 import { discardIfStaged } from '../courses/scormStaging'
 import { api, errorMessage, API_ORIGIN, type Course, type CourseModule, type CourseModuleInput } from '../../api'
@@ -30,7 +32,7 @@ const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp'])
 const VIDEO_EXT = new Set(['.mp4', '.webm', '.mov', '.ogg'])
 const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase()
 
-type Errors = Partial<Record<'title' | 'order' | 'media' | 'scorm', string>>
+type Errors = Partial<Record<'title' | 'order' | 'media' | 'scorm' | 'videoUrl', string>>
 
 export function ModuleFormModal({
   module,
@@ -55,9 +57,12 @@ export function ModuleFormModal({
   const [order, setOrder] = useState(String(module?.order ?? nextOrder))
   const [status, setStatus] = useState<CourseModule['status']>(module?.status ?? 'Active')
   const [content, setContent] = useState(module?.content ?? '')
+  const [displaySize, setDisplaySize] = useState(parseDisplaySize(module?.content))
+  const [videoUrl, setVideoUrl] = useState(parseVideoUrl(module?.content))
 
   const [media, setMedia] = useState<string | null>(module?.media ?? null)
   const [mediaFileName, setMediaFileName] = useState('')
+  const [dragOver, setDragOver] = useState(false)
   const [mediaError, setMediaError] = useState('')
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const mediaInputRef = useRef<HTMLInputElement>(null)
@@ -77,7 +82,7 @@ export function ModuleFormModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const showMedia = type !== 'text' && type !== 'scorm'
+  const showMedia = type !== 'text' && type !== 'scorm' && type !== 'hybrid' // hybrid embeds media in its content instead
   const showEditor = type === 'text' || type === 'hybrid'
   const showScorm = type === 'scorm'
 
@@ -144,7 +149,11 @@ export function ModuleFormModal({
     const n = Number(order)
     if (order.trim() === '' || !Number.isInteger(n) || n < 1) next.order = 'Enter a whole number of 1 or more.'
 
-    if (showMedia && type !== 'hybrid' && !media) next.media = `Upload a file for this ${type} module.`
+    if (type === 'video' && !media && !videoUrl.trim()) next.media = 'Upload a video file, or paste a video link below.'
+    else if (showMedia && type !== 'video' && !media) next.media = `Upload a file for this ${type} module.`
+    if (type === 'video' && videoUrl.trim() && !toEmbedUrl(videoUrl) && !isDirectVideoUrl(videoUrl)) {
+      next.videoUrl = 'Paste a YouTube or Vimeo link, or a direct .mp4 / .webm link.'
+    }
     if (showScorm && !scorm) next.scorm = 'Upload a SCORM package for this module.'
 
     return next
@@ -166,8 +175,10 @@ export function ModuleFormModal({
         duration: duration.trim() || null,
         order: Number(order),
         status,
-        content: showEditor ? content : '',
-        media: showMedia ? media : null,
+        // image / video modules keep their display size in `content`; text and hybrid keep what was written
+        content: showEditor ? content : type === 'image' ? displaySizeMarker(displaySize) : type === 'video' ? displaySizeMarker(displaySize) + videoUrlMarker(media ? '' : videoUrl) : '',
+        // A hybrid module has no attachment field any more, but one it already had is kept.
+        media: showMedia || type === 'hybrid' ? media : null,
       }
       // Only send SCORM changes: a newly uploaded package attaches (or replaces), clearing it detaches.
       if (scorm && scorm.packageId !== module?.scormPackage) data.scormPackage = scorm.packageId
@@ -193,13 +204,15 @@ export function ModuleFormModal({
       tone="brand"
       icon={<FileText size={20} />}
     >
-      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3">
+      {/* Same popup size for every Content Type: the form never gets shorter than the tallest one (Hybrid), and the
+          buttons stay pinned to the bottom. */}
+      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3" style={{ minHeight: 'min(678px, calc(100vh - 240px))' }}>
         {error && <Notice tone="error">{error}</Notice>}
 
         <div className="row g-3">
           <div className="col-md-6">
             <Field label="Course" required>
-              <Select value={courseId} onChange={setCourseId} options={courses.map((c) => ({ value: c.id, label: c.name }))} style={{ width: '100%' }} />
+              <Select disabled value={courseId} onChange={setCourseId} options={courses.map((c) => ({ value: c.id, label: c.code ? `${c.name} (${c.code})` : c.name }))} style={{ width: '100%' }} />
             </Field>
           </div>
           <div className="col-md-6">
@@ -225,16 +238,17 @@ export function ModuleFormModal({
         </Field>
 
         <div className="row g-3">
-          <div className="col-6 col-md-4">
+          <div className={type === 'hybrid' ? 'col-md-6' : 'col-6 col-md-4'}>
             <Field label="Sequence Order" error={errors.order}>
               <Input type="number" min={1} value={order} onChange={(e) => setOrder(e.target.value)} status={errors.order ? 'error' : undefined} />
             </Field>
           </div>
-          <div className="col-6 col-md-4">
-            <Field label="Duration">
+          <div className={type === 'hybrid' ? 'col-md-6' : 'col-6 col-md-4'}>
+            <Field label="Duration (minutes)">
               <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Enter duration" />
             </Field>
           </div>
+          {type !== 'hybrid' && (
           <div className="col-12 col-md-4">
             <Field label="Status">
               <Select
@@ -245,66 +259,88 @@ export function ModuleFormModal({
               />
             </Field>
           </div>
+          )}
         </div>
 
         {showScorm && (
           <Field label="SCORM Content" required error={errors.scorm} hint="No quiz or certificate at the module level - those stay set on the course.">
-            <ScormUpload value={scorm} onChange={setScorm} onBusyChange={setScormBusy} />
+            <ScormUpload value={scorm} onChange={setScorm} onBusyChange={setScormBusy} showLabel={false} />
           </Field>
         )}
 
         {showMedia && (
           <Field
-            label={type === 'hybrid' ? 'Attachment (optional)' : `Module ${type[0].toUpperCase() + type.slice(1)}`}
-            required={type !== 'hybrid'}
+            label={`Module ${type[0].toUpperCase() + type.slice(1)}`}
+            required
             error={mediaError || errors.media}
             hint={
               (type === 'image' && `PNG/JPG/GIF/WEBP, up to ${MEDIA_MAX_MB} MB.`) ||
               (type === 'video' && `MP4/WEBM/MOV/OGG, up to ${MEDIA_MAX_MB} MB.`) ||
               (type === 'document' && `PDF/DOC/DOCX/PPT/PPTX, up to ${MEDIA_MAX_MB} MB.`) ||
-              (type === 'hybrid' && `Optional image, video, or document, up to ${MEDIA_MAX_MB} MB.`) ||
               undefined
             }
           >
-            <div className="d-flex align-items-center gap-2">
-              <Button
-                icon={type === 'video' ? <Film size={14} /> : type === 'document' ? <FileUp size={14} /> : <ImagePlus size={14} />}
-                onClick={() => mediaInputRef.current?.click()}
-                loading={uploadingMedia}
-              >
-                Choose File
-              </Button>
-              <span className="small text-secondary text-truncate">
-                {uploadingMedia ? 'Uploading…' : mediaFileName || (media ? 'Current file kept' : 'No file chosen')}
-              </span>
-              {media && !uploadingMedia && (
-                <Button
-                  type="text"
-                  danger
-                  size="small"
-                  icon={<X size={14} />}
-                  aria-label="Remove file"
-                  onClick={() => {
-                    setMedia(null)
-                    setMediaFileName('')
-                  }}
-                />
+            <div
+              className={`media-drop${dragOver ? ' is-over' : ''}${media ? ' has-file' : ''}${type === 'video' ? ' is-compact' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => !uploadingMedia && mediaInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  mediaInputRef.current?.click()
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragOver(true)
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setDragOver(false)
+                void handleMediaChange(e.dataTransfer.files?.[0])
+              }}
+            >
+              {uploadingMedia ? (
+                <>
+                  <Loader2 size={26} className="spin media-drop-icon" />
+                  <div className="media-drop-title">Uploading…</div>
+                </>
+              ) : mediaUrl ? (
+                <div className="media-drop-file" onClick={(e) => e.stopPropagation()}>
+                  {IMAGE_EXT.has(mediaExt) ? (
+                    <img src={mediaUrl} alt="Attachment preview" className="media-drop-preview" />
+                  ) : VIDEO_EXT.has(mediaExt) ? (
+                    <video src={mediaUrl} controls className="media-drop-preview" />
+                  ) : (
+                    <FileUp size={30} className="media-drop-icon" />
+                  )}
+                  <div className="media-drop-meta">
+                    <div className="media-drop-title text-truncate">{mediaFileName || 'Current file'}</div>
+                    <div className="media-drop-hint">Click the box to replace it, or drop another file.</div>
+                  </div>
+                  <Button
+                    type="text"
+                    danger
+                    icon={<X size={15} />}
+                    aria-label="Remove file"
+                    onClick={() => {
+                      setMedia(null)
+                      setMediaFileName('')
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {type === 'video' ? <Film size={28} className="media-drop-icon" /> : type === 'document' ? <FileUp size={28} className="media-drop-icon" /> : <ImagePlus size={28} className="media-drop-icon" />}
+                  <div className="media-drop-title">Click to choose {type === 'image' ? 'an image' : type === 'video' ? 'a video' : 'a document'}, or drag it here</div>
+                </>
               )}
             </div>
 
-            {mediaUrl && !uploadingMedia && (
-              <div className="mt-2">
-                {IMAGE_EXT.has(mediaExt) ? (
-                  <img src={mediaUrl} alt="Attachment preview" className="rounded-2 border" style={{ maxWidth: 200, maxHeight: 120, objectFit: 'cover' }} />
-                ) : VIDEO_EXT.has(mediaExt) ? (
-                  <video src={mediaUrl} controls className="rounded-2 border" style={{ maxWidth: 260, maxHeight: 150 }} />
-                ) : (
-                  <a href={mediaUrl} target="_blank" rel="noreferrer" className="small">
-                    {mediaFileName || 'View attached file'}
-                  </a>
-                )}
-              </div>
-            )}
             <input
               ref={mediaInputRef}
               type="file"
@@ -315,13 +351,36 @@ export function ModuleFormModal({
           </Field>
         )}
 
-        {showEditor && (
-          <Field label="Module Content (HTML supported)">
-            <RichTextEditor value={content} onChange={setContent} placeholder="Enter module content" />
+        {type === 'video' && (
+          <Field label="External Video URL (used only if no file is uploaded)" error={errors.videoUrl}>
+            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="e.g. YouTube or Vimeo link" status={errors.videoUrl ? 'error' : undefined} />
           </Field>
         )}
 
-        <div className="d-flex justify-content-end gap-3 pt-3 border-top">
+        {(type === 'image' || type === 'video') && (
+          <Field label="Display Size" hint={`How wide the ${type} appears to learners.`}>
+            <Select value={displaySize} onChange={setDisplaySize} options={DISPLAY_SIZES.map((d) => ({ value: d.value, label: d.label }))} style={{ width: '100%' }} />
+          </Field>
+        )}
+
+        {showEditor && (
+          <Field label="Module Content (HTML supported)">
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="Enter module content"
+              allowDocuments={type !== 'hybrid'} // Hybrid modules take pictures and videos only; documents have their own Document module type
+              // Hybrid modules can embed images and videos right inside the content.
+              onUploadMedia={
+                type === 'hybrid'
+                  ? async (file, kind) => `${API_ORIGIN}/course-modules/media/${(await api.uploadModuleMedia(file, kind)).media}`
+                  : undefined
+              }
+            />
+          </Field>
+        )}
+
+        <div className="d-flex justify-content-end gap-3 pt-3 border-top mt-auto">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit" loading={saving} disabled={uploadingMedia || scormBusy}>
             {saving ? 'Saving…' : uploadingMedia || scormBusy ? 'Uploading…' : module ? 'Save Changes' : 'Create Module'}

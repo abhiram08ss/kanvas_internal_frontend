@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Button, Layout, Menu } from 'antd'
-import { LayoutDashboard, Building2, ClipboardCheck, FileText, RefreshCcw, Users, FileClock, ChevronsLeft } from 'lucide-react'
+import { Layout, Menu } from 'antd'
+import { LayoutDashboard, Building2, ClipboardCheck, FileText, RefreshCcw, Users, FileClock } from 'lucide-react'
 import { useSidebarCollapse } from './hooks/useSidebarCollapse'
 import { useAuth } from '../../context/AuthContext'
 
@@ -24,6 +25,18 @@ const navItems = [
 
 export function Sidebar() {
   const { collapsed, toggle } = useSidebarCollapse()
+
+  // Ctrl/Cmd + B opens and closes the sidebar, like most editors.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        toggle()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [toggle])
   const { pathname } = useLocation()
   const { user } = useAuth()
   const isSuper = user?.role === 'Super Admin'
@@ -56,10 +69,16 @@ export function Sidebar() {
         items={items.map(({ to, label, icon: Icon }) => ({ key: to, icon: <Icon size={16} />, label: <Link to={to}>{label}</Link> }))}
       />
 
-      <div className="flex-shrink-0 p-2" style={{ borderTop: '1px solid #ede8f5' }}>
-        <Button type="text" block onClick={toggle} icon={<ChevronsLeft size={16} className={collapsed ? 'rotate-180' : ''} />} style={{ color: '#7b6b94' }}>
-          {!collapsed && 'Collapse'}
-        </Button>
+      <div className="sidebar-brand-light flex-shrink-0" title="Powered by Kan Associations © 2026">
+        {collapsed ? (
+          <span className="sidebar-brand-year">© 2026</span>
+        ) : (
+          <>
+            <span className="sidebar-brand-label">Powered by</span>
+            <span className="sidebar-brand-name">Kan Associations</span>
+            <span className="sidebar-brand-year">© 2026</span>
+          </>
+        )}
       </div>
     </Layout.Sider>
   )

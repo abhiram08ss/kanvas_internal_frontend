@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Select } from 'antd'
+import { useEffect, useRef, useState } from 'react'
+import { CalendarDays, Check, ChevronDown } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card } from '../../ui/Card'
 import { Badge } from '../../ui/Badge'
@@ -8,14 +8,31 @@ import { useApi } from '../../../api/useApi'
 
 type Range = '1m' | '6m' | '1y'
 
-const RANGES: { value: Range; label: string; caption: string }[] = [
-  { value: '1m', label: 'Last 1 month', caption: 'Last 1 month' },
-  { value: '6m', label: 'Last 6 months', caption: 'Last 6 months' },
-  { value: '1y', label: 'Last 1 year', caption: 'Last 1 year' },
+const RANGES: { value: Range; label: string; caption: string; hint: string }[] = [
+  { value: '1m', label: 'Last 1 month', caption: 'Last 1 month', hint: 'Day by day' },
+  { value: '6m', label: 'Last 6 months', caption: 'Last 6 months', hint: 'Month by month' },
+  { value: '1y', label: 'Last 1 year', caption: 'Last 1 year', hint: 'Month by month' },
 ]
 
 export function TenantStatusChart({ totalTenants }: { totalTenants: number }) {
   const [range, setRange] = useState<Range>('1m')
+  const [open, setOpen] = useState(false)
+  const rangeRef = useRef<HTMLDivElement>(null)
+
+  // Close the list on an outside click or Escape.
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (!rangeRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
   const { data, loading } = useApi(() => api.tenantStatusTrend(range), [range])
   const caption = RANGES.find((r) => r.value === range)?.caption
 
@@ -31,7 +48,41 @@ export function TenantStatusChart({ totalTenants }: { totalTenants: number }) {
           </p>
         </div>
         <div className="d-flex align-items-center gap-2">
-          <Select size="small" value={range} onChange={setRange} options={RANGES.map(({ value, label }) => ({ value, label }))} style={{ width: 140 }} />
+          <div className="kv-range" ref={rangeRef}>
+            <button
+              type="button"
+              className={`kv-range-btn${open ? ' is-open' : ''}`}
+              aria-haspopup="listbox"
+              aria-expanded={open}
+              onClick={() => setOpen((o) => !o)}
+            >
+              <CalendarDays size={14} />
+              <span>{RANGES.find((r) => r.value === range)?.label}</span>
+              <ChevronDown size={14} />
+            </button>
+            {open && (
+              <ul className="kv-range-panel" role="listbox">
+                {RANGES.map((r) => (
+                  <li key={r.value} role="option" aria-selected={r.value === range}>
+                    <button
+                      type="button"
+                      className={`kv-range-option${r.value === range ? ' is-selected' : ''}`}
+                      onClick={() => {
+                        setRange(r.value)
+                        setOpen(false)
+                      }}
+                    >
+                      <span className="kv-range-text">
+                        <span className="kv-range-label">{r.label}</span>
+                        <span className="kv-range-hint">{r.hint}</span>
+                      </span>
+                      {r.value === range && <Check size={15} strokeWidth={3} />}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <Badge tone="purple">{totalTenants} Total</Badge>
         </div>
       </div>

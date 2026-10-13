@@ -373,7 +373,7 @@ export default function CreateTenant() {
 
   return (
     <AppLayout title="Create Tenant" subtitle={`Step ${step} of 3`}>
-      <>
+      <div className="wz-page">
         <Button type="text" className="mb-3" icon={<ArrowLeft size={16} />} onClick={() => navigate('/tenants')} style={{ color: '#7b6b94', fontWeight: 600 }}>
           Back to Tenants
         </Button>
@@ -389,7 +389,7 @@ export default function CreateTenant() {
               <Form layout="vertical" noValidate>
                 <FormSection icon={<Building2 size={22} />} title="Organization Information" description="Organization profile and tenant settings.">
                   <div className="row">
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Organization Name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
                         <Input
                           size="middle"
@@ -400,7 +400,7 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item
                         label="Tenant Code"
                         required
@@ -447,9 +447,9 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-12">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Address">
-                        <Input.TextArea rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
+                        <Input size="middle" maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
                       </Form.Item>
                     </div>
                   </div>
@@ -496,7 +496,7 @@ export default function CreateTenant() {
 
                 <FormSection icon={<UserCog size={22} />} title="LMS Admin Details" description="Primary administrator for the tenant's LMS.">
                   <div className="row">
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Admin Name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
                         <Input
                           size="middle"
@@ -507,7 +507,7 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Admin Email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
                         <Input
                           size="middle"
@@ -637,7 +637,7 @@ export default function CreateTenant() {
             )}
           </div>
         </Card>
-      </>
+      </div>
     </AppLayout>
   )
 }
