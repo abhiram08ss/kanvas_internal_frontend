@@ -691,3 +691,7 @@ textarea:focus::placeholder,
   transform: translateX(-8px);
 }
 .ant-select-focused .ant-select-placeholder { opacity: 0 !important; transform: translateX(-8px); }
+
+// Selects inside popups match the inputs beside them (40px)
+.ant-modal:not(.kv-confirm) .ant-modal-body .ant-select-single { height: 40px; }
+.ant-modal:not(.kv-confirm) .ant-modal-body .ant-select-single .ant-select-selector { height: 40px; align-items: center; }

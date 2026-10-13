@@ -396,3 +396,83 @@
 .wz-section-fields textarea.ant-input { min-height: 58px; }
 .ct-wizard-footer { padding: 10px 20px; }
 .ct-wizard-footer .ant-btn { height: 34px; padding-inline: 18px; font-size: 13px; border-radius: 8px; }
+
+/* ---- Roomier, centred layout so the wizard doesn't look cramped or stretched ---- */
+.wz-page { max-width: 1180px; margin: 0 auto; padding: 8px 8px 32px; }
+.wz-title-row { margin: 8px 0 18px; }
+.wz-title { font-size: 24px; }
+.wz-stepper-card { padding: 18px 28px; margin-bottom: 20px; border-radius: 14px; }
+.wz-dot { width: 36px; height: 36px; font-size: 14px; }
+.wz-step-label { font-size: 14px; }
+.wz-step-caption { font-size: 12px; margin-top: 1px; }
+.wz-line { margin: 0 22px; }
+.wz-section { grid-template-columns: 250px 1fr; gap: 40px; padding: 30px 36px; }
+.wz-section-icon { width: 40px; height: 40px; margin-bottom: 14px; }
+.wz-section-title { font-size: 16px; margin-bottom: 6px; }
+.wz-section-desc { font-size: 13px; line-height: 1.5; }
+.wz-section-fields .row { --bs-gutter-x: 1.5rem; --bs-gutter-y: 1.35rem; }
+.wz-section-fields .ant-form-item-label { padding-bottom: 7px; }
+.wz-section-fields .ant-form-item-label > label, .wz-section-fields label.d-block { font-size: 13px !important; margin-bottom: 7px !important; }
+.wz-section-fields .ant-input, .wz-section-fields .ant-select .ant-select-selector { min-height: 38px; font-size: 14px !important; }
+.wz-section-fields .ant-input { padding-block: 7px; padding-inline: 12px; border-radius: 9px; }
+.wz-section-fields .ant-select .ant-select-selector { border-radius: 9px !important; }
+.wz-section-fields textarea.ant-input { min-height: 84px; }
+.ct-wizard-footer { padding: 18px 36px; }
+.ct-wizard-footer .ant-btn { height: 38px; padding-inline: 22px; font-size: 14px; border-radius: 9px; }
+.wz-section-fields .ant-select, .wz-section-fields .ant-select-single { height: 38px; }
+.wz-section-fields .ant-select .ant-select-selector { height: 38px; align-items: center; }
+
+/* ---- Matched to the design mockup: full-width page, generous padding, 44px fields ---- */
+.wz-page { max-width: none; margin: 0; padding: 0 0 24px; }
+.wz-title-row { margin: 6px 0 18px; align-items: baseline; }
+.wz-title { font-size: 28px; }
+.wz-required-note { font-size: 13px; }
+.wz-stepper-card { padding: 24px 32px; margin-bottom: 24px; border-radius: 18px; }
+.wz-dot { width: 36px; height: 36px; font-size: 14px; }
+.wz-step { gap: 14px; }
+.wz-step-label { font-size: 16px; }
+.wz-step-caption { font-size: 12.5px; }
+.wz-line { margin: 0 28px; }
+.ct-wizard-card { border-radius: 18px; }
+.wz-section { grid-template-columns: 256px 1fr; gap: 0; padding: 28px 28px 28px 28px; }
+.wz-section-icon { width: 36px; height: 36px; margin-bottom: 18px; }
+.wz-section-title { font-size: 18px; margin-bottom: 8px; }
+.wz-section-desc { font-size: 14px; line-height: 1.55; padding-right: 24px; }
+.wz-section-fields .row { --bs-gutter-x: 1.25rem; --bs-gutter-y: 1.3rem; }
+.wz-section-fields .ant-form-item-label { padding-bottom: 8px; }
+.wz-section-fields .ant-form-item-label > label, .wz-section-fields label.d-block { font-size: 14px !important; margin-bottom: 8px !important; }
+.wz-section-fields .ant-input, .wz-section-fields .ant-select .ant-select-selector { min-height: 44px; font-size: 14px !important; }
+.wz-section-fields .ant-input { padding-block: 10px; padding-inline: 14px; border-radius: 10px; }
+.wz-section-fields .ant-select .ant-select-selector { border-radius: 10px !important; }
+.wz-section-fields .ant-select, .wz-section-fields .ant-select-single { height: 44px; }
+.wz-section-fields .ant-select .ant-select-selector { height: 44px; align-items: center; }
+.wz-section-fields textarea.ant-input { min-height: 100px; }
+.ct-wizard-footer { padding: 24px 28px; }
+.ct-wizard-footer .ant-btn { height: 44px; padding-inline: 26px; font-size: 15px; border-radius: 10px; }
+@media (max-width: 991px) { .wz-section { grid-template-columns: 1fr; gap: 20px; padding: 22px; } }
+.wz-section-fields .ant-select, .wz-section-fields .ant-select .ant-select-content, .wz-section-fields .ant-select .ant-select-selection-item, .wz-section-fields .ant-select .ant-select-placeholder { font-size: 14px !important; }
+
+/* ---- Fit on one screen: same look, tighter vertical rhythm, fewer rows ---- */
+.wz-page { padding-bottom: 8px; }
+.wz-title-row { margin: 0 0 12px; }
+.wz-title { font-size: 24px; }
+.wz-stepper-card { padding: 14px 28px; margin-bottom: 14px; border-radius: 16px; }
+.wz-dot { width: 32px; height: 32px; font-size: 13px; }
+.wz-step-label { font-size: 15px; }
+.wz-section { grid-template-columns: 240px 1fr; padding: 20px 28px; }
+.wz-section-icon { width: 32px; height: 32px; margin-bottom: 10px; }
+.wz-section-title { font-size: 16px; margin-bottom: 4px; }
+.wz-section-desc { font-size: 13px; line-height: 1.45; }
+.wz-section-fields .row { --bs-gutter-x: 1.1rem; --bs-gutter-y: 0.9rem; }
+.wz-section-fields .ant-form-item-label { padding-bottom: 5px; }
+.wz-section-fields .ant-form-item-label > label, .wz-section-fields label.d-block { font-size: 13px !important; margin-bottom: 5px !important; }
+.wz-section-fields .ant-input, .wz-section-fields .ant-select .ant-select-selector { min-height: 38px; }
+.wz-section-fields .ant-input { padding-block: 7px; }
+.wz-section-fields .ant-select, .wz-section-fields .ant-select-single, .wz-section-fields .ant-select .ant-select-selector { height: 38px; }
+.ct-wizard-footer { padding: 14px 28px; }
+.ct-wizard-footer .ant-btn { height: 38px; padding-inline: 22px; font-size: 14px; }
+
+/* A little more air around the stepper */
+.wz-title-row { margin-bottom: 16px; }
+.wz-stepper-card { padding: 20px 36px; margin-bottom: 18px; }
+.wz-line { margin: 0 24px; }

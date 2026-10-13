@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
+import { GlobalTooltip } from './components/ui/GlobalTooltip'
 import Login from './pages/Login'
 import { DashboardPage } from './components/dashboard/DashboardPage'
 import Tenants from './pages/Tenants'
@@ -195,6 +196,7 @@ export default function App() {
     <AuthProvider>
       <DataProvider>
         <AppRoutes />
+        <GlobalTooltip />
       </DataProvider>
     </AuthProvider>
   )

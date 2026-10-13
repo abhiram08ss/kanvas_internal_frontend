@@ -21,10 +21,13 @@ export function ScormUpload({
   value,
   onChange,
   onBusyChange,
+  showLabel = true,
 }: {
   value: ScormSelection | null
   onChange: (value: ScormSelection | null) => void
   onBusyChange: (busy: boolean) => void
+  /** Set false when the parent already labels the field (e.g. the module form's "SCORM Content"). */
+  showLabel?: boolean
 }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -63,9 +66,11 @@ export function ScormUpload({
 
   return (
     <div>
-      <label className="d-block mb-1 fw-semibold" style={{ fontSize: 13, color: '#1a1228' }}>
-        SCORM Package
-      </label>
+      {showLabel && (
+        <label className="d-block mb-1 fw-semibold" style={{ fontSize: 13, color: '#1a1228' }}>
+          SCORM Package
+        </label>
+      )}
 
       {value ? (
         <div className="rounded-2 border border-success-subtle bg-success-subtle p-3">
@@ -116,17 +121,17 @@ export function ScormUpload({
           </div>
         </div>
       ) : (
-        <Upload.Dragger {...zipPicker} disabled={uploading}>
+        <Upload.Dragger className="scorm-dragger" {...zipPicker} disabled={uploading}>
           {uploading ? (
             <div className="d-flex flex-column align-items-center gap-1 py-2">
               <Loader2 size={20} className="spin" color="#5c2d91" />
-              <span className="small fw-semibold">Uploading and reading imsmanifest.xml�</span>
+              <span className="small fw-semibold">Uploading and reading imsmanifest.xml…</span>
             </div>
           ) : (
             <div className="d-flex flex-column align-items-center gap-1 py-2">
-              <UploadCloud size={22} color="#5c2d91" />
-              <span className="small fw-semibold">Upload SCORM ZIP</span>
-              <span style={{ fontSize: 12, color: '#7b6b94' }}>Click or drag a .zip file here � SCORM 1.2</span>
+              <UploadCloud size={38} color="#8a56c4" />
+              <span className="fw-semibold mt-1" style={{ fontSize: 15, color: '#3d2260' }}>Upload SCORM ZIP</span>
+              <span style={{ fontSize: 12, color: '#7b6b94' }}>Click or drag a .zip file here · SCORM 1.2</span>
             </div>
           )}
         </Upload.Dragger>

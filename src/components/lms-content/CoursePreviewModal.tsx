@@ -1,25 +1,69 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Award, Check, CheckCircle2, ChevronLeft, ChevronRight, FileText, HelpCircle, Layers, XCircle } from 'lucide-react'
+import { Award, Check, CheckCircle2, ChevronLeft, ChevronRight, HelpCircle, Layers, XCircle } from 'lucide-react'
 import { Button, Progress } from 'antd'
 import { Modal } from '../ui/Modal'
 import { Badge } from '../ui/Badge'
 import { CertificateSheet } from '../courses/CertificateModal'
 import { ScormPlayer } from '../courses/ScormPreviewModal'
+import { DocumentViewer } from './DocumentViewer'
+import { parseDisplaySize, parseVideoUrl } from './displaySize'
+import { isDirectVideoUrl, toEmbedUrl } from '../ui/embedUrl'
 import { useData } from '../../context/DataContext'
 import { api, API_ORIGIN, type Course, type CourseModule, type CourseResult } from '../../api'
 
 const DEFAULT_DESIGN = { logo: 'Company Default', colors: ['#5C2D91', '#7B3FA0', '#F5F4F8'], signatures: ['Kanvas LMS'] }
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp'])
 const VIDEO_EXT = new Set(['.mp4', '.webm', '.mov', '.ogg'])
-const PDF_EXT = new Set(['.pdf'])
 const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase()
 
 type Selection = { type: 'course-scorm' } | { type: 'module'; id: number } | { type: 'quiz' } | { type: 'certificate' }
 
+/** Authored HTML (text / hybrid modules). Attached documents, which the editor saves as small file cards, are opened up
+ *  here into the real document (PDF / Word pages in the shared viewer); everything else is shown as written. */
+function RichContent({ html }: { html: string }) {
+  const parts = useMemo(() => {
+    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html')
+    const out: ({ kind: 'html'; html: string } | { kind: 'doc'; href: string; name: string })[] = []
+    let buffer = ''
+    const flush = () => {
+      if (buffer.trim()) out.push({ kind: 'html', html: buffer })
+      buffer = ''
+    }
+    doc.body.firstElementChild?.childNodes.forEach((node) => {
+      if (node instanceof HTMLElement && node.matches('a.rte-doc[href]')) {
+        flush()
+        out.push({ kind: 'doc', href: node.getAttribute('href') ?? '', name: node.getAttribute('data-name') ?? 'Document' })
+      } else buffer += node instanceof HTMLElement ? node.outerHTML : (node.textContent ?? '')
+    })
+    flush()
+    return out
+  }, [html])
+
+  return (
+    <div className="small module-html" style={{ color: '#3d3352' }}>
+      {parts.map((p, i) =>
+        p.kind === 'html' ? (
+          // eslint-disable-next-line react/no-danger -- authored by admins in this same app's own rich-text editor, not learner input
+          <div key={i} dangerouslySetInnerHTML={{ __html: p.html }} />
+        ) : (
+          <div key={i} className="my-3">
+            <div className="fw-semibold mb-1" style={{ fontSize: 13, color: '#5c2d91' }}>
+              {p.name}
+            </div>
+            <DocumentViewer url={p.href} fileName={p.name} />
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
+
 /** A module's content, by type - a SCORM module plays inline (no separate launch step). */
-function ModuleBody({ module, onProgressSaved }: { module: CourseModule; onProgressSaved?: () => void }) {
+export function ModuleBody({ module, onProgressSaved }: { module: CourseModule; onProgressSaved?: () => void }) {
   const mediaUrl = module.media ? `${API_ORIGIN}/course-modules/media/${module.media}` : null
   const ext = module.media ? extOf(module.media) : ''
+  const size = parseDisplaySize(module.content) // image / video modules: how wide to show them
+  const externalVideo = module.type === 'video' && !module.media ? parseVideoUrl(module.content) : ''
 
   if (module.type === 'scorm') {
     return module.scormPackage ? (
@@ -38,8 +82,7 @@ function ModuleBody({ module, onProgressSaved }: { module: CourseModule; onProgr
     <>
       {module.type === 'text' || module.type === 'hybrid' ? (
         module.content ? (
-          // eslint-disable-next-line react/no-danger -- authored by admins in this same app's own rich-text editor, not learner input
-          <div className="small" style={{ color: '#3d3352' }} dangerouslySetInnerHTML={{ __html: module.content }} />
+          <RichContent html={module.content} />
         ) : (
           <p className="small mb-0" style={{ color: '#9b87b5' }}>
             No content written yet.
@@ -47,34 +90,32 @@ function ModuleBody({ module, onProgressSaved }: { module: CourseModule; onProgr
         )
       ) : null}
 
+      {externalVideo &&
+        (toEmbedUrl(externalVideo) ? (
+          <iframe
+            src={toEmbedUrl(externalVideo) ?? ''}
+            title={module.title}
+            allowFullScreen
+            className="rounded-2 border"
+            style={{ width: `${size}%`, maxWidth: '100%', aspectRatio: '16 / 9', border: 0 }}
+          />
+        ) : isDirectVideoUrl(externalVideo) ? (
+          <video src={externalVideo} controls className="rounded-2 border" style={{ width: `${size}%`, maxWidth: '100%' }} />
+        ) : (
+          <a href={externalVideo} target="_blank" rel="noreferrer" className="small">
+            {externalVideo}
+          </a>
+        ))}
+
       {mediaUrl && (
         <div className={module.type === 'hybrid' ? 'mt-2' : undefined}>
           {module.type === 'image' || IMAGE_EXT.has(ext) ? (
-            <img src={mediaUrl} alt="" className="rounded-2 border" style={{ maxWidth: '100%', maxHeight: 360, objectFit: 'contain' }} />
+            <img src={mediaUrl} alt="" className="rounded-2 border" style={{ width: `${size}%`, maxWidth: '100%', height: 'auto', objectFit: 'contain' }} />
           ) : module.type === 'video' || VIDEO_EXT.has(ext) ? (
-            <video src={mediaUrl} controls className="rounded-2 border" style={{ maxWidth: '100%', maxHeight: 360 }} />
-          ) : PDF_EXT.has(ext) ? (
-            <div className="d-flex flex-column gap-2">
-              {/* #toolbar=0&navpanes=0 hides the browser's own PDF viewer chrome (Chrome/Edge respect
-                  this) - without it, that native toolbar looks jarringly out of place against the rest
-                  of this preview's own styling. */}
-              <iframe
-                src={`${mediaUrl}#toolbar=0&navpanes=0`}
-                title={module.title}
-                className="w-100 rounded-2"
-                style={{ height: 420, border: '1.5px solid #ede8f5' }}
-              />
-              <a href={mediaUrl} target="_blank" rel="noreferrer" className="small d-flex align-items-center gap-2 align-self-start">
-                <FileText size={14} /> Open in new tab
-              </a>
-            </div>
+            <video src={mediaUrl} controls className="rounded-2 border" style={{ width: `${size}%`, maxWidth: '100%' }} />
           ) : (
-            // Word/PowerPoint files can't be rendered inline by the browser itself (that needs a viewer
-            // service reaching this file over the public internet, which a local/dev deployment can't
-            // offer) - a plain open-in-new-tab link is the one option that always works.
-            <a href={mediaUrl} target="_blank" rel="noreferrer" className="small d-flex align-items-center gap-2">
-              <FileText size={14} /> Open document
-            </a>
+            // PDF and Word (.docx) are drawn on the page in one shared frame; .doc / PowerPoint get an Open / Download card.
+            <DocumentViewer url={mediaUrl} fileName={module.media ?? ''} />
           )}
         </div>
       )}
