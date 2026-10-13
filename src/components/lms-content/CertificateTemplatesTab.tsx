@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { confirmDialog } from '../ui/confirmOptions'
 import { Award, CheckCircle2, Ban, Pencil } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
@@ -43,6 +44,16 @@ export function CertificateTemplatesTab() {
     updateCertificateTemplate(t.id, {
       status: t.status === 'Active' ? 'Inactive' : 'Active',
     })
+  const confirmToggle = (t: CertificateTemplate) => {
+    const deactivating = t.status === 'Active'
+    confirmDialog({
+      title: deactivating ? 'Deactivate template?' : 'Activate template?',
+      content: `Are you sure you want to ${deactivating ? 'deactivate' : 'activate'} ${t.name}?`,
+      okText: deactivating ? 'Deactivate Template' : 'Activate Template',
+      okButtonProps: { danger: deactivating },
+      onOk: () => toggleStatus(t),
+    })
+  }
 
   return (
     <div>
@@ -74,10 +85,10 @@ export function CertificateTemplatesTab() {
           dataSource={rows}
           locale={{ emptyText: 'No certificate templates match your search.' }}
           columns={[
-            { title: 'Name', dataIndex: 'name', render: (name: string) => <span className="fw-semibold">{name}</span> },
-            { title: 'Logo', dataIndex: 'logo', render: (logo: string) => <span style={{ color: '#9b87b5' }}>{logo}</span> },
+            { title: 'Name', dataIndex: 'name', render: (name: string) => <span className="tenant-name">{name}</span> },
+            { title: 'Logo', width: 160, dataIndex: 'logo', render: (logo: string) => <span className="tenant-muted">{logo}</span> },
             {
-              title: 'Colors',
+              title: 'Colors', width: 140,
               dataIndex: 'colors',
               render: (colors: string[]) => (
                 <div className="d-flex gap-1">
@@ -88,20 +99,20 @@ export function CertificateTemplatesTab() {
               ),
             },
             {
-              title: 'Signatures',
+              title: 'Signatures', width: 160,
               dataIndex: 'signatures',
-              render: (sigs: string[]) => <span style={{ color: '#9b87b5' }}>{sigs.length > 0 ? sigs.join(' · ') : '—'}</span>,
+              render: (sigs: string[]) => <span className="tenant-muted">{sigs.length > 0 ? sigs.join(' · ') : '—'}</span>,
             },
-            { title: 'Status', dataIndex: 'status', render: (status: CertificateTemplate['status']) => <Badge>{status}</Badge> },
+            { title: 'Status', width: 130, dataIndex: 'status', render: (status: CertificateTemplate['status']) => <Badge>{status}</Badge> },
             {
-              title: 'Actions',
+              title: 'Actions', width: 140,
               key: 'actions',
               render: (_: unknown, t: CertificateTemplate) => (
-                <div className="d-flex align-items-center justify-content-center gap-2">
+                <div className="d-flex align-items-center gap-2">
                   <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(t)} title="Edit template" tone="blue" />
                   <IconButton
                     icon={t.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
-                    onClick={() => void toggleStatus(t)}
+                    onClick={() => confirmToggle(t)}
                     title={t.status === 'Active' ? 'Deactivate' : 'Activate'}
                     tone={t.status === 'Active' ? 'amber' : 'green'}
                   />

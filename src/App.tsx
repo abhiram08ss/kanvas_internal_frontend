@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import { DashboardPage } from './components/dashboard/DashboardPage'
 import Tenants from './pages/Tenants'
 import CreateTenant from './pages/CreateTenant'
+import EditTenant from './pages/EditTenant'
 import Plans from './pages/Plans'
 import PlanDetail from './pages/PlanDetail'
 import Courses from './pages/Courses'
@@ -66,6 +67,16 @@ function AppRoutes() {
           <RequireAuth>
             <RequireSuperAdmin fallback="/tenants">
               <CreateTenant />
+            </RequireSuperAdmin>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/tenants/:id/edit"
+        element={
+          <RequireAuth>
+            <RequireSuperAdmin fallback="/tenants">
+              <EditTenant />
             </RequireSuperAdmin>
           </RequireAuth>
         }

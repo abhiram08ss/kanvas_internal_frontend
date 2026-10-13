@@ -53,7 +53,7 @@ export type TenantProfileUpdate = Partial<
     | 'userLimit'
     | 'status'
   >
->
+> & { courseIds?: number[] }
 
 export interface Plan {
   id: number

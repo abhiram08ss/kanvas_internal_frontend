@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Steps, Form, Input, Select, Button, Checkbox, Descriptions, Empty } from 'antd'
+import { App, Form, Input, Select, Button, Empty } from 'antd'
 import './CreateTenant.css'
+import { WizardSteps, WizardTitleRow, FormSection } from '../components/tenants/WizardSteps'
 import {
   ArrowLeft,
   Building2,
@@ -15,13 +16,16 @@ import {
   BookOpen,
   Mail,
   RefreshCw,
+  Receipt,
+  UserCog,
 } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Card } from '../components/ui/Card'
 import { COUNTRIES } from '../data/countries'
 import { ReviewCard, ReviewRow } from '../components/tenants/ReviewParts'
+import { CourseGroupPicker, ReviewCourseGroups } from '../components/tenants/CourseGroupPicker'
 import { useData, useDataNeeds } from '../context/DataContext'
-import { api, errorMessage, API_ORIGIN, type Credentials, type ProvisioningRecord } from '../api'
+import { api, errorMessage, type Credentials, type ProvisioningRecord } from '../api'
 
 const KANVAS_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
 
@@ -56,8 +60,9 @@ type OrgErrors = Partial<Record<OrgField, string>>
 
 export default function CreateTenant() {
   const navigate = useNavigate()
+  const { notification } = App.useApp()
   const { courses, refresh } = useData()
-  useDataNeeds('courses')
+  useDataNeeds('courses', 'courseOptions')
 
   const [step, setStep] = useState(1)
   const [phase, setPhase] = useState<Phase>('form')
@@ -204,6 +209,7 @@ export default function CreateTenant() {
       setProvisioning(created.provisioning)
       setCredentials(created.credentials)
       setPhase('provisioning')
+      notification.success({ title: 'Tenant created', description: `${orgName.trim()} was created successfully.` })
       void refresh()
     })
 
@@ -361,20 +367,6 @@ export default function CreateTenant() {
   }
 
   // ---- 3-step form (antd) ----
-  const stepItems = formSteps.map((label, i) => {
-    const stepNum = i + 1
-    const done = stepNum < step
-    const active = stepNum === step
-    const filled = done || active
-    return {
-      title: label,
-      icon: (
-        <span className="ct-step-dot" style={{ background: filled ? KANVAS_GRADIENT : '#f0e8fa', color: filled ? '#fff' : '#9b87b5' }}>
-          {done ? <Check size={16} /> : stepNum}
-        </span>
-      ),
-    }
-  })
 
   const primaryBtnStyle = { background: KANVAS_GRADIENT, border: 'none' }
   const cancelBtnStyle = { background: '#f5f4f8', color: '#7b6b94', border: '1.5px solid #ede8f5' }
@@ -386,59 +378,53 @@ export default function CreateTenant() {
           Back to Tenants
         </Button>
 
-        <Card className="p-0 ct-wizard-card">
-          <div className="ct-wizard-header">
-            <h2 className="font-display ct-wizard-title">Create New Tenant</h2>
-            <Steps current={step - 1} items={stepItems} titlePlacement="vertical" />
-          </div>
+        <WizardTitleRow title="Create New Tenant" />
+        <div className="wz-stepper-card">
+          <WizardSteps steps={formSteps} current={step} />
+        </div>
 
-          <div className="p-4">
+        <Card className="p-0 ct-wizard-card">
+          <div className={step === 1 ? '' : 'p-4'}>
             {step === 1 && (
-              <Form layout="vertical" className="mx-auto" style={{ maxWidth: 560 }} noValidate>
-                <div className="d-flex flex-column gap-1">
-                  <h3 className="font-display fs-6 fw-bold text-dark mb-2">Organization Information</h3>
-                  <Form.Item label="Organization Name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
-                    <Input
-                      size="large"
-                      value={orgName}
-                      maxLength={200}
-                      onChange={(e) => { setOrgName(e.target.value); clearField('orgName') }}
-                      placeholder="Enter organization name"
-                    />
-                  </Form.Item>
-                  <div className="row g-3">
-                    <div className="col-6">
+              <Form layout="vertical" noValidate>
+                <FormSection icon={<Building2 size={22} />} title="Organization Information" description="Organization profile and tenant settings.">
+                  <div className="row">
+                    <div className="col-12 col-md-6">
+                      <Form.Item label="Organization Name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
+                        <Input
+                          size="middle"
+                          value={orgName}
+                          maxLength={200}
+                          onChange={(e) => { setOrgName(e.target.value); clearField('orgName') }}
+                          placeholder="Enter organization name"
+                        />
+                      </Form.Item>
+                    </div>
+                    <div className="col-12 col-md-6">
                       <Form.Item
                         label="Tenant Code"
                         required
                         validateStatus={fieldErrors.tenantCode ? 'error' : ''}
-                        help={fieldErrors.tenantCode ?? 'Lowercase letters and digits only.'}
+                        help={fieldErrors.tenantCode}
+                        tooltip="Lowercase letters and digits only."
                       >
                         <Input
-                          size="large"
+                          size="middle"
                           value={tenantCode}
                           onChange={(e) => { setTenantCode(normalizeCode(e.target.value)); clearField('tenantCode') }}
                           placeholder="Enter tenant code"
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Industry">
-                        <Select
-                          size="large"
-                          value={industry}
-                          onChange={setIndustry}
-                          options={industries.map((i) => ({ value: i, label: i }))}
-                          style={{ width: '100%' }}
-                        />
+                        <Select size="middle" value={industry} onChange={setIndustry} options={industries.map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
                       </Form.Item>
                     </div>
-                  </div>
-                  <div className="row g-3">
-                    <div className="col-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="User Limit" required validateStatus={fieldErrors.userLimit ? 'error' : ''} help={fieldErrors.userLimit}>
                         <Input
-                          size="large"
+                          size="middle"
                           type="number"
                           min={1}
                           value={userLimit}
@@ -447,10 +433,10 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Country" validateStatus={fieldErrors.country ? 'error' : ''} help={fieldErrors.country}>
                         <Select
-                          size="large"
+                          size="middle"
                           showSearch
                           value={country || undefined}
                           onChange={(v) => { setCountry(v); clearField('country') }}
@@ -461,28 +447,31 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
+                    <div className="col-12">
+                      <Form.Item label="Address">
+                        <Input.TextArea rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
+                      </Form.Item>
+                    </div>
                   </div>
-                  <Form.Item label="Address">
-                    <Input.TextArea rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
-                  </Form.Item>
-                </div>
+                </FormSection>
 
-                <div className="d-flex flex-column gap-1 border-top pt-4 mt-2">
-                  <h3 className="font-display fs-6 fw-bold text-dark mb-2">Billing Contact Details</h3>
-                  <Form.Item label="Billing Contact Name" validateStatus={fieldErrors.billingContactName ? 'error' : ''} help={fieldErrors.billingContactName}>
-                    <Input
-                      size="large"
-                      value={billingContactName}
-                      maxLength={120}
-                      onChange={(e) => { setBillingContactName(e.target.value); clearField('billingContactName') }}
-                      placeholder="Enter contact name"
-                    />
-                  </Form.Item>
-                  <div className="row g-3">
-                    <div className="col-6">
+                <FormSection icon={<Receipt size={22} />} title="Billing Contact Details" description="Contact information for billing.">
+                  <div className="row">
+                    <div className="col-12 col-md-4">
+                      <Form.Item label="Billing Contact Name" validateStatus={fieldErrors.billingContactName ? 'error' : ''} help={fieldErrors.billingContactName}>
+                        <Input
+                          size="middle"
+                          value={billingContactName}
+                          maxLength={120}
+                          onChange={(e) => { setBillingContactName(e.target.value); clearField('billingContactName') }}
+                          placeholder="Enter contact name"
+                        />
+                      </Form.Item>
+                    </div>
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Billing Email" required validateStatus={fieldErrors.billingEmail ? 'error' : ''} help={fieldErrors.billingEmail}>
                         <Input
-                          size="large"
+                          size="middle"
                           type="email"
                           value={billingEmail}
                           onChange={(e) => { setBillingEmail(e.target.value); clearField('billingEmail') }}
@@ -490,10 +479,10 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-6">
+                    <div className="col-12 col-md-4">
                       <Form.Item label="Phone" validateStatus={fieldErrors.billingPhone ? 'error' : ''} help={fieldErrors.billingPhone}>
                         <Input
-                          size="large"
+                          size="middle"
                           inputMode="tel"
                           value={billingPhone}
                           maxLength={10}
@@ -503,15 +492,14 @@ export default function CreateTenant() {
                       </Form.Item>
                     </div>
                   </div>
-                </div>
+                </FormSection>
 
-                <div className="d-flex flex-column gap-1 border-top pt-4 mt-2">
-                  <h3 className="font-display fs-6 fw-bold text-dark mb-2">LMS Admin Details</h3>
-                  <div className="row g-3">
-                    <div className="col-6">
+                <FormSection icon={<UserCog size={22} />} title="LMS Admin Details" description="Primary administrator for the tenant's LMS.">
+                  <div className="row">
+                    <div className="col-12 col-md-6">
                       <Form.Item label="Admin Name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
                         <Input
-                          size="large"
+                          size="middle"
                           value={lmsAdminName}
                           maxLength={120}
                           onChange={(e) => { setLmsAdminName(e.target.value); clearField('lmsAdminName') }}
@@ -519,10 +507,10 @@ export default function CreateTenant() {
                         />
                       </Form.Item>
                     </div>
-                    <div className="col-6">
+                    <div className="col-12 col-md-6">
                       <Form.Item label="Admin Email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
                         <Input
-                          size="large"
+                          size="middle"
                           type="email"
                           value={lmsAdminEmail}
                           onChange={(e) => { setLmsAdminEmail(e.target.value); clearField('lmsAdminEmail') }}
@@ -531,9 +519,8 @@ export default function CreateTenant() {
                       </Form.Item>
                     </div>
                   </div>
-                </div>
-
-                {orgError && <p className="small text-danger mb-0">{orgError}</p>}
+                  {orgError && <p className="small text-danger mt-3 mb-0">{orgError}</p>}
+                </FormSection>
               </Form>
             )}
 
@@ -587,45 +574,7 @@ export default function CreateTenant() {
                     <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>
                 ) : (
-                  <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
-                    {visibleCourses.map((c) => {
-                      const checked = selectedCourseIds.includes(c.id)
-                      return (
-                        <div key={c.id} className="col">
-                          <div
-                            role="checkbox"
-                            aria-checked={checked}
-                            tabIndex={0}
-                            className={`ct-course-card${checked ? ' is-selected' : ''}`}
-                            onClick={() => toggleCourse(c.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                toggleCourse(c.id)
-                              }
-                            }}
-                          >
-                            {c.coverImage ? (
-                              <img src={`${API_ORIGIN}/courses/covers/${c.coverImage}`} alt="" className="ct-course-thumb" />
-                            ) : (
-                              <div className="ct-course-thumb ct-course-thumb-empty">
-                                <BookOpen size={20} color="#fff" />
-                              </div>
-                            )}
-                            <div className="flex-grow-1 min-w-0">
-                              <div className="ct-course-name text-truncate" title={c.name}>
-                                {c.name}
-                              </div>
-                              <div className="ct-course-meta text-truncate">
-                                {c.code} · {c.category}
-                              </div>
-                            </div>
-                            <span className="ct-course-check">{checked && <Check size={14} />}</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <CourseGroupPicker courses={visibleCourses} selected={selectedCourseIds} onToggle={toggleCourse} />
                 )}
               </div>
             )}
@@ -662,13 +611,7 @@ export default function CreateTenant() {
                       {selectedCourses.length === 0 ? (
                         <p className="small text-secondary mb-0">No courses selected - you can assign courses later from the Tenants page.</p>
                       ) : (
-                        <div className="d-flex flex-wrap gap-2">
-                          {selectedCourses.map((c) => (
-                            <span key={c.id} className="ct-review-chip">
-                              <Check size={13} /> {c.name}
-                            </span>
-                          ))}
-                        </div>
+                        <ReviewCourseGroups courses={selectedCourses} />
                       )}
                     </ReviewCard>
                   </div>

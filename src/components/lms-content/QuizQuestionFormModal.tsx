@@ -86,7 +86,7 @@ export function QuizQuestionFormModal({
         </Field>
 
         <Field label="Question" required>
-          <Input.TextArea value={text} onChange={(e) => setText(e.target.value)} rows={2} required placeholder="Question text" />
+          <Input.TextArea value={text} onChange={(e) => setText(e.target.value)} rows={2} required placeholder="Enter question text" />
         </Field>
 
         <div className="row g-3">
@@ -103,7 +103,7 @@ export function QuizQuestionFormModal({
         </div>
 
         <Field label="Category">
-          <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Final Assessment" />
+          <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Enter category" />
         </Field>
 
         {type === 'true false' ? (
@@ -120,7 +120,7 @@ export function QuizQuestionFormModal({
                 {options.map((opt, i) => (
                   <div key={i} className="d-flex align-items-center gap-2">
                     <Radio value={i} />
-                    <Input value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`} required />
+                    <Input value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Enter option ${i + 1}`} required />
                     {options.length > 2 && (
                       <Button type="text" danger icon={<Trash2 size={15} />} onClick={() => removeOption(i)} aria-label="Remove option" />
                     )}
@@ -137,7 +137,7 @@ export function QuizQuestionFormModal({
         )}
 
         <Field label="Explanation (optional, shown after grading)">
-          <Input.TextArea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} placeholder="Explanation (optional, shown after grading)" />
+          <Input.TextArea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} placeholder="Enter explanation (optional)" />
         </Field>
 
         <div className="d-flex justify-content-end gap-3 pt-2">

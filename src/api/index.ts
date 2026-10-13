@@ -55,6 +55,8 @@ export const api = {
 
   // ---- dashboards
   dashboard: () => request<DashboardData>('/dashboard'),
+  /** Tenant-status trend for the dashboard chart: 1m = daily for a month, 6m / 1y = monthly. */
+  tenantStatusTrend: (range: '1m' | '6m' | '1y') => request<DashboardData['tenantStatusOverTime']>('/dashboard/tenant-status', { params: { range } }),
   usage: () => request<UsageData>('/analytics/usage'),
   health: () => request<HealthData>('/system-health'),
 
@@ -160,15 +162,16 @@ export const api = {
 
   // ---- platform users
   platformUsers: () => request<PlatformUser[]>('/platform-users'),
-  createPlatformUser: (body: { name: string; email: string; role: PlatformRole }) => request<PlatformUser>('/platform-users', { method: 'POST', body }),
+  createPlatformUser: (body: { name: string; email: string; role: PlatformRole; password: string }) => request<PlatformUser>('/platform-users', { method: 'POST', body }),
   updatePlatformUser: (id: number, body: Partial<Pick<PlatformUser, 'name' | 'role' | 'status'>>) =>
     request<PlatformUser>(`/platform-users/${id}`, { method: 'PATCH', body }),
-  resetPlatformUserPassword: (id: number) => request<PlatformUser>(`/platform-users/${id}/reset-password`, { method: 'POST' }),
+  resetPlatformUserPassword: (id: number, password: string) =>
+    request<PlatformUser>(`/platform-users/${id}/reset-password`, { method: 'POST', body: { password } }),
   deletePlatformUser: (id: number) => request<void>(`/platform-users/${id}`, { method: 'DELETE' }),
 
   // ---- audit logs
-  auditLogs: (params: { q?: string; category?: string; page?: number; pageSize?: number }) => request<AuditPage>('/audit-logs', { params }),
-  exportAuditLogs: (params: { q?: string; category?: string }) => download('/audit-logs/export', 'audit-logs.csv', params),
+  auditLogs: (params: { q?: string; category?: string; page?: number; pageSize?: number; from?: string; to?: string }) => request<AuditPage>('/audit-logs', { params }),
+  exportAuditLogs: (params: { q?: string; category?: string; from?: string; to?: string }) => download('/audit-logs/export', 'audit-logs.csv', params),
 
   // ---- settings
   settings: () => request<SettingsData>('/settings'),

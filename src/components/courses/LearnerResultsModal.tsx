@@ -73,7 +73,7 @@ export function LearnerResultsModal({ course, onClose }: { course: Course; onClo
             ),
           }}
           columns={[
-            { title: 'Learner', dataIndex: 'userName', key: 'name', render: (n: string) => <span className="fw-semibold">{n}</span> },
+            { title: 'Learner', dataIndex: 'userName', key: 'name', render: (n: string) => <span className="tenant-name">{n}</span> },
             {
               title: 'Progress',
               key: 'progress',
@@ -98,10 +98,10 @@ export function LearnerResultsModal({ course, onClose }: { course: Course; onClo
                     {l.certificateNumber}
                   </Button>
                 ) : (
-                  <span style={{ color: '#9b87b5' }}>—</span>
+                  <span className="tenant-muted">—</span>
                 ),
             },
-            { title: 'Last activity', key: 'last', render: (_, l) => <span style={{ color: '#9b87b5' }}>{formatDateTime(lastActivity(l))}</span> },
+            { title: 'Last activity', key: 'last', render: (_, l) => <span className="tenant-muted">{formatDateTime(lastActivity(l))}</span> },
           ]}
         />
       )}

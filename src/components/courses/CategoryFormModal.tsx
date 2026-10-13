@@ -61,7 +61,7 @@ export function CategoryFormModal({
       <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
         {error && <Notice tone="error">{error}</Notice>}
         <Field label="Name" required error={errors.name}>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Health, Safety and Wellbeing" status={errors.name ? 'error' : undefined} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter category name" status={errors.name ? 'error' : undefined} />
         </Field>
         <div className="row g-3">
           <div className="col-7">
@@ -70,7 +70,7 @@ export function CategoryFormModal({
                 value={type}
                 onChange={setType}
                 options={courseOptions.categoryTypes.map((t) => ({ value: t, label: t }))}
-                placeholder="Select a type"
+                placeholder="Select type"
                 status={errors.type ? 'error' : undefined}
                 style={{ width: '100%' }}
               />
@@ -78,7 +78,7 @@ export function CategoryFormModal({
           </div>
           <div className="col-5">
             <Field label="Code" hint="Optional, e.g. A1.">
-              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. A1" maxLength={10} />
+              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Enter category code" maxLength={10} />
             </Field>
           </div>
         </div>
@@ -87,7 +87,7 @@ export function CategoryFormModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            placeholder="e.g. Built for HR generalists, business partners, centers of excellence and shared services teams."
+            placeholder="Enter category description"
           />
         </Field>
         <div className="d-flex justify-content-end gap-3 pt-3 border-top">

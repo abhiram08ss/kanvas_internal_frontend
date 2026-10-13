@@ -45,7 +45,7 @@ export function CoursePicker({ courses, selectedId, onSelect }: { courses: Cours
           style={{ width: '100%' }}
         />
       </div>
-      <div className="mt-3 flex-grow-1 scrollbar-thin" style={{ minHeight: 0, overflowY: 'auto' }}>
+      <div className="mt-3 flex-grow-1 scrollbar-thin" style={{ minHeight: 0, overflowX: 'hidden', overflowY: 'auto' }}>
         {rows.length > 0 ? (
           <ul className="course-picker-list list-unstyled mb-0">
             {rows.map((c) => (

@@ -1,5 +1,4 @@
 import { Layout } from 'antd'
-import { SearchBox } from './components/SearchBox'
 import { NotificationBell } from './components/NotificationBell'
 import { ProfileMenu } from './components/ProfileMenu'
 
@@ -19,7 +18,6 @@ export function PageHeader({ title, subtitle }: { title: string; subtitle: strin
       </div>
 
       <div className="d-flex align-items-center gap-3 flex-shrink-0">
-        <SearchBox />
         <NotificationBell />
         <ProfileMenu />
       </div>

@@ -1,20 +1,23 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, Clock, Copy } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, Copy, KeyRound, RefreshCw } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { StatCard } from '../components/ui/StatCard'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
+import { IconButton } from '../components/ui/IconButton'
 import { Notice } from '../components/ui/State'
 import { ListCard } from '../components/ui/ListCard'
 import { DataTable } from '../components/ui/DataTable'
 import { Toolbar } from '../components/ui/Toolbar'
-import { Button } from 'antd'
+import { App, Button } from 'antd'
+import { confirmDialog } from '../components/ui/confirmOptions'
 import { api, errorMessage, type Credentials, type ProvisioningRecord } from '../api'
 import { useData, useDataNeeds } from '../context/DataContext'
 
 const provisioningSteps = ['Create Kanvas Tenant', 'Setup LMS Tenant', 'Create Admin Account', 'Apply Configuration', 'Verify & Complete']
 
 export default function Provisioning() {
+  const { notification } = App.useApp()
   const { provisioningRecords, refresh } = useData()
   useDataNeeds('provisioningRecords')
   const [query, setQuery] = useState('')
@@ -25,7 +28,7 @@ export default function Provisioning() {
   const [copied, setCopied] = useState(false)
   const rows = provisioningRecords.filter((r) => r.tenant.toLowerCase().includes(query.toLowerCase()))
 
-  const run = async (record: ProvisioningRecord, action: () => Promise<Credentials | null>) => {
+  const run = async (record: ProvisioningRecord, action: () => Promise<Credentials | null>, done: string) => {
     setBusyId(record.id)
     setError('')
     try {
@@ -34,8 +37,10 @@ export default function Provisioning() {
         setIssued({ tenant: record.tenant, credentials })
         setCopied(false)
       }
+      notification.success({ title: done, description: record.tenant })
       await refresh()
     } catch (e) {
+      notification.error({ title: 'Action failed', description: `${record.tenant}: ${errorMessage(e)}` })
       setError(`${record.tenant}: ${errorMessage(e)}`)
     } finally {
       setBusyId(null)
@@ -47,9 +52,26 @@ export default function Provisioning() {
       const result = await api.retryProvisioning(r.id)
       if (result.status === 'Failed') throw new Error(result.error ?? 'Provisioning failed again')
       return result.credentials
+    }, 'Provisioning retried')
+
+  const resetPassword = (r: ProvisioningRecord) => run(r, () => api.resetAdminPassword(r.id), 'Admin password reset')
+
+  const confirmReset = (r: ProvisioningRecord) =>
+    confirmDialog({
+      title: 'Reset admin password?',
+      content: `Are you sure you want to reset the admin password for ${r.tenant}?`,
+      okText: 'Reset Password',
+      okButtonProps: { danger: true },
+      onOk: () => resetPassword(r),
     })
 
-  const resetPassword = (r: ProvisioningRecord) => run(r, () => api.resetAdminPassword(r.id))
+  const confirmRetry = (r: ProvisioningRecord) =>
+    confirmDialog({
+      title: 'Retry provisioning?',
+      content: `Are you sure you want to retry provisioning for ${r.tenant}?`,
+      okText: 'Retry Provisioning',
+      onOk: () => retry(r),
+    })
 
   const copyCredentials = async () => {
     if (!issued) return
@@ -120,9 +142,9 @@ export default function Provisioning() {
           dataSource={rows}
           locale={{ emptyText: 'No provisioning records match your search.' }}
           columns={[
-            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="fw-semibold">{t}</span> },
+            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="tenant-name">{t}</span> },
             {
-              title: 'LMS ID',
+              title: 'LMS ID', width: 130,
               dataIndex: 'lmsId',
               render: (id: string) => (
                 <code className="rounded bg-light px-2 py-1 text-secondary" style={{ fontSize: 12 }}>
@@ -130,10 +152,10 @@ export default function Provisioning() {
                 </code>
               ),
             },
-            { title: 'Admin Account', dataIndex: 'adminAccount', render: (a: string) => <span style={{ color: '#9b87b5' }}>{a}</span> },
-            { title: 'Configuration', dataIndex: 'configuration' },
+            { title: 'Admin Account', width: 200, dataIndex: 'adminAccount', render: (a: string) => <span className="tenant-muted">{a}</span> },
+            { title: 'Configuration', width: 150, dataIndex: 'configuration' },
             {
-              title: 'Status',
+              title: 'Status', width: 140,
               dataIndex: 'status',
               render: (status: ProvisioningRecord['status'], r) => (
                 <>
@@ -147,26 +169,22 @@ export default function Provisioning() {
               ),
             },
             {
-              title: 'Date',
+              title: 'Date', width: 190,
               dataIndex: 'date',
               render: (d: string) => (
-                <span className="text-nowrap" style={{ color: '#9b87b5' }}>
+                <span className="text-nowrap tenant-muted">
                   {d}
                 </span>
               ),
             },
             {
-              title: 'Actions',
+              title: 'Actions', width: 110,
               key: 'actions',
               render: (_: unknown, r) =>
                 r.status === 'Success' ? (
-                  <Button type="link" size="small" onClick={() => void resetPassword(r)} disabled={busyId === r.id} className="text-nowrap">
-                    Reset admin password
-                  </Button>
+                  <IconButton icon={<KeyRound size={16} />} title="Reset admin password" tone="purple" disabled={busyId === r.id} onClick={() => confirmReset(r)} />
                 ) : (
-                  <Button type="link" size="small" onClick={() => void retry(r)} disabled={busyId === r.id}>
-                    {busyId === r.id ? 'Retrying…' : 'Retry'}
-                  </Button>
+                  <IconButton icon={<RefreshCw size={16} />} title={busyId === r.id ? 'Retrying…' : 'Retry'} tone="amber" disabled={busyId === r.id} onClick={() => confirmRetry(r)} />
                 ),
             },
           ]}

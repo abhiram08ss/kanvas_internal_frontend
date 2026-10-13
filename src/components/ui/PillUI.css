@@ -13,7 +13,7 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  padding: 12px 20px;
+  padding: 16px 24px;
   border-bottom: 1px solid #e8e5ef;
   background: #fff;
 }
@@ -162,7 +162,7 @@
 /* Toolbar to match the reference: roomy white row, bordered white search, solid purple New button. */
 .pill-toolbar {
   gap: 12px;
-  padding: 12px 20px;
+  padding: 16px 24px;
   background: #fff;
 }
 .pill-toolbar .ant-input-affix-wrapper {
@@ -182,3 +182,55 @@
   box-shadow: 0 2px 6px rgba(98, 48, 156, 0.25);
 }
 .pill-toolbar .ant-btn-primary:hover { background: #764aa8 !important; }
+
+/* Toolbar controls on the right (date range, Export) share the search box's height and look. */
+.pill-toolbar .ant-picker {
+  height: 36px;
+  min-width: 270px;
+  border-radius: 10px;
+  border: 1px solid #e8e5ef;
+  background: #fff;
+  box-shadow: none;
+  padding: 0 12px;
+}
+.pill-toolbar .ant-picker:hover, .pill-toolbar .ant-picker-focused { border-color: #b89be0; }
+.pill-toolbar .ant-picker input { font-size: 14px; color: #1a1228; font-weight: 500; text-align: center; }
+.pill-toolbar .ant-picker .ant-picker-range-separator { color: #9b87b5; }
+.pill-toolbar .ant-picker .ant-picker-suffix { color: #62309c; }
+.pill-toolbar .ant-picker .ant-picker-active-bar { background: #62309c; }
+.pill-toolbar .ant-btn-default { height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid #e8e5ef; font-weight: 600; color: #1a1228; box-shadow: none; }
+.pill-toolbar .ant-btn-default:hover { border-color: #b89be0; color: #62309c; }
+/* Calendar popup: purple selected days and range */
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner { background: #62309c; }
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-in-range::before,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start::before,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end::before { background: #f1ebfa; }
+.ant-picker-dropdown .ant-picker-presets li:hover { color: #62309c; }
+
+/* Range pickers show one calendar, not two side by side (start and end are both picked on it). */
+.ant-picker-range-wrapper .ant-picker-panel-container .ant-picker-panels > .ant-picker-panel:nth-child(2) { display: none; }
+.ant-picker-range-wrapper .ant-picker-panel-container .ant-picker-panels > .ant-picker-panel:first-child .ant-picker-header-next-btn,
+.ant-picker-range-wrapper .ant-picker-panel-container .ant-picker-panels > .ant-picker-panel:first-child .ant-picker-header-super-next-btn { visibility: visible !important; }
+
+/* "90 days" chip shown before a toolbar date range */
+.audit-duration {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #62309c;
+  background: #f1ebfa;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* Compact right-hand toolbar controls (duration chip, date range, Export). */
+.pill-toolbar .ant-picker { height: 32px; min-width: 0; width: 230px; padding: 0 10px; border-radius: 8px; }
+.pill-toolbar .ant-picker input { font-size: 13px; }
+.pill-toolbar .ant-picker .ant-picker-suffix { font-size: 13px; }
+.pill-toolbar .ant-btn-default { height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+.audit-duration { height: 32px; padding: 0 10px; font-size: 13px; border-radius: 8px; }

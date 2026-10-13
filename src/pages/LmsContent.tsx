@@ -5,10 +5,9 @@ import { CoursesTab } from '../components/lms-content/CoursesTab'
 import { ModulesTab } from '../components/lms-content/ModulesTab'
 import { QuizQuestionsTab } from '../components/lms-content/QuizQuestionsTab'
 import { CertificateTemplatesTab } from '../components/lms-content/CertificateTemplatesTab'
-import { IssuedCertificatesTab } from '../components/lms-content/IssuedCertificatesTab'
 import { useData, useDataNeeds, type DataKey } from '../context/DataContext'
 
-const tabs = ['Courses', 'Modules', 'Quiz Questions', 'Certificate Templates', 'Issued Certificates']
+const tabs = ['Courses', 'Modules', 'Quiz Questions', 'Certificate Templates']
 
 // What each tab reads. Only the open tab's lists are fetched, the first time it is opened.
 const tabNeeds: Record<string, DataKey[]> = {
@@ -18,7 +17,6 @@ const tabNeeds: Record<string, DataKey[]> = {
   Modules: ['courses', 'editableCourses', 'courseModules'],
   'Quiz Questions': ['courses', 'editableCourses', 'quizQuestions'],
   'Certificate Templates': ['certificateTemplates'],
-  'Issued Certificates': [],
 }
 
 export default function LmsContent() {
@@ -46,7 +44,6 @@ export default function LmsContent() {
           {tab === 'Modules' && <ModulesTab selectedCourseId={selectedCourseId} onSelectCourse={setSelectedCourseId} />}
           {tab === 'Quiz Questions' && <QuizQuestionsTab selectedCourseId={selectedCourseId} onSelectCourse={setSelectedCourseId} />}
           {tab === 'Certificate Templates' && <CertificateTemplatesTab />}
-          {tab === 'Issued Certificates' && <IssuedCertificatesTab />}
         </div>
       </div>
     </AppLayout>

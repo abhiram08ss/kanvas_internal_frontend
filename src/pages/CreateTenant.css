@@ -226,3 +226,173 @@
 .ct-edit .ant-steps-item-wait .ant-steps-item-title { color: #9b87b5; }
 .ct-course-card.is-locked { cursor: not-allowed; background: #f6f4fa; }
 .ct-course-card.is-locked .ct-course-check { background: #9b87b5; border-color: #9b87b5; }
+
+/* Wizard step tracker */
+.ws { display: flex; list-style: none; margin: 0; padding: 0; }
+.ws-step { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.ws-step::before { /* bar to the previous step */
+  content: ''; position: absolute; top: 19px; right: 50%; width: 100%; height: 3px; border-radius: 3px; background: #ede8f5; z-index: 0;
+}
+.ws-step:first-child::before { display: none; }
+.ws-step.is-done::before, .ws-step.is-current::before { background: linear-gradient(90deg, #5c2d91, #7b3fa0); }
+.ws-dot {
+  position: relative; z-index: 1; width: 40px; height: 40px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
+  background: #fff; color: #9b87b5; border: 2px solid #ede8f5; transition: all 160ms ease;
+}
+.ws-step.is-done .ws-dot { background: linear-gradient(135deg, #5c2d91, #7b3fa0); border-color: transparent; color: #fff; }
+.ws-step.is-current .ws-dot { background: linear-gradient(135deg, #5c2d91, #7b3fa0); border-color: transparent; color: #fff; box-shadow: 0 0 0 5px rgba(92, 45, 145, 0.15); }
+.ws-label { font-size: 14px; font-weight: 500; color: #9b87b5; }
+.ws-step.is-current .ws-label { color: #1a1228; font-weight: 700; }
+.ws-step.is-done .ws-label { color: #5c2d91; }
+
+/* Form rhythm: hints/errors no longer collapse the gap to the next field */
+.ct-wizard-card .ant-form-item-with-help { margin-bottom: 1.25rem; }
+.ct-wizard-card .ant-form-item .ant-form-item-explain { padding-top: 4px; }
+.ct-wizard-header { padding: 1.5rem 2rem 1.75rem; }
+.ct-wizard-header .ws { max-width: 760px; margin: 0 auto; }
+
+/* Compact step-1 form: three fields per row so the whole step fits without scrolling. */
+.ct-compact .ant-form-item { margin-bottom: 0.25rem; }
+.ct-compact .ant-form-item-with-help { margin-bottom: 0.25rem; }
+.ct-wizard-header { padding: 1rem 2rem 1rem; }
+.ct-wizard-title { margin-bottom: 0.75rem; }
+.ct-wizard-card .p-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+.ct-wizard-footer { padding: 0.75rem 1.5rem; }
+
+/* No-scroll step 1: tighter rhythm all round. */
+.ct-compact h3 { margin-bottom: 0.5rem !important; }
+.ct-compact .border-top { margin-top: 0.5rem !important; padding-top: 0.75rem !important; }
+.ct-compact .ant-form-item-label { padding-bottom: 2px; }
+.ct-compact .ant-form-item-label > label { font-size: 13px; height: 22px; }
+.ct-compact .ant-form-item { margin-bottom: 0 !important; }
+.ct-compact .row { --bs-gutter-y: 0.5rem; }
+.ct-wizard-header { padding: 0.75rem 2rem 0.75rem; }
+.ct-wizard-header .ws-dot { width: 32px; height: 32px; font-size: 13px; }
+.ct-wizard-header .ws-step::before { top: 15px; }
+.ct-wizard-header .ws-step { gap: 6px; }
+.ct-wizard-header .ws-label { font-size: 13px; }
+.ct-wizard-title { margin-bottom: 0.5rem; font-size: 1.1rem; }
+
+/* Edit tenant: star on courses added during this edit */
+.ct-course-card { position: relative; }
+.ct-new-star {
+  position: absolute;
+  top: -9px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+}
+
+/* ---- Create / Edit tenant: page layout (title row, stepper card, sectioned form) ---- */
+.wz-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 4px 0 20px; }
+.wz-title { margin: 0; font-size: 30px; font-weight: 700; color: #1a1228; }
+.wz-required-note { font-size: 14px; color: #727587; }
+
+.wz-stepper-card { background: #fff; border: 1px solid #ede8f5; border-radius: 16px; padding: 24px 32px; margin-bottom: 24px; }
+.wz-steps { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; }
+.wz-step { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
+.wz-step:not(:last-child) { flex: 1 1 0; }
+.wz-dot {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; background: #f6f4fb; color: #8a7ba3; border: 1px solid #ebe5f4;
+}
+.wz-step.is-current .wz-dot, .wz-step.is-done .wz-dot { background: #62309c; border-color: #62309c; color: #fff; }
+.wz-step-text { display: flex; flex-direction: column; line-height: 1.25; }
+.wz-step-label { font-size: 17px; font-weight: 600; color: #727587; }
+.wz-step.is-current .wz-step-label, .wz-step.is-done .wz-step-label { color: #62309c; }
+.wz-step-caption { font-size: 13px; color: #8a7ba3; margin-top: 2px; }
+.wz-line { flex: 1 1 auto; height: 2px; margin: 0 28px; background: #e8e5ef; border-radius: 2px; }
+.wz-line.is-done { background: #62309c; }
+
+.wz-section { display: grid; grid-template-columns: 300px 1fr; gap: 32px; padding: 32px 36px; border-bottom: 1px solid #ede8f5; }
+.wz-section:last-child { border-bottom: 0; }
+.wz-section-icon { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 12px; background: #f1ebfa; color: #62309c; margin-bottom: 16px; }
+.wz-section-title { margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #1a1228; }
+.wz-section-desc { margin: 0; font-size: 15px; color: #727587; line-height: 1.5; }
+.wz-section-fields .ant-form-item, .wz-section-fields .row > div > div { margin-bottom: 0; }
+.wz-section-fields .ant-form-item-label > label { font-size: 15px; font-weight: 500; color: #1a1228; }
+.wz-section-fields label.d-block { font-size: 15px !important; font-weight: 500 !important; margin-bottom: 8px !important; }
+.wz-section-fields .row { --bs-gutter-x: 1.25rem; --bs-gutter-y: 1.25rem; }
+@media (max-width: 991px) { .wz-section { grid-template-columns: 1fr; gap: 20px; padding: 24px; } }
+.ct-wizard-footer { padding: 20px 36px; }
+
+/* Compact sizing for the Create / Edit tenant pages */
+.wz-title-row { margin: 0 0 12px; }
+.wz-title { font-size: 22px; }
+.wz-required-note { font-size: 13px; }
+.wz-stepper-card { padding: 14px 24px; margin-bottom: 14px; border-radius: 12px; }
+.wz-step { gap: 10px; }
+.wz-dot { width: 34px; height: 34px; font-size: 14px; }
+.wz-step-label { font-size: 14px; }
+.wz-step-caption { font-size: 12px; margin-top: 0; }
+.wz-line { margin: 0 18px; }
+.wz-section { grid-template-columns: 240px 1fr; gap: 24px; padding: 20px 24px; }
+.wz-section-icon { width: 38px; height: 38px; border-radius: 10px; margin-bottom: 10px; }
+.wz-section-title { font-size: 16px; margin-bottom: 4px; }
+.wz-section-desc { font-size: 13px; }
+.wz-section-fields .ant-form-item-label > label { font-size: 13px; }
+.wz-section-fields label.d-block { font-size: 13px !important; margin-bottom: 4px !important; }
+.wz-section-fields .row { --bs-gutter-x: 1rem; --bs-gutter-y: 0.75rem; }
+.wz-section-fields .ant-form-item-label { padding-bottom: 4px; }
+.ct-wizard-footer { padding: 12px 24px; }
+
+/* Final polish: balanced sizes, soft depth, tidy fields */
+.wz-title { font-size: 26px; letter-spacing: -0.01em; }
+.wz-title-row { margin: 0 0 16px; align-items: center; }
+.wz-stepper-card { padding: 18px 28px; margin-bottom: 18px; border-radius: 14px; box-shadow: 0 1px 2px rgba(26, 18, 40, 0.04), 0 6px 18px rgba(92, 45, 145, 0.05); }
+.wz-dot { width: 40px; height: 40px; font-size: 15px; }
+.wz-step.is-current .wz-dot { box-shadow: 0 0 0 5px rgba(98, 48, 156, 0.14); }
+.wz-step-label { font-size: 15px; }
+.wz-step-caption { font-size: 12.5px; }
+.wz-line { margin: 0 22px; }
+.ct-wizard-card { border-radius: 14px; box-shadow: 0 1px 2px rgba(26, 18, 40, 0.04), 0 6px 18px rgba(92, 45, 145, 0.05); }
+.wz-section { grid-template-columns: 260px 1fr; gap: 32px; padding: 26px 30px; }
+.wz-section-icon { width: 42px; height: 42px; margin-bottom: 12px; }
+.wz-section-title { font-size: 17px; margin-bottom: 6px; }
+.wz-section-desc { font-size: 13.5px; }
+.wz-section-fields .ant-form-item-label > label { font-size: 13.5px; font-weight: 500; color: #3d3450; }
+.wz-section-fields label.d-block { font-size: 13.5px !important; font-weight: 500 !important; color: #3d3450 !important; margin-bottom: 6px !important; }
+.wz-section-fields .row { --bs-gutter-x: 1.1rem; --bs-gutter-y: 1rem; }
+.wz-section-fields .ant-input-lg, .wz-section-fields .ant-select-lg .ant-select-selector, .wz-section-fields .ant-select-lg { font-size: 14px; }
+.wz-section-fields .ant-input-lg { padding-block: 8px; border-radius: 10px; }
+.wz-section-fields .ant-select-lg .ant-select-selector { border-radius: 10px !important; }
+.wz-section-fields .ant-input:focus, .wz-section-fields .ant-input-focused, .wz-section-fields .ant-select-focused .ant-select-selector { border-color: #62309c !important; box-shadow: 0 0 0 3px rgba(98, 48, 156, 0.12) !important; }
+.wz-section-fields .ant-input-disabled { background: #f6f4fb; }
+.ct-wizard-footer { padding: 14px 30px; background: #faf9fc; }
+.ct-wizard-footer .ant-btn-lg { height: 40px; padding-inline: 22px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+
+/* Smaller again: compact sizing (kept last so it wins over the earlier blocks) */
+.wz-title { font-size: 20px; }
+.wz-title-row { margin: 0 0 10px; }
+.wz-required-note { font-size: 12px; }
+.wz-stepper-card { padding: 10px 20px; margin-bottom: 10px; border-radius: 12px; }
+.wz-step { gap: 8px; }
+.wz-dot { width: 30px; height: 30px; font-size: 13px; }
+.wz-step.is-current .wz-dot { box-shadow: 0 0 0 3px rgba(98, 48, 156, 0.14); }
+.wz-step-label { font-size: 13px; }
+.wz-step-caption { font-size: 11px; }
+.wz-line { margin: 0 14px; height: 2px; }
+.wz-section { grid-template-columns: 210px 1fr; gap: 20px; padding: 16px 20px; }
+.wz-section-icon { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 8px; }
+.wz-section-icon svg { width: 17px; height: 17px; }
+.wz-section-title { font-size: 14px; margin-bottom: 3px; }
+.wz-section-desc { font-size: 12px; line-height: 1.4; }
+.wz-section-fields .ant-form-item-label > label { font-size: 12.5px; }
+.wz-section-fields label.d-block { font-size: 12.5px !important; margin-bottom: 3px !important; }
+.wz-section-fields .ant-form-item-label { padding-bottom: 3px; }
+.wz-section-fields .row { --bs-gutter-x: 0.85rem; --bs-gutter-y: 0.6rem; }
+.wz-section-fields .ant-input, .wz-section-fields .ant-select .ant-select-selector, .wz-section-fields .ant-input-number { font-size: 13px !important; min-height: 32px; }
+.wz-section-fields .ant-input { padding-block: 4px; border-radius: 8px; }
+.wz-section-fields textarea.ant-input { min-height: 58px; }
+.ct-wizard-footer { padding: 10px 20px; }
+.ct-wizard-footer .ant-btn { height: 34px; padding-inline: 18px; font-size: 13px; border-radius: 8px; }

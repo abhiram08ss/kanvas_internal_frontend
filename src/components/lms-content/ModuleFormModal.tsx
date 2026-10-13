@@ -219,7 +219,7 @@ export function ModuleFormModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={200}
-            placeholder="e.g. Introduction to Root Cause Analysis"
+            placeholder="Enter module title"
             status={errors.title ? 'error' : undefined}
           />
         </Field>
@@ -232,7 +232,7 @@ export function ModuleFormModal({
           </div>
           <div className="col-6 col-md-4">
             <Field label="Duration">
-              <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 15 min" />
+              <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Enter duration" />
             </Field>
           </div>
           <div className="col-12 col-md-4">
@@ -317,7 +317,7 @@ export function ModuleFormModal({
 
         {showEditor && (
           <Field label="Module Content (HTML supported)">
-            <RichTextEditor value={content} onChange={setContent} placeholder="Write the module content learners will see…" />
+            <RichTextEditor value={content} onChange={setContent} placeholder="Enter module content" />
           </Field>
         )}
 

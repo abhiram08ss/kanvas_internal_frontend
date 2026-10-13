@@ -90,20 +90,20 @@ export function LiveProgressModal({ course, onClose }: { course: Course; onClose
         locale={{ emptyText: 'No one has started this course yet.' }}
         onRow={([key]) => ({ style: { transition: 'background-color 1.5s', backgroundColor: justUpdated.has(key) ? '#f6f4fd' : undefined } })}
         columns={[
-          { title: 'Learner', key: 'learner', render: (_: unknown, [, r]) => <span className="fw-semibold">{r.userName}</span> },
+          { title: 'Learner', key: 'learner', render: (_: unknown, [, r]) => <span className="tenant-name">{r.userName}</span> },
           ...(showModuleColumn
             ? [
                 {
                   title: 'Module',
                   key: 'module',
-                  render: (_: unknown, [, r]: [string, LiveProgressEvent]) => <span style={{ color: '#9b87b5' }}>{r.moduleTitle ?? '—'}</span>,
+                  render: (_: unknown, [, r]: [string, LiveProgressEvent]) => <span className="tenant-muted">{r.moduleTitle ?? '—'}</span>,
                 },
               ]
             : []),
           { title: 'Status', key: 'status', render: (_: unknown, [, r]) => <Badge tone={statusTone(r.lessonStatus)}>{r.lessonStatus}</Badge> },
           { title: 'Score', key: 'score', render: (_: unknown, [, r]) => r.scoreRaw || '—' },
-          { title: 'Location', key: 'location', render: (_: unknown, [, r]) => <span style={{ color: '#9b87b5' }}>{r.lessonLocation || '—'}</span> },
-          { title: 'Updated', key: 'updated', render: (_: unknown, [, r]) => <span style={{ color: '#9b87b5' }}>{relativeTime(r.updatedAt, now)}</span> },
+          { title: 'Location', key: 'location', render: (_: unknown, [, r]) => <span className="tenant-muted">{r.lessonLocation || '—'}</span> },
+          { title: 'Updated', key: 'updated', render: (_: unknown, [, r]) => <span className="tenant-muted">{relativeTime(r.updatedAt, now)}</span> },
         ]}
       />
 

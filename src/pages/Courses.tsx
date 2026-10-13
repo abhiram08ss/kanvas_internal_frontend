@@ -81,13 +81,13 @@ export default function Courses() {
           dataSource={rows}
           locale={{ emptyText: 'No courses match your search.' }}
           columns={[
-            { title: 'ID', dataIndex: 'code', render: (code: string) => <span style={{ color: '#9b87b5' }}>{code}</span> },
+            { title: 'ID', width: 120, dataIndex: 'code', render: (code: string) => <span className="tenant-muted">{code}</span> },
             {
               title: 'Course Name',
               dataIndex: 'name',
               render: (name: string, c) => (
                 <>
-                  <span className="fw-semibold">{name}</span>
+                  <span className="tenant-name">{name}</span>
                   {c.scormPackage && (
                     <span
                       title={`SCORM ${c.scormVersion ?? ''} · ${c.launchFile ?? ''}`}
@@ -100,15 +100,15 @@ export default function Courses() {
                 </>
               ),
             },
-            { title: 'Category', dataIndex: 'category' },
-            { title: 'Price', dataIndex: 'price', render: (price: number) => (price > 0 ? `₹${price.toLocaleString('en-IN')}` : 'Free') },
-            { title: 'Type', dataIndex: 'type', render: (type: Course['type']) => <Badge tone={type === 'Free' ? 'green' : 'blue'}>{type}</Badge> },
-            { title: 'Status', dataIndex: 'status', render: (status: Course['status']) => <Badge>{status}</Badge> },
+            { title: 'Category', width: 190, dataIndex: 'category' },
+            { title: 'Price', width: 110, dataIndex: 'price', render: (price: number) => (price > 0 ? `₹${price.toLocaleString('en-IN')}` : 'Free') },
+            { title: 'Type', width: 110, dataIndex: 'type', render: (type: Course['type']) => <Badge tone={type === 'Free' ? 'green' : 'blue'}>{type}</Badge> },
+            { title: 'Status', width: 130, dataIndex: 'status', render: (status: Course['status']) => <Badge>{status}</Badge> },
             {
-              title: 'Actions',
+              title: 'Actions', width: 160,
               key: 'actions',
               render: (_: unknown, c) => (
-                <div className="d-flex align-items-center justify-content-center gap-2">
+                <div className="d-flex align-items-center gap-2">
                   <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Preview course" tone="purple" />
                   <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(c)} title="Edit course" tone="blue" />
                 </div>

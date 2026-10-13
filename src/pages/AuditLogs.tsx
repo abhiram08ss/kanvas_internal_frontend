@@ -7,11 +7,14 @@ import { ErrorBlock, LoadingBlock, Notice } from '../components/ui/State'
 import { ListCard } from '../components/ui/ListCard'
 import { DataTable } from '../components/ui/DataTable'
 import { Toolbar } from '../components/ui/Toolbar'
-import { Button } from 'antd'
+import { Button, DatePicker } from 'antd'
+import dayjs, { type Dayjs } from 'dayjs'
 import { api, errorMessage, type AuditCategory, type AuditLog } from '../api'
 import { useApi } from '../api/useApi'
 
 const PAGE_SIZE = 10
+const DEFAULT_DAYS = 90
+const DATE_FMT = 'YYYY-MM-DD'
 
 const categories: { key: AuditCategory; icon: typeof Building2 }[] = [
   { key: 'Tenant', icon: Building2 },
@@ -28,6 +31,11 @@ export default function AuditLogs() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [filter, setFilter] = useState<(typeof filterChips)[number]>('All')
   const [page, setPage] = useState(1)
+  // Date range of the entries shown; starts as the last 90 days (today included, so 89 days back).
+  const [range, setRange] = useState<[Dayjs, Dayjs]>(() => [dayjs().subtract(DEFAULT_DAYS - 1, 'day'), dayjs()])
+  const from = range[0].format(DATE_FMT)
+  const to = range[1].format(DATE_FMT)
+  const spanDays = range[1].diff(range[0], 'day') + 1 // both end days count
   const [exportError, setExportError] = useState('')
 
   // Wait for the user to stop typing before hitting the API, and go back to page 1 on any new search.
@@ -40,8 +48,8 @@ export default function AuditLogs() {
   }, [query])
 
   const { data, error, loading, reload } = useApi(
-    () => api.auditLogs({ q: debouncedQuery, category: filter, page, pageSize: PAGE_SIZE }),
-    [debouncedQuery, filter, page],
+    () => api.auditLogs({ q: debouncedQuery, category: filter, page, pageSize: PAGE_SIZE, from, to }),
+    [debouncedQuery, filter, page, from, to],
   )
 
   const firstShown = data && data.total > 0 ? (data.page - 1) * PAGE_SIZE + 1 : 0
@@ -50,7 +58,7 @@ export default function AuditLogs() {
   const exportCsv = async () => {
     setExportError('')
     try {
-      await api.exportAuditLogs({ q: debouncedQuery, category: filter })
+      await api.exportAuditLogs({ q: debouncedQuery, category: filter, from, to })
     } catch (e) {
       setExportError(errorMessage(e))
     }
@@ -94,9 +102,33 @@ export default function AuditLogs() {
             setPage(1)
           }}
           extra={
-            <Button icon={<Download size={14} />} onClick={() => void exportCsv()}>
-              Export
-            </Button>
+            <div className="d-flex align-items-center gap-2">
+              <span className="audit-duration">
+                {spanDays} {spanDays === 1 ? 'day' : 'days'}
+              </span>
+              <DatePicker.RangePicker
+                allowClear={false}
+                value={range}
+                format="DD MMM YYYY"
+                // No future dates; and once a start date is picked, the end date can't be before it.
+                disabledDate={(d, info) => d.isAfter(dayjs(), 'day') || (!!info.from && d.isBefore(info.from, 'day'))}
+                presets={[
+                  { label: 'Last 7 days', value: [dayjs().subtract(6, 'day'), dayjs()] },
+                  { label: 'Last 30 days', value: [dayjs().subtract(29, 'day'), dayjs()] },
+                  { label: 'Last 90 days', value: [dayjs().subtract(DEFAULT_DAYS - 1, 'day'), dayjs()] },
+                  { label: 'Last 12 months', value: [dayjs().subtract(12, 'month'), dayjs()] },
+                ]}
+                onChange={(v) => {
+                  if (v?.[0] && v[1]) {
+                    setRange([v[0], v[1]])
+                    setPage(1)
+                  }
+                }}
+              />
+              <Button icon={<Download size={14} />} onClick={() => void exportCsv()}>
+                Export
+              </Button>
+            </div>
           }
         />
         {loading && !data ? (
@@ -119,19 +151,19 @@ export default function AuditLogs() {
             }}
             columns={[
               {
-                title: 'Date & Time',
+                title: 'Date & Time', width: 190,
                 dataIndex: 'date',
                 render: (d: string) => (
-                  <span className="text-nowrap" style={{ color: '#9b87b5' }}>
+                  <span className="text-nowrap tenant-muted">
                     {d}
                   </span>
                 ),
               },
-              { title: 'Action', dataIndex: 'action', render: (a: string) => <span className="fw-semibold">{a}</span> },
-              { title: 'Category', dataIndex: 'category', render: (c: string) => <Badge tone="purple">{c}</Badge> },
-              { title: 'Performed By', dataIndex: 'performedBy' },
-              { title: 'Details', dataIndex: 'details', render: (d: string) => <span style={{ color: '#9b87b5' }}>{d}</span> },
-              { title: 'IP Address', dataIndex: 'ip', render: (ip: string) => <span style={{ color: '#9b87b5' }}>{ip}</span> },
+              { title: 'Action', width: 220, dataIndex: 'action', render: (a: string) => <span className="tenant-name">{a}</span> },
+              { title: 'Category', width: 130, dataIndex: 'category', render: (c: string) => <Badge tone="purple">{c}</Badge> },
+              { title: 'Performed By', width: 160, dataIndex: 'performedBy' },
+              { title: 'Details', dataIndex: 'details', render: (d: string) => <span className="tenant-muted">{d}</span> },
+              { title: 'IP Address', width: 140, dataIndex: 'ip', render: (ip: string) => <span className="tenant-muted">{ip}</span> },
             ]}
           />
         )}

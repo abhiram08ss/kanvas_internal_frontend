@@ -10,7 +10,7 @@ import App from './App.tsx'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ConfigProvider theme={antdTheme}>
-      <AntApp>
+      <AntApp notification={{ placement: 'topRight', duration: 4, showProgress: true, pauseOnHover: true, top: 72 }}>
         <BrowserRouter>
           <App />
         </BrowserRouter>

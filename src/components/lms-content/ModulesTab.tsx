@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { confirmDialog } from '../ui/confirmOptions'
 import { Pencil, Trash2, Eye } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
@@ -49,15 +50,21 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
     setModalOpen(true)
   }
   const handleSave = (data: Parameters<typeof addCourseModule>[0]) => (editing ? updateCourseModule(editing.id, data) : addCourseModule(data))
-  const handleDelete = async (m: CourseModule) => {
-    if (!window.confirm(`Delete module "${m.title}"? This cannot be undone.`)) return
-    setError('')
-    try {
-      await deleteCourseModule(m.id)
-    } catch (e) {
-      setError(errorMessage(e))
-    }
-  }
+  const handleDelete = (m: CourseModule) =>
+    confirmDialog({
+      title: 'Delete module?',
+      content: `Are you sure you want to delete ${m.title}?`,
+      okText: 'Delete Module',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setError('')
+        try {
+          await deleteCourseModule(m.id)
+        } catch (e) {
+          setError(errorMessage(e))
+        }
+      },
+    })
 
   return (
     <div className="d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
@@ -84,17 +91,17 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
             dataSource={rows}
             locale={{ emptyText: 'No modules yet for this course.' }}
             columns={[
-              { title: 'Order', dataIndex: 'order', render: (order: number) => <span style={{ color: '#9b87b5' }}>{order}</span> },
-              { title: 'Course', dataIndex: 'course' },
-              { title: 'Title', dataIndex: 'title', render: (title: string) => <span className="fw-semibold">{title}</span> },
-              { title: 'Type', dataIndex: 'type', render: (type: CourseModule['type']) => <Badge tone={typeTone[type]}>{type}</Badge> },
-              { title: 'Duration', dataIndex: 'duration', render: (d: string | null) => <span style={{ color: '#9b87b5' }}>{d ?? '—'}</span> },
-              { title: 'Status', dataIndex: 'status', render: (status: CourseModule['status']) => <Badge>{status}</Badge> },
+              { title: 'Order', width: 90, dataIndex: 'order', render: (order: number) => <span className="tenant-muted">{order}</span> },
+              { title: 'Course', width: 200, dataIndex: 'course' },
+              { title: 'Title', dataIndex: 'title', render: (title: string) => <span className="tenant-name">{title}</span> },
+              { title: 'Type', width: 120, dataIndex: 'type', render: (type: CourseModule['type']) => <Badge tone={typeTone[type]}>{type}</Badge> },
+              { title: 'Duration', width: 120, dataIndex: 'duration', render: (d: string | null) => <span className="tenant-muted">{d ?? '—'}</span> },
+              { title: 'Status', width: 130, dataIndex: 'status', render: (status: CourseModule['status']) => <Badge>{status}</Badge> },
               {
-                title: 'Actions',
+                title: 'Actions', width: 140,
                 key: 'actions',
                 render: (_: unknown, m: CourseModule) => (
-                  <div className="d-flex align-items-center justify-content-center gap-2">
+                  <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(m)} title="Edit module" tone="blue" />
                     {m.scormPackage && <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(m)} title="Preview SCORM" tone="purple" />}
                     <IconButton icon={<Trash2 size={14} />} onClick={() => void handleDelete(m)} title="Delete module" tone="red" />

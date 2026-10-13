@@ -100,7 +100,7 @@ export function CertificateTemplateFormModal({
             }}
             disabled={!!template}
             status={nameError ? 'error' : undefined}
-            placeholder="e.g. Standard Completion Certificate"
+            placeholder="Enter template name"
           />
         </Field>
 
@@ -109,7 +109,7 @@ export function CertificateTemplateFormModal({
             <Radio value="default">Company Default Logo</Radio>
             <Radio value="custom">Custom Logo</Radio>
           </Radio.Group>
-          {customLogo && <Input className="mt-2" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="Logo name or image URL" />}
+          {customLogo && <Input className="mt-2" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="Enter logo name or image URL" />}
         </Field>
 
         <div className="row g-3">
@@ -129,11 +129,11 @@ export function CertificateTemplateFormModal({
         </div>
 
         <Field label="Title Text">
-          <Input value={titleText} onChange={(e) => setTitleText(e.target.value)} maxLength={120} placeholder="CERTIFICATE OF COMPLETION" />
+          <Input value={titleText} onChange={(e) => setTitleText(e.target.value)} maxLength={120} placeholder="Enter certificate title" />
         </Field>
 
         <Field label="Intro Text">
-          <Input value={introText} onChange={(e) => setIntroText(e.target.value)} maxLength={200} placeholder="This is to certify that" />
+          <Input value={introText} onChange={(e) => setIntroText(e.target.value)} maxLength={200} placeholder="Enter introduction text" />
         </Field>
 
         <Checkbox checked={showPassScore} onChange={(e) => setShowPassScore(e.target.checked)}>
@@ -151,14 +151,14 @@ export function CertificateTemplateFormModal({
                 disabled={!sl.enabled}
                 onChange={(e) => setSlot(i, { title: e.target.value })}
                 maxLength={80}
-                placeholder="Title, e.g. HR Department"
+                placeholder="Enter signatory title"
               />
               <Input
                 value={sl.name}
                 disabled={!sl.enabled}
                 onChange={(e) => setSlot(i, { name: e.target.value })}
                 maxLength={80}
-                placeholder="Signatory name (optional)"
+                placeholder="Enter signatory name (optional)"
               />
             </div>
           ))}

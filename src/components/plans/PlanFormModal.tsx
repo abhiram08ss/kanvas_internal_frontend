@@ -120,7 +120,7 @@ export function PlanFormModal({
             value={features}
             onChange={(e) => setFeatures(e.target.value)}
             rows={2}
-            placeholder="Core LMS access, Basic analytics, Email support"
+            placeholder="Enter features, separated by commas"
           />
         </Field>
 

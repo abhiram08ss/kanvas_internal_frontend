@@ -340,8 +340,11 @@ textarea:focus::placeholder,
   position: fixed;
   z-index: 900;
   padding: 16px;
+  overflow-x: hidden;
   overflow-y: auto;
-  pointer-events: none;
+  box-sizing: border-box;
+  user-select: text;
+  cursor: auto;
   background: #fff;
   border: 1px solid #ede8f5;
   border-radius: 14px;
@@ -373,7 +376,7 @@ textarea:focus::placeholder,
     text-align: left;
   }
   .ant-table-tbody > tr:hover > td { background: #faf9fc; }
-  .tenant-name { font-weight: 700; color: #62309c; }
+  .tenant-name { font-weight: 600; color: #62309c; }
   .tenant-muted { color: #727587; }
   .tenant-usage { min-width: 160px; font-size: 14px; }
   .tenant-usage strong { font-weight: 500; color: #202333; }
@@ -395,7 +398,10 @@ textarea:focus::placeholder,
   .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
   &.is-active { color: #16804a; background: #edf8f1; }
   &.is-suspended { color: #a96a09; background: #fff6e5; }
-  &.is-expired { color: #d33b48; background: #fdeff0; }
+  &.is-expired, &.is-red { color: #d33b48; background: #fdeff0; }
+  &.is-green { color: #16804a; background: #edf8f1; }
+  &.is-amber { color: #a96a09; background: #fff6e5; }
+  &.is-slate { color: #475569; background: #f1f5f9; }
 }
 .tenant-action {
   width: 30px;
@@ -414,6 +420,11 @@ textarea:focus::placeholder,
   &.is-pause { color: #a96a09; }
   &.is-play { color: #16804a; }
   &.is-delete { color: #d33b48; }
+  &.is-blue, &.is-purple { color: #62309c; }
+  &.is-amber { color: #a96a09; }
+  &.is-green { color: #16804a; }
+  &.is-red { color: #d33b48; }
+  &.is-slate { color: #475569; }
 }
 .tenant-footer {
   display: flex;
@@ -453,7 +464,7 @@ textarea:focus::placeholder,
   color: #727587;
   background: #fff !important;
 }
-.list-card .tenant-table .ant-table-placeholder .ant-empty-description { color: #727587; }
+.ant-table-wrapper.tenant-table .ant-table-placeholder .ant-empty-description { color: #727587; }
 
 // Tenant details popup.
 .td-table {
@@ -522,3 +533,161 @@ textarea:focus::placeholder,
   border-top: 1px solid #e8e5ef;
 }
 @media (max-width: 575px) { .td-label { flex-basis: 130px; } }
+
+// Toasts (antd notification): soft tinted card per type, matching border + icon + progress bar.
+.ant-notification .ant-notification-notice {
+  --toast-c: #5c2d91; --toast-bg: #f6f2fb; --toast-bd: #e3d6f3;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--toast-bd);
+  background: var(--toast-bg);
+  box-shadow: 0 10px 28px rgba(26, 18, 40, 0.12);
+  overflow: hidden;
+  &:has(.ant-notification-notice-icon-success) { --toast-c: #15803d; --toast-bg: #f0fdf4; --toast-bd: #bbf7d0; }
+  &:has(.ant-notification-notice-icon-error) { --toast-c: #b91c1c; --toast-bg: #fef2f2; --toast-bd: #fecaca; }
+  &:has(.ant-notification-notice-icon-warning) { --toast-c: #b45309; --toast-bg: #fffbeb; --toast-bd: #fde68a; }
+  &:has(.ant-notification-notice-icon-info) { --toast-c: #1d4ed8; --toast-bg: #eff6ff; --toast-bd: #bfdbfe; }
+  .ant-notification-notice-icon { font-size: 22px; color: var(--toast-c); }
+  .ant-notification-notice-title { font-weight: 700; font-size: 15px; color: var(--toast-c); }
+  .ant-notification-notice-description { font-size: 13.5px; color: #3d3450; }
+  .ant-notification-notice-close { color: var(--toast-c); }
+  .ant-notification-notice-progress { height: 3px; accent-color: var(--toast-c); color: var(--toast-c); }
+  .ant-notification-notice-progress::-webkit-progress-bar { background: transparent; }
+  .ant-notification-notice-progress::-webkit-progress-value { background: var(--toast-c); }
+  .ant-notification-notice-progress::-moz-progress-bar { background: var(--toast-c); }
+}
+
+// Shared table pager (DataTable) styled like the Tenants footer: total on the left, page buttons on the right.
+.ant-table-wrapper.tenant-table .ant-pagination {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 10px 20px;
+  border-top: 1px solid #e8e5ef;
+  .ant-pagination-total-text { margin-inline-end: auto; color: #727587; font-size: 14px; }
+  .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next {
+    min-width: 32px; height: 32px; line-height: 30px; margin: 0 0 0 8px;
+    border: 1px solid #e8e5ef; border-radius: 10px; background: #fff;
+    a, button { color: #727587; font-size: 14px; }
+    &:hover { border-color: #c9b3e6; a, button { color: #5c2d91; } }
+  }
+  .ant-pagination-item a { font-weight: 600; }
+  .ant-pagination-item-active { background: #f1ebfa; border-color: #f1ebfa; a { color: #62309c; } }
+  .ant-pagination-prev .ant-pagination-item-link, .ant-pagination-next .ant-pagination-item-link { border: 0; background: transparent; }
+}
+
+// Header and cells always share one alignment (left), whatever a column's `align` says, so headers sit
+// directly above their content in every table.
+.ant-table-wrapper.tenant-table {
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td { text-align: left !important; vertical-align: middle; }
+  .ant-table-thead > tr > th { white-space: nowrap; }
+  .ant-table-thead > tr > th::before { display: none; }
+}
+
+// Roomier spacing for every table (matches the Tenants design): 24px side gutters shared by the toolbar,
+// header, cells and pager so everything lines up; taller rows; slightly larger type.
+.ant-table-wrapper.tenant-table {
+  .ant-table-thead > tr > th { padding: 12px 24px !important; font-size: 13px; }
+  .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td { padding: 12px 24px !important; font-size: 14px; }
+  .tenant-name { font-size: 14px; font-weight: 600; color: #62309c; text-decoration: none; }
+  .tenant-name:hover { text-decoration: underline; cursor: pointer; }
+  .tenant-muted { font-size: 14px; }
+  .tenant-usage { font-size: 14px; }
+  .tenant-status { font-size: 13px; padding: 3px 11px; }
+  .tenant-action { width: 32px; height: 32px; }
+  .ant-pagination { padding: 16px 24px; }
+  .ant-pagination .ant-pagination-total-text { font-size: 14px; }
+}
+
+// Actions column: header and buttons centered.
+.ant-table-wrapper.tenant-table {
+  .ant-table-thead > tr > th.col-center,
+  .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td.col-center { text-align: center !important; }
+  td.col-center > .d-flex { justify-content: center; }
+}
+
+// antd's hidden column-measuring row must not pick up the cell padding above (it showed as a blank gap
+// between the header and the first row).
+.ant-table-wrapper.tenant-table .ant-table-tbody > tr.ant-table-measure-row > td { padding: 0 !important; border: 0; height: 0; }
+
+// Confirmation popups (see ui/confirmOptions.ts).
+.kv-confirm {
+  .ant-modal-container, .ant-modal-content { padding: 24px 32px 32px; border-radius: 20px; box-shadow: 0 20px 50px rgba(26, 18, 40, 0.18); }
+  .ant-modal-confirm-title, .ant-modal-title { font-size: 24px; font-weight: 700; color: #1a1228; line-height: 1.3; }
+  .ant-modal-confirm-content { margin-top: 20px; font-size: 16px; color: #727587; }
+  .ant-modal-confirm-body-wrapper .ant-modal-confirm-body { display: block; }
+  .ant-modal-confirm-btns { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; }
+  .ant-modal-confirm-btns .ant-btn { height: 40px; padding: 0 20px; font-size: 14px; font-weight: 600; border-radius: 10px; margin: 0; }
+  .ant-modal-confirm-btns .ant-btn-default { color: #1a1228; border-color: #e8e5ef; background: #fff; box-shadow: none; }
+  .ant-modal-confirm-btns .ant-btn-dangerous.ant-btn-primary { background: #d9374a; border-color: #d9374a; box-shadow: none; }
+  .ant-modal-close { top: 28px; inset-inline-end: 28px; width: 32px; height: 32px; color: #3d3450; }
+}
+
+// No visible bottom (horizontal) scrollbar on tables; they can still be scrolled sideways by trackpad/shift+wheel.
+.ant-table-wrapper.tenant-table .ant-table-content,
+.ant-table-wrapper.tenant-table .ant-table-body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; height: 0; }
+}
+
+// Lock confirmation-popup typography so every one reads identically, whichever page or API opened it
+// (Modal.confirm, App modal.confirm, long titles, rich content).
+.kv-confirm {
+  .ant-modal-confirm-title { font-size: 24px !important; font-weight: 700 !important; line-height: 1.3 !important; color: #1a1228 !important; }
+  .ant-modal-confirm-content, .ant-modal-confirm-content * { font-size: 16px !important; font-weight: 400 !important; line-height: 1.5 !important; color: #727587 !important; }
+  .ant-modal-confirm-btns .ant-btn, .ant-modal-confirm-btns .ant-btn > span { font-size: 14px !important; font-weight: 600 !important; }
+}
+
+// One font size for table text: 14px for cell content (names, dates, codes, notes), 13px for status pills and
+// tags, 13px for headers - whatever inline sizes individual pages set.
+.ant-table-wrapper.tenant-table {
+  .ant-table-tbody > tr > td,
+  .ant-table-tbody > tr > td :where(span, div, p, a, code, strong, small) { font-size: 14px !important; }
+  .ant-table-tbody > tr > td .tenant-status,
+  .ant-table-tbody > tr > td .tenant-status *,
+  .ant-table-tbody > tr > td .ant-tag { font-size: 13px !important; }
+  .ant-table-tbody > tr > td .tenant-usage-pct { font-size: 13px !important; }
+  .ant-table-thead > tr > th { font-size: 13px !important; }
+  .ant-pagination, .ant-pagination * { font-size: 14px; }
+}
+
+// Form/detail popups: compact type scale - 20px bold title, 14px subtitle/body/labels/inputs, 14px bold buttons.
+// (Confirmation popups are larger and styled separately above.)
+.ant-modal:not(.kv-confirm) {
+  .ant-modal-title, .ant-modal-header .font-display { font-size: 20px !important; font-weight: 700 !important; line-height: 1.3 !important; }
+  .ant-modal-header .fw-normal { font-size: 14px !important; }
+  .ant-modal-body,
+  .ant-modal-body :where(p, span, div, li, label, small, td, th, a, code) { font-size: 14px; }
+  .ant-modal-body :where(.ant-input, .ant-input-affix-wrapper, .ant-select, .ant-select-selector, .ant-select-content, textarea, input, .ant-form-item-label > label) { font-size: 14px; }
+  .ant-btn, .ant-btn > span { font-size: 14px; font-weight: 600; }
+}
+
+// Popup forms: one consistent field look - 14px bold labels, 40px controls with the same border/radius,
+// matching placeholder, 12px hints/errors, 40px buttons. (Field.tsx sets small inline sizes, hence !important.)
+.ant-modal:not(.kv-confirm) .ant-modal-body {
+  label.d-block { font-size: 14px !important; font-weight: 600 !important; margin-bottom: 6px !important; color: #1a1228 !important; }
+  .ant-input, .ant-input-affix-wrapper, .ant-input-number, .ant-select .ant-select-selector {
+    min-height: 40px; border-radius: 10px !important; border-color: #e2d9f0 !important; font-size: 14px !important;
+  }
+  .ant-input-number { width: 100%; }
+  .ant-input-number .ant-input-number-input { height: 38px; font-size: 14px !important; }
+  textarea.ant-input { min-height: 88px; }
+  .ant-select .ant-select-selector { display: flex; align-items: center; }
+  .ant-input::placeholder, textarea::placeholder, .ant-input-affix-wrapper input::placeholder,
+  .ant-select-placeholder, .ant-input-number input::placeholder { color: #b5aac4 !important; font-size: 14px !important; font-weight: 400 !important; opacity: 1; }
+  .ant-btn { height: 40px; padding: 0 20px; border-radius: 10px; }
+}
+
+// Placeholders slide away to the left and fade out as soon as a field is focused (clicked / tabbed into).
+.ant-input::placeholder, textarea::placeholder, .ant-input-number input::placeholder,
+.ant-select-placeholder, .ant-input-affix-wrapper input::placeholder {
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.ant-input:focus::placeholder, textarea:focus::placeholder, .ant-input-number-focused input::placeholder,
+.ant-input-affix-wrapper-focused input::placeholder {
+  opacity: 0 !important;
+  transform: translateX(-8px);
+}
+.ant-select-focused .ant-select-placeholder { opacity: 0 !important; transform: translateX(-8px); }

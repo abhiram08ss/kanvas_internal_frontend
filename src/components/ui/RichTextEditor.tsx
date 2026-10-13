@@ -68,7 +68,7 @@ export function RichTextEditor({ value, onChange, placeholder }: { value: string
       StarterKit.configure({ heading: { levels: [3, 4] } }), // v3's StarterKit already includes Underline
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TableKit.configure({ table: { resizable: false } }),
-      Placeholder.configure({ placeholder: placeholder ?? 'Write the module content…' }),
+      Placeholder.configure({ placeholder: placeholder ?? 'Enter content' }),
     ],
     content: value,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),

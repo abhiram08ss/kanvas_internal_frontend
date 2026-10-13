@@ -1,9 +1,24 @@
+import { useState } from 'react'
+import { Select } from 'antd'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card } from '../../ui/Card'
 import { Badge } from '../../ui/Badge'
-import type { DashboardData } from '../../../api'
+import { api } from '../../../api'
+import { useApi } from '../../../api/useApi'
 
-export function TenantStatusChart({ data, totalTenants }: { data: DashboardData['tenantStatusOverTime']; totalTenants: number }) {
+type Range = '1m' | '6m' | '1y'
+
+const RANGES: { value: Range; label: string; caption: string }[] = [
+  { value: '1m', label: 'Last 1 month', caption: 'Last 1 month' },
+  { value: '6m', label: 'Last 6 months', caption: 'Last 6 months' },
+  { value: '1y', label: 'Last 1 year', caption: 'Last 1 year' },
+]
+
+export function TenantStatusChart({ totalTenants }: { totalTenants: number }) {
+  const [range, setRange] = useState<Range>('1m')
+  const { data, loading } = useApi(() => api.tenantStatusTrend(range), [range])
+  const caption = RANGES.find((r) => r.value === range)?.caption
+
   return (
     <Card className="p-4">
       <div className="d-flex align-items-center justify-content-between mb-3">
@@ -12,13 +27,16 @@ export function TenantStatusChart({ data, totalTenants }: { data: DashboardData[
             Tenant Status Over Time
           </h3>
           <p className="mb-0" style={{ fontSize: 11, color: '#9b87b5', marginTop: 2 }}>
-            Last 6 months — Active, Suspended, Expired
+            {caption} — Active, Suspended, Expired
           </p>
         </div>
-        <Badge tone="purple">{totalTenants} Total</Badge>
+        <div className="d-flex align-items-center gap-2">
+          <Select size="small" value={range} onChange={setRange} options={RANGES.map(({ value, label }) => ({ value, label }))} style={{ width: 140 }} />
+          <Badge tone="purple">{totalTenants} Total</Badge>
+        </div>
       </div>
-      <ResponsiveContainer width="100%" height={240}>
-        <AreaChart data={data}>
+      <ResponsiveContainer width="100%" height={240} style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 150ms' }}>
+        <AreaChart data={data ?? []}>
           <defs>
             <linearGradient id="gradActive" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#16A34A" stopOpacity={0.25} />
@@ -34,7 +52,7 @@ export function TenantStatusChart({ data, totalTenants }: { data: DashboardData[
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#F0E8FA" />
-          <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9B87B5' }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9B87B5' }} axisLine={false} tickLine={false} minTickGap={24} />
           <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9B87B5' }} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={{ borderRadius: 10, border: '1.5px solid #EDE8F5', fontSize: 12 }} />
           <Legend wrapperStyle={{ fontSize: 11 }} />
