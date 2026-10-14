@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { App, Pagination } from 'antd'
 import { confirmDialog } from '../ui/confirmOptions'
 import { Plus, Trash2, CheckCircle2, Pencil } from 'lucide-react'
 import { ListCard } from '../ui/ListCard'
@@ -6,6 +7,7 @@ import { Badge } from '../ui/Badge'
 import { Toolbar } from '../ui/Toolbar'
 import { IconButton } from '../ui/IconButton'
 import { CoursePicker } from './CoursePicker'
+import { CourseSummary } from './CourseSummary'
 import { QuizQuestionFormModal } from './QuizQuestionFormModal'
 import { useData } from '../../context/DataContext'
 import { errorMessage, type QuizQuestion } from '../../api'
@@ -14,11 +16,26 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
   const { editableCourses, quizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion } = useData()
   const [query, setQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  // Questions per page follow the window height (a card is ~210-240px) so the list fits without scrolling.
+  const fitRows = () => window.innerWidth < 992 ? 3 : Math.max(1, Math.floor((window.innerHeight - 210 - 72 - 155) / 210))
+  const [PAGE_SIZE, setPageSize] = useState(fitRows)
+  useEffect(() => {
+    const onResize = () => setPageSize(fitRows())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
   const [editing, setEditing] = useState<QuizQuestion | undefined>(undefined)
   const [error, setError] = useState('')
 
   const scoped = selectedCourseId ? quizQuestions.filter((q) => q.courseId === selectedCourseId) : quizQuestions
   const rows = useMemo(() => scoped.filter((q) => q.text.toLowerCase().includes(query.toLowerCase())), [scoped, query])
+  const lastPage = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
+  useEffect(() => setPage(1), [selectedCourseId, query])
+  useEffect(() => {
+    if (page > lastPage) setPage(lastPage)
+  }, [page, lastPage])
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const openCreate = () => {
     setEditing(undefined)
@@ -28,7 +45,12 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
     setEditing(q)
     setModalOpen(true)
   }
-  const handleSave = (data: Parameters<typeof addQuizQuestion>[0]) => (editing ? updateQuizQuestion(editing.id, data) : addQuizQuestion(data))
+  const { notification } = App.useApp()
+  const handleSave = async (data: Parameters<typeof addQuizQuestion>[0]) => {
+    if (editing) await updateQuizQuestion(editing.id, data)
+    else await addQuizQuestion(data)
+    notification.success({ title: editing ? 'Question updated' : 'Question created', description: data.text.slice(0, 80) })
+  }
   const handleDelete = (q: QuizQuestion) =>
     confirmDialog({
       title: 'Delete question?',
@@ -39,6 +61,7 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
         setError('')
         try {
           await deleteQuizQuestion(q.id)
+          notification.success({ title: 'Question deleted', description: q.text.slice(0, 80) })
         } catch (e) {
           setError(errorMessage(e))
         }
@@ -46,15 +69,15 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
     })
 
   return (
-    <div className="d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
+    <div className="lms-split d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
       <CoursePicker courses={editableCourses} selectedId={selectedCourseId} onSelect={onSelectCourse} />
 
-      <div className="flex-grow-1" style={{ minWidth: 0, overflowY: 'auto' }}>
-        <p className="mb-2 fw-bold text-dark">All Questions ({rows.length} records)</p>
+      <div className="lms-split-main flex-grow-1 d-flex flex-column" style={{ minWidth: 0, overflow: 'hidden' }}>
+        <CourseSummary course={editableCourses.find((c) => c.id === selectedCourseId)} count={scoped.length} noun="Question" />
 
         {error && <p className="small text-danger">{error}</p>}
 
-        <ListCard>
+        <ListCard className="fill-height">
           <Toolbar
             query={query}
             onQueryChange={setQuery}
@@ -64,8 +87,8 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
             newIcon={<Plus size={14} />}
           />
 
-          <div className="d-flex flex-column p-3 gap-3">
-            {rows.map((q) => (
+          <div className="d-flex flex-column p-3 gap-3 flex-grow-1 scrollbar-thin" style={{ minHeight: 0, overflowY: 'auto' }}>
+            {pageRows.map((q) => (
               <div key={q.id} className="rounded-3 p-3" style={{ border: '1.5px solid #ede8f5', background: '#fdfcff' }}>
                 <div className="d-flex align-items-start justify-content-between gap-3">
                   <div className="d-flex flex-wrap align-items-center gap-2">
@@ -86,7 +109,7 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
                   {q.options.map((opt, i) => (
                     <div key={i} className="d-flex align-items-center gap-2 small" style={{ color: '#7b6b94' }}>
                       {opt}
-                      {i === q.correctIndex && <CheckCircle2 size={14} className="text-success" />}
+                      {q.correctIndices.includes(i) && <CheckCircle2 size={14} className="text-success" />}
                     </div>
                   ))}
                 </div>
@@ -105,6 +128,18 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
                 No questions yet for this course.
               </p>
             )}
+          </div>
+          <div className="ant-table-wrapper tenant-table flex-shrink-0">
+            <Pagination
+              current={page}
+              pageSize={PAGE_SIZE}
+              total={rows.length}
+              onChange={setPage}
+              showSizeChanger={false}
+              hideOnSinglePage={false}
+              size="small"
+              showTotal={(total) => `${total} ${total === 1 ? 'item' : 'items'}`}
+            />
           </div>
         </ListCard>
       </div>

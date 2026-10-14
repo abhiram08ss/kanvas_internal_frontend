@@ -24,7 +24,8 @@ import {
   Factory,
   FolderOpen,
 } from 'lucide-react'
-import { Select } from 'antd'
+import { App, Select } from 'antd'
+import { reasonDialog } from '../ui/reasonDialog'
 import { confirmDialog } from '../ui/confirmOptions'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
@@ -34,7 +35,7 @@ import { IconButton } from '../ui/IconButton'
 import { ManualCourseModal } from '../courses/ManualCourseModal'
 import { CoursePreviewModal } from './CoursePreviewModal'
 import { useData, useDataNeeds } from '../../context/DataContext'
-import { API_ORIGIN, type CategoryType, type Course, type CourseInput, type CourseModule } from '../../api'
+import { API_ORIGIN, errorMessage, type CategoryType, type Course, type CourseInput, type CourseModule } from '../../api'
 
 // Per-category look: accent colour, icon and a one-line description for the group header.
 export const GROUP_STYLE: Record<string, { color: string; bg: string; icon: ReactNode; blurb: string }> = {
@@ -81,16 +82,15 @@ function CourseGridCard({
 }) {
   const outcomes = (course.learningOutcomes ?? []).filter(Boolean)
   // Without quiz questions there is nothing to score, so neither the question count nor a pass score is shown.
-  const facts: [string, string][] = (
+  const tiles = (
     [
-      ['Level', course.level],
-      ['Duration', course.durationHours != null ? `${course.durationHours} hours` : null],
-      ['Modules', String(modules.length)],
-      ['Questions', questionCount > 0 ? String(questionCount) : null],
-      ['Pass score', questionCount > 0 ? `${course.passScore}%` : null],
-      ['Published', course.approvedAt ? formatDate(course.approvedAt) : null],
-    ] as [string, string | null][]
-  ).filter((f): f is [string, string] => !!f[1])
+      [<Layers size={15} key="m" />, String(modules.length), modules.length === 1 ? 'Module' : 'Modules'],
+      questionCount > 0 ? [<HelpCircle size={15} key="q" />, String(questionCount), questionCount === 1 ? 'Question' : 'Questions'] : null,
+      questionCount > 0 ? [<Award size={15} key="p" />, `${course.passScore}%`, 'Pass score'] : null,
+      course.durationHours != null ? [<Clock size={15} key="d" />, `${course.durationHours}h`, 'Duration'] : null,
+    ] as ([ReactNode, string, string] | null)[]
+  ).filter((t): t is [ReactNode, string, string] => !!t)
+  const published = course.approvedAt ? formatDate(course.approvedAt) : null
   // Hover details sit beside the card. Positioned with `fixed` from the card's rect (and clamped under the
   // page header), so it works inside the grid's own scroll container, which a normal popover can't.
   const cardRef = useRef<HTMLDivElement>(null)
@@ -147,16 +147,23 @@ function CourseGridCard({
         <Badge tone="purple">{course.category}</Badge>
         <Badge>{course.status}</Badge>
       </div>
-      <div
-        className="mb-3"
-        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 10, borderRadius: 10, background: '#f8f5fd', border: '1px solid #eee7f8' }}
-      >
-        {facts.map(([label, value]) => (
-          <div key={label} style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 10.5, letterSpacing: 0.4, textTransform: 'uppercase', color: '#9b87b5', fontWeight: 600 }}>{label}</div>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1228' }}>{value}</div>
+      <div className="mb-3 d-flex flex-column gap-1" style={{ fontSize: 13.5 }}>
+        {tiles.map(([icon, value, label]) => (
+          <div key={label} className="d-flex align-items-center gap-2" style={{ color: '#3d3450' }}>
+            <span style={{ color: '#7c3fc0', display: 'inline-flex' }}>{icon}</span>
+            <span style={{ color: '#9b87b5' }}>{label}</span>
+            <strong style={{ color: '#1a1228' }}>{value}</strong>
           </div>
         ))}
+        {published && (
+          <div className="d-flex align-items-center gap-2" style={{ color: '#3d3450' }}>
+            <span style={{ color: '#7c3fc0', display: 'inline-flex' }}>
+              <CalendarDays size={15} />
+            </span>
+            <span style={{ color: '#9b87b5' }}>Published</span>
+            <strong style={{ color: '#1a1228' }}>{published}</strong>
+          </div>
+        )}
       </div>
       {course.description && (
         <div className="mb-2" style={{ color: '#3d3450', fontSize: 14 }}>
@@ -216,40 +223,34 @@ function CourseGridCard({
         <div className="course-grid-title mb-1" title={course.name}>
           {course.name}
         </div>
-        <div className="small mb-3 d-flex align-items-center justify-content-between gap-2" style={{ color: '#9b87b5' }}>
-          <span>{course.code}</span>
-          {course.approvedAt && (
+        <div className="mb-3 d-flex align-items-center justify-content-between gap-2" style={{ fontSize: 12, color: '#9b87b5' }}>
+          <span>
+            Code · <span style={{ color: '#6b5a85', fontWeight: 600 }}>{course.code}</span>
+          </span>
+          {published && (
             <span className="d-inline-flex align-items-center gap-1" style={{ whiteSpace: 'nowrap' }}>
-              <CalendarDays size={12} /> {formatDate(course.approvedAt)}
+              <CalendarDays size={12} /> Published on <span style={{ color: '#6b5a85', fontWeight: 600 }}>{published}</span>
             </span>
           )}
         </div>
-        <div className="course-grid-stats mb-3">
-          <span title="Modules">
-            <Layers size={14} /> {modules.length}
-          </span>
-          {questionCount > 0 && (
-            <span title="Quiz questions">
-              <HelpCircle size={14} /> {questionCount}
+        <div className="mb-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
+          {tiles.map(([icon, value, label]) => (
+            <span
+              key={label}
+              className="d-inline-flex align-items-center justify-content-center gap-1"
+              style={{ padding: '6px 4px', borderRadius: 10, background: '#f8f5fd', border: '1px solid #eee7f8', fontSize: 12, fontWeight: 700, color: '#1a1228', whiteSpace: 'nowrap' }}
+            >
+              <span style={{ color: '#7c3fc0', display: 'inline-flex' }}>{icon}</span>
+              {value} <span style={{ fontWeight: 500, color: '#9b87b5' }}>{label === 'Pass score' ? 'Pass' : label}</span>
             </span>
-          )}
-          {course.durationHours != null && (
-            <span title="Duration">
-              <Clock size={14} /> {course.durationHours}h
-            </span>
-          )}
-          {questionCount > 0 && (
-            <span title="Pass score">
-              <Award size={14} /> {course.passScore}%
-            </span>
-          )}
+          ))}
         </div>
         <div className="d-flex align-items-center gap-2 mt-auto pt-3" style={{ borderTop: '1px solid #ede8f5' }}>
           <IconButton icon={<Pencil size={14} />} onClick={onEdit} title="Edit course" tone="blue" />
           <IconButton
             icon={course.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
             onClick={onToggleStatus}
-            title={course.status === 'Active' ? 'Deactivate' : 'Activate'}
+            title={course.status === 'Active' ? 'Deactivate' : 'Re-activate'}
             tone={course.status === 'Active' ? 'amber' : 'green'}
           />
           <IconButton icon={<Eye size={14} />} onClick={onPreview} title="Full preview" tone="purple" />
@@ -326,18 +327,35 @@ export function CoursesTab() {
     setEditing(course)
     setModalOpen(true)
   }
-  const handleSave = (data: Partial<CourseInput>) => (editing ? updateCourse(editing.id, data) : addCourse(data as CourseInput))
-  const toggleStatus = (course: Course) =>
-    updateCourse(course.id, {
-      status: course.status === 'Active' ? 'Inactive' : 'Active',
-    })
+  const { notification } = App.useApp()
+  const handleSave = async (data: Partial<CourseInput>) => {
+    if (editing) await updateCourse(editing.id, data)
+    else await addCourse(data as CourseInput)
+    notification.success({ title: editing ? 'Course updated' : 'Course created', description: data.name ?? editing?.name })
+  }
+  const toggleStatus = async (course: Course, reason?: string) => {
+    const next = course.status === 'Active' ? 'Inactive' : 'Active'
+    try {
+      await updateCourse(course.id, { status: next, ...(reason ? { reason } : {}) })
+      notification.success({ title: next === 'Active' ? 'Course re-activated' : 'Course deactivated', description: course.name })
+    } catch (e) {
+      notification.error({ title: 'Action failed', description: `${course.name}: ${errorMessage(e)}` })
+    }
+  }
   const confirmToggle = (course: Course) => {
-    const deactivating = course.status === 'Active'
+    if (course.status === 'Active') {
+      reasonDialog({
+        title: 'Deactivate course?',
+        content: `Are you sure you want to deactivate ${course.name}?`,
+        okText: 'Deactivate Course',
+        onOk: (reason) => toggleStatus(course, reason),
+      })
+      return
+    }
     confirmDialog({
-      title: deactivating ? 'Deactivate course?' : 'Activate course?',
-      content: `Are you sure you want to ${deactivating ? 'deactivate' : 'activate'} ${course.name}?`,
-      okText: deactivating ? 'Deactivate Course' : 'Activate Course',
-      okButtonProps: { danger: deactivating },
+      title: 'Re-activate course?',
+      content: `Are you sure you want to re-activate ${course.name}?`,
+      okText: 'Re-activate Course',
       onOk: () => toggleStatus(course),
     })
   }
@@ -496,7 +514,7 @@ export function CoursesTab() {
                               <IconButton
                                 icon={c.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
                                 onClick={() => confirmToggle(c)}
-                                title={c.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                title={c.status === 'Active' ? 'Deactivate' : 'Re-activate'}
                                 tone={c.status === 'Active' ? 'amber' : 'green'}
                               />
                               <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Full preview" tone="purple" />

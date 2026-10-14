@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Layout, Menu } from 'antd'
-import { LayoutDashboard, Building2, ClipboardCheck, FileText, RefreshCcw, Users, FileClock } from 'lucide-react'
+import { ChevronLeft, LayoutDashboard, Building2, ClipboardCheck, FileText, Users, FileClock } from 'lucide-react'
 import { useSidebarCollapse } from './hooks/useSidebarCollapse'
 import { useAuth } from '../../context/AuthContext'
 
@@ -16,7 +16,6 @@ const navItems = [
   // '/course-categories' is intentionally not linked here either, same reasoning as '/courses' above -
   // the route/page still exists (unlinked, not deleted).
   // The rest are platform/billing-operations screens - a Content User only ever works the 4 items above.
-  { to: '/provisioning', label: 'Provisioning', icon: RefreshCcw, superOnly: true },
   // '/subscription' is intentionally not linked here - the route/page still exists (unlinked, not deleted).
   // '/usage-analytics' is intentionally not linked here - the route/page still exists (unlinked, not deleted).
   { to: '/platform-users', label: 'Platform Users', icon: Users, superOnly: true },
@@ -24,7 +23,9 @@ const navItems = [
 ]
 
 export function Sidebar() {
-  const { collapsed, toggle } = useSidebarCollapse()
+  const { collapsed: desktopCollapsed, toggle, mobile, drawerOpen, setDrawerOpen } = useSidebarCollapse()
+  // On a phone the sidebar is a full-width-labels drawer, never the icon-only strip.
+  const collapsed = mobile ? false : desktopCollapsed
 
   // Ctrl/Cmd + B opens and closes the sidebar, like most editors.
   useEffect(() => {
@@ -38,13 +39,18 @@ export function Sidebar() {
     return () => window.removeEventListener('keydown', onKey)
   }, [toggle])
   const { pathname } = useLocation()
+  // Close the drawer after navigating.
+  useEffect(() => setDrawerOpen(false), [pathname, setDrawerOpen])
   const { user } = useAuth()
   const isSuper = user?.role === 'Super Admin'
   const items = navItems.filter((item) => isSuper || !item.superOnly)
   const selected = items.find(({ to }) => (to === '/' ? pathname === '/' : pathname.startsWith(to)))?.to
 
   return (
+    <>
+    {mobile && <div className={`sidebar-backdrop${drawerOpen ? ' is-open' : ''}`} onClick={() => setDrawerOpen(false)} />}
     <Layout.Sider
+      className={mobile ? `sidebar-drawer${drawerOpen ? ' is-open' : ''}` : undefined}
       theme="light"
       width={256}
       collapsedWidth={80}
@@ -69,17 +75,28 @@ export function Sidebar() {
         items={items.map(({ to, label, icon: Icon }) => ({ key: to, icon: <Icon size={16} />, label: <Link to={to}>{label}</Link> }))}
       />
 
-      <div className="sidebar-brand-light flex-shrink-0" title="Powered by Kan Associations © 2026">
+        {!mobile && (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-pressed={!collapsed}
+          className={`sidebar-edge-toggle${collapsed ? ' is-collapsed' : ''}`}
+        >
+          <ChevronLeft size={13} strokeWidth={3} />
+        </button>
+        )}
+
+      <div className="sidebar-brand-light flex-shrink-0">
         {collapsed ? (
-          <span className="sidebar-brand-year">© 2026</span>
+          <span>© 2026</span>
         ) : (
           <>
-            <span className="sidebar-brand-label">Powered by</span>
-            <span className="sidebar-brand-name">Kan Associations</span>
-            <span className="sidebar-brand-year">© 2026</span>
+            Powered by <strong>Kan Associations</strong> <span className="sidebar-brand-year">© 2026</span>
           </>
         )}
       </div>
     </Layout.Sider>
+    </>
   )
 }

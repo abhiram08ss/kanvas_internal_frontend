@@ -1,10 +1,17 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 const STORAGE_KEY = 'kanvas-sidebar-collapsed'
+
+/** Below this width (px) the sidebar becomes a slide-in drawer opened from the header, instead of a fixed column. */
+export const MOBILE_BREAKPOINT = 992
 
 interface SidebarCollapseValue {
   collapsed: boolean
   toggle: () => void
+  /** True on phones / small tablets: the sidebar is an off-canvas drawer. */
+  mobile: boolean
+  drawerOpen: boolean
+  setDrawerOpen: (open: boolean) => void
 }
 
 const SidebarCollapseContext = createContext<SidebarCollapseValue | undefined>(undefined)
@@ -28,7 +35,19 @@ export function SidebarCollapseProvider({ children }: { children: ReactNode }) {
       }
       return !c
     })
-  return <SidebarCollapseContext.Provider value={{ collapsed, toggle }}>{children}</SidebarCollapseContext.Provider>
+  const query = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`
+  const [mobile, setMobile] = useState(() => window.matchMedia(query).matches)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const onChange = () => {
+      setMobile(mq.matches)
+      if (!mq.matches) setDrawerOpen(false)
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [query])
+  return <SidebarCollapseContext.Provider value={{ collapsed, toggle, mobile, drawerOpen, setDrawerOpen }}>{children}</SidebarCollapseContext.Provider>
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

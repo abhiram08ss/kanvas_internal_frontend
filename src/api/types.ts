@@ -225,7 +225,7 @@ export type CourseModuleInput = Omit<CourseModule, 'id' | 'course' | 'scormPacka
   removeScorm?: boolean
 }
 
-export type QuizQuestionType = 'single choice' | 'true false'
+export type QuizQuestionType = 'single choice' | 'true false' | 'multi choice'
 
 export interface QuizQuestion {
   id: number
@@ -236,6 +236,8 @@ export interface QuizQuestion {
   text: string
   options: string[]
   correctIndex: number
+  /** Every correct answer: one entry for single choice / true false, two or more for multi choice. */
+  correctIndices: number[]
   marks: number
   explanation: string
 }
@@ -246,6 +248,8 @@ export interface CertificateTemplate {
   id: number
   name: string
   logo: string
+  /** Optional uploaded picture behind the certificate (stored like a course cover); null = just the background colour. */
+  backgroundImage: string | null
   colors: string[]
   signatures: string[]
   status: 'Active' | 'Inactive'
@@ -322,7 +326,7 @@ export interface IssuedCertificate {
   score: number | null
   issuedAt: string
   validUntil: string | null
-  design: { logo: string; colors: string[]; signatures: string[] }
+  design: { logo: string; backgroundImage?: string | null; colors: string[]; signatures: string[] }
 }
 
 export type PaymentLinkStatus = 'Pending' | 'Paid' | 'Failed' | 'Expired'

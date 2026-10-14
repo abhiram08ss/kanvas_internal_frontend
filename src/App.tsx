@@ -13,7 +13,6 @@ import Courses from './pages/Courses'
 import CourseCategories from './pages/CourseCategories'
 import Approvals from './pages/Approvals'
 import LmsContent from './pages/LmsContent'
-import Provisioning from './pages/Provisioning'
 import Subscription from './pages/Subscription'
 import UsageAnalytics from './pages/UsageAnalytics'
 import PlatformUsers from './pages/PlatformUsers'
@@ -134,7 +133,7 @@ function AppRoutes() {
         path="/provisioning"
         element={
           <RequireAuth>
-            <Provisioning />
+            <Navigate to="/tenants?tab=provisioning" replace />
           </RequireAuth>
         }
       />

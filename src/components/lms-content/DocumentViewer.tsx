@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, ExternalLink, Loader2 } from 'lucide-react'
-import { Button } from 'antd'
+import { Loader2 } from 'lucide-react'
 import { renderAsync } from 'docx-preview'
+import { init as initPptx } from 'pptx-preview'
 import * as pdfjs from 'pdfjs-dist'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
@@ -9,24 +9,16 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase()
 
-/** The card shown for files a browser can't display itself (old .doc, PowerPoint) or when rendering failed. */
-function FileCard({ url, name, note }: { url: string; name: string; note?: string }) {
+/** The card shown for files a browser can't display itself (old .doc / .ppt) or when rendering failed. */
+function FileCard({ name, note }: { name: string; note?: string }) {
   const ext = extOf(name).replace('.', '').toUpperCase().slice(0, 4) || 'FILE'
   return (
     <div className="doc-card">
       <span className="doc-card-badge">{ext}</span>
       <div className="doc-card-meta">
         <div className="doc-card-name text-truncate">{name}</div>
-        <div className="doc-card-note">{note ?? 'This file type cannot be shown in the browser. Open or download it to read it.'}</div>
+        <div className="doc-card-note">{note ?? 'This file type cannot be previewed in the browser.'}</div>
       </div>
-      <a href={url} target="_blank" rel="noreferrer">
-        <Button icon={<ExternalLink size={14} />}>Open</Button>
-      </a>
-      <a href={url} download>
-        <Button type="primary" icon={<Download size={14} />}>
-          Download
-        </Button>
-      </a>
     </div>
   )
 }
@@ -56,12 +48,12 @@ async function renderPdf(buf: ArrayBuffer, host: HTMLElement, isCancelled: () =>
 /**
  * Shows a document module's file in one consistent frame: PDF and Word (.docx) pages are drawn on the page itself
  * (pdf.js and docx-preview - free, client-side, nothing leaves the browser).
- * Anything else (.doc, PowerPoint) gets a file card with Open / Download.
+ * PowerPoint (.pptx) slides are drawn by pptx-preview. Anything else (.doc, .ppt) gets a plain file card (no download or open links).
  */
 export function DocumentViewer({ url, fileName }: { url: string; fileName: string }) {
   const name = fileName || url.split('/').pop() || 'Document'
   const ext = extOf(name) || extOf(url)
-  const kind: 'docx' | 'pdf' | 'other' = ext === '.docx' ? 'docx' : ext === '.pdf' ? 'pdf' : 'other'
+  const kind: 'docx' | 'pdf' | 'pptx' | 'other' = ext === '.docx' ? 'docx' : ext === '.pdf' ? 'pdf' : ext === '.pptx' ? 'pptx' : 'other'
   const host = useRef<HTMLDivElement>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>(kind === 'other' ? 'failed' : 'loading')
 
@@ -78,7 +70,10 @@ export function DocumentViewer({ url, fileName }: { url: string; fileName: strin
         if (cancelled || !host.current) return
         host.current.innerHTML = ''
         if (kind === 'pdf') await renderPdf(buf, host.current, () => cancelled)
-        else await renderAsync(buf, host.current, undefined, { className: 'docx', inWrapper: true, ignoreWidth: true, ignoreHeight: true, breakPages: false })
+        else if (kind === 'pptx') {
+          const width = Math.max(host.current.clientWidth - 24, 320)
+          await initPptx(host.current, { width, height: Math.round((width * 9) / 16), mode: 'list' }).preview(buf)
+        } else await renderAsync(buf, host.current, undefined, { className: 'docx', inWrapper: true, ignoreWidth: true, ignoreHeight: true, breakPages: false })
         if (!cancelled) setState('ready')
       })
       .catch(() => !cancelled && setState('failed'))
@@ -87,7 +82,7 @@ export function DocumentViewer({ url, fileName }: { url: string; fileName: strin
     }
   }, [url, kind])
 
-  if (kind === 'other') return <FileCard url={url} name={name} />
+  if (kind === 'other') return <FileCard name={name} />
   return (
     <div>
       {state === 'loading' && (
@@ -95,7 +90,7 @@ export function DocumentViewer({ url, fileName }: { url: string; fileName: strin
           <Loader2 size={16} className="spin" /> Loading document…
         </div>
       )}
-      {state === 'failed' && <FileCard url={url} name={name} note="The document could not be shown here. Open or download it to read it." />}
+      {state === 'failed' && <FileCard name={name} note="The document could not be loaded for preview." />}
       <div className={`doc-pages${state === 'ready' ? '' : ' is-hidden'}`} ref={host} />
     </div>
   )

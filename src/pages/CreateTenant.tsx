@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { App, Form, Input, Select, Button, Empty } from 'antd'
 import './CreateTenant.css'
-import { WizardSteps, WizardTitleRow, FormSection } from '../components/tenants/WizardSteps'
+import './CreateTenantPage.css'
+import { WizardSteps } from '../components/tenants/WizardSteps'
 import {
   ArrowLeft,
+  ArrowRight,
+  Globe,
   Building2,
   Check,
   CheckCircle2,
@@ -29,7 +32,8 @@ import { api, errorMessage, type Credentials, type ProvisioningRecord } from '..
 
 const KANVAS_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
 
-const formSteps = ['Organization', 'Select Courses', 'Review & Proceed']
+const formSteps = ['Organization', 'Select courses', 'Review & proceed']
+const LIMIT_PRESETS = [50, 100, 250, 500]
 
 type Phase = 'form' | 'provisioning' | 'credentials'
 
@@ -70,6 +74,7 @@ export default function CreateTenant() {
   // Step 1 — Organization / Billing / LMS Admin
   const [orgName, setOrgName] = useState('')
   const [tenantCode, setTenantCode] = useState('')
+  const [codeTouched, setCodeTouched] = useState(false)
   const [industry, setIndustry] = useState(industries[0])
   const [country, setCountry] = useState('India')
   const [address, setAddress] = useState('')
@@ -313,7 +318,7 @@ export default function CreateTenant() {
               <Button
                 type="primary"
                 block
-                size="large"
+                size="middle"
                 className="mt-4"
                 disabled={!provisioningOk}
                 onClick={() => {
@@ -352,10 +357,10 @@ export default function CreateTenant() {
                 Provisioning).
               </p>
               <div className="mt-4 d-flex gap-3">
-                <Button size="large" className="flex-grow-1" icon={<Copy size={15} />} onClick={() => void copyCredentials()}>
+                <Button size="middle" className="flex-grow-1" icon={<Copy size={15} />} onClick={() => void copyCredentials()}>
                   {copied ? 'Copied!' : 'Copy Details'}
                 </Button>
-                <Button type="primary" size="large" className="flex-grow-1" onClick={() => navigate('/tenants')}>
+                <Button type="primary" size="middle" className="flex-grow-1" onClick={() => navigate('/tenants')}>
                   Done
                 </Button>
               </div>
@@ -368,275 +373,422 @@ export default function CreateTenant() {
 
   // ---- 3-step form (antd) ----
 
-  const primaryBtnStyle = { background: KANVAS_GRADIENT, border: 'none' }
-  const cancelBtnStyle = { background: '#f5f4f8', color: '#7b6b94', border: '1.5px solid #ede8f5' }
+  const requiredFilled = !!(orgName.trim() && tenantCode && userLimit.trim() && billingEmail.trim() && lmsAdminName.trim() && lmsAdminEmail.trim())
+  const nextLabel = step === 1 ? 'Next: Select courses' : step === 2 ? 'Next: Review' : 'Create tenant'
+  const limitNumber = Number(userLimit)
+  const initial = orgName.trim()[0]?.toUpperCase()
+  const hintStyle = { margin: 0 }
 
   return (
-    <AppLayout title="Create Tenant" subtitle={`Step ${step} of 3`}>
-      <div className="wz-page">
-        <Button type="text" className="mb-3" icon={<ArrowLeft size={16} />} onClick={() => navigate('/tenants')} style={{ color: '#7b6b94', fontWeight: 600 }}>
-          Back to Tenants
-        </Button>
-
-        <WizardTitleRow title="Create New Tenant" />
-        <div className="wz-stepper-card">
-          <WizardSteps steps={formSteps} current={step} />
+    <AppLayout title="Create tenant" subtitle={`Step ${step} of 3`} crumbs={[{ label: 'Tenants', to: '/tenants' }, { label: 'Create tenant' }]}>
+      <div className="tc-page">
+        <button type="button" className="tc-back" onClick={() => navigate('/tenants')}>
+          <ArrowLeft size={15} /> Back to tenants
+        </button>
+        <div className="tc-title-row">
+          <div>
+            <h2 className="font-display tc-title">Create new tenant</h2>
+            <p className="tc-sub">Set up the organization, who gets billed, and who manages their LMS.</p>
+          </div>
+          <span className="tc-required">
+            <b>*</b> Required
+          </span>
         </div>
 
-        <Card className="p-0 ct-wizard-card">
-          <div className={step === 1 ? '' : 'p-4'}>
-            {step === 1 && (
-              <Form layout="vertical" noValidate>
-                <FormSection icon={<Building2 size={22} />} title="Organization Information" description="Organization profile and tenant settings.">
-                  <div className="row">
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Organization Name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
-                        <Input
-                          size="middle"
-                          value={orgName}
-                          maxLength={200}
-                          onChange={(e) => { setOrgName(e.target.value); clearField('orgName') }}
-                          placeholder="Enter organization name"
-                        />
-                      </Form.Item>
+        <div className="tc-stepper">
+          <WizardSteps steps={formSteps} current={step} onStepClick={(n) => n < step && !busy && setStep(n)} captions={['Profile, billing & admin', 'Choose the course catalog', 'Confirm and provision']} />
+        </div>
+
+        {step === 1 && (
+          <Form layout="vertical" noValidate>
+            <div className="tc-grid">
+              <div className="tc-main">
+                <section className="tc-card">
+                  <div className="tc-card-head">
+                    <span className="tc-card-icon">
+                      <Building2 size={20} />
+                    </span>
+                    <div>
+                      <h3 className="tc-card-title">Organization</h3>
+                      <p className="tc-card-desc">Who this tenant is and how many people can use it.</p>
                     </div>
-                    <div className="col-12 col-md-4">
+                  </div>
+                  <div className="tc-fields">
+                    <Form.Item label="Organization name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
+                      <Input
+                        size="middle"
+                        value={orgName}
+                        maxLength={200}
+                        onChange={(e) => {
+                          setOrgName(e.target.value)
+                          // The code follows the name until the admin types their own.
+                          if (!codeTouched) {
+                            setTenantCode(normalizeCode(e.target.value))
+                            clearField('tenantCode')
+                          }
+                          clearField('orgName')
+                        }}
+                        placeholder="e.g. Acme Industries"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      label="Tenant code"
+                      required
+                      validateStatus={fieldErrors.tenantCode ? 'error' : ''}
+                      help={fieldErrors.tenantCode ?? <span className="tc-hint" style={hintStyle}>Lowercase letters and numbers only.</span>}
+                    >
+                      <Input
+                        size="middle"
+                        className="tc-mono"
+                        value={tenantCode}
+                        onChange={(e) => {
+                          const v = normalizeCode(e.target.value)
+                          setTenantCode(v)
+                          setCodeTouched(v !== '')
+                          clearField('tenantCode')
+                        }}
+                        placeholder="Auto-filled from the name"
+                      />
+                    </Form.Item>
+                    <Form.Item label="Industry">
+                      <Select size="middle" value={industry} onChange={setIndustry} options={industries.map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
+                    </Form.Item>
+                    <Form.Item label="Country" validateStatus={fieldErrors.country ? 'error' : ''} help={fieldErrors.country}>
+                      <Select
+                        size="middle"
+                        showSearch
+                        value={country || undefined}
+                        onChange={(v) => {
+                          setCountry(v)
+                          clearField('country')
+                        }}
+                        options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+                        placeholder="Select country"
+                        optionFilterProp="label"
+                        style={{ width: '100%' }}
+                      />
+                    </Form.Item>
+                    <div>
                       <Form.Item
-                        label="Tenant Code"
+                        label="User limit"
                         required
-                        validateStatus={fieldErrors.tenantCode ? 'error' : ''}
-                        help={fieldErrors.tenantCode}
-                        tooltip="Lowercase letters and digits only."
+                        validateStatus={fieldErrors.userLimit ? 'error' : ''}
+                        help={fieldErrors.userLimit ?? <span className="tc-hint" style={hintStyle}>Learners who can sign in at the same time. You can raise it later.</span>}
                       >
-                        <Input
-                          size="middle"
-                          value={tenantCode}
-                          onChange={(e) => { setTenantCode(normalizeCode(e.target.value)); clearField('tenantCode') }}
-                          placeholder="Enter tenant code"
-                        />
+                        <div className="tc-limit">
+                          {LIMIT_PRESETS.map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              className={`tc-limit-pick${userLimit === String(n) ? ' is-active' : ''}`}
+                              onClick={() => {
+                                setUserLimit(String(n))
+                                clearField('userLimit')
+                              }}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                          <span className="tc-limit-or">or</span>
+                          <Input
+                            size="middle"
+                            type="number"
+                            min={1}
+                            value={userLimit}
+                            onChange={(e) => {
+                              setUserLimit(e.target.value)
+                              clearField('userLimit')
+                            }}
+                            style={{ width: 120 }}
+                            status={fieldErrors.userLimit ? 'error' : undefined}
+                          />
+                          <span className="tc-limit-unit">users</span>
+                        </div>
                       </Form.Item>
                     </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Industry">
-                        <Select size="middle" value={industry} onChange={setIndustry} options={industries.map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
-                      </Form.Item>
-                    </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="User Limit" required validateStatus={fieldErrors.userLimit ? 'error' : ''} help={fieldErrors.userLimit}>
-                        <Input
-                          size="middle"
-                          type="number"
-                          min={1}
-                          value={userLimit}
-                          onChange={(e) => { setUserLimit(e.target.value); clearField('userLimit') }}
-                          placeholder="Enter user limit"
-                        />
-                      </Form.Item>
-                    </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Country" validateStatus={fieldErrors.country ? 'error' : ''} help={fieldErrors.country}>
-                        <Select
-                          size="middle"
-                          showSearch
-                          value={country || undefined}
-                          onChange={(v) => { setCountry(v); clearField('country') }}
-                          options={COUNTRIES.map((c) => ({ value: c, label: c }))}
-                          placeholder="Select country"
-                          optionFilterProp="label"
-                          style={{ width: '100%' }}
-                        />
-                      </Form.Item>
-                    </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Address">
-                        <Input size="middle" maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" />
-                      </Form.Item>
-                    </div>
-                  </div>
-                </FormSection>
-
-                <FormSection icon={<Receipt size={22} />} title="Billing Contact Details" description="Contact information for billing.">
-                  <div className="row">
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Billing Contact Name" validateStatus={fieldErrors.billingContactName ? 'error' : ''} help={fieldErrors.billingContactName}>
-                        <Input
-                          size="middle"
-                          value={billingContactName}
-                          maxLength={120}
-                          onChange={(e) => { setBillingContactName(e.target.value); clearField('billingContactName') }}
-                          placeholder="Enter contact name"
-                        />
-                      </Form.Item>
-                    </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Billing Email" required validateStatus={fieldErrors.billingEmail ? 'error' : ''} help={fieldErrors.billingEmail}>
-                        <Input
-                          size="middle"
-                          type="email"
-                          value={billingEmail}
-                          onChange={(e) => { setBillingEmail(e.target.value); clearField('billingEmail') }}
-                          placeholder="Enter billing email"
-                        />
-                      </Form.Item>
-                    </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Phone" validateStatus={fieldErrors.billingPhone ? 'error' : ''} help={fieldErrors.billingPhone}>
-                        <Input
-                          size="middle"
-                          inputMode="tel"
-                          value={billingPhone}
-                          maxLength={10}
-                          onChange={(e) => { setBillingPhone(e.target.value.replace(/\D/g, '')); clearField('billingPhone') }}
-                          placeholder="Enter 10-digit phone number"
-                        />
+                    <div>
+                      <Form.Item
+                        label={
+                          <>
+                            Address <span className="tc-opt">(optional)</span>
+                          </>
+                        }
+                      >
+                        <Input size="middle" maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, state, PIN" />
                       </Form.Item>
                     </div>
                   </div>
-                </FormSection>
+                </section>
 
-                <FormSection icon={<UserCog size={22} />} title="LMS Admin Details" description="Primary administrator for the tenant's LMS.">
-                  <div className="row">
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Admin Name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
-                        <Input
-                          size="middle"
-                          value={lmsAdminName}
-                          maxLength={120}
-                          onChange={(e) => { setLmsAdminName(e.target.value); clearField('lmsAdminName') }}
-                          placeholder="Enter admin name"
-                        />
-                      </Form.Item>
+                <section className="tc-card">
+                  <div className="tc-card-head">
+                    <span className="tc-card-icon">
+                      <Receipt size={20} />
+                    </span>
+                    <div>
+                      <h3 className="tc-card-title">Billing contact</h3>
+                      <p className="tc-card-desc">Where invoices and renewal reminders go.</p>
                     </div>
-                    <div className="col-12 col-md-4">
-                      <Form.Item label="Admin Email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
-                        <Input
-                          size="middle"
-                          type="email"
-                          value={lmsAdminEmail}
-                          onChange={(e) => { setLmsAdminEmail(e.target.value); clearField('lmsAdminEmail') }}
-                          placeholder="Enter admin email"
-                        />
+                  </div>
+                  <div className="tc-fields">
+                    <Form.Item
+                      label={
+                        <>
+                          Contact name <span className="tc-opt">(optional)</span>
+                        </>
+                      }
+                      validateStatus={fieldErrors.billingContactName ? 'error' : ''}
+                      help={fieldErrors.billingContactName}
+                    >
+                      <Input
+                        size="middle"
+                        value={billingContactName}
+                        maxLength={120}
+                        onChange={(e) => {
+                          setBillingContactName(e.target.value)
+                          clearField('billingContactName')
+                        }}
+                        placeholder="Full name"
+                      />
+                    </Form.Item>
+                    <Form.Item label="Billing email" required validateStatus={fieldErrors.billingEmail ? 'error' : ''} help={fieldErrors.billingEmail}>
+                      <Input
+                        size="middle"
+                        type="email"
+                        value={billingEmail}
+                        onChange={(e) => {
+                          setBillingEmail(e.target.value)
+                          clearField('billingEmail')
+                        }}
+                        placeholder="billing@company.com"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <>
+                          Phone <span className="tc-opt">(optional)</span>
+                        </>
+                      }
+                      validateStatus={fieldErrors.billingPhone ? 'error' : ''}
+                      help={fieldErrors.billingPhone}
+                    >
+                      <Input
+                        size="middle"
+                        addonBefore="+91"
+                        inputMode="tel"
+                        value={billingPhone}
+                        maxLength={10}
+                        onChange={(e) => {
+                          setBillingPhone(e.target.value.replace(/\D/g, ''))
+                          clearField('billingPhone')
+                        }}
+                        placeholder="98765 43210"
+                      />
+                    </Form.Item>
+                  </div>
+                </section>
+
+                <section className="tc-card">
+                  <div className="tc-card-head">
+                    <span className="tc-card-icon">
+                      <UserCog size={20} />
+                    </span>
+                    <div>
+                      <h3 className="tc-card-title">LMS administrator</h3>
+                      <p className="tc-card-desc">The person who will manage courses and users for this tenant.</p>
+                    </div>
+                  </div>
+                  <div className="tc-fields">
+                    <Form.Item label="Admin name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
+                      <Input
+                        size="middle"
+                        value={lmsAdminName}
+                        maxLength={120}
+                        onChange={(e) => {
+                          setLmsAdminName(e.target.value)
+                          clearField('lmsAdminName')
+                        }}
+                        placeholder="Full name"
+                      />
+                    </Form.Item>
+                    <Form.Item label="Admin email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
+                      <Input
+                        size="middle"
+                        type="email"
+                        value={lmsAdminEmail}
+                        onChange={(e) => {
+                          setLmsAdminEmail(e.target.value)
+                          clearField('lmsAdminEmail')
+                        }}
+                        placeholder="admin@company.com"
+                      />
+                    </Form.Item>
+                    <div>
+                      <Form.Item label="Tenant URL">
+                        <div className="tc-url">
+                          <Globe size={15} />
+                          <span>https://[tenant-url]</span>
+                          <Copy size={14} style={{ opacity: 0.5 }} />
+                        </div>
+                        <p className="tc-hint">Generated when the tenant is created.</p>
                       </Form.Item>
                     </div>
                   </div>
                   {orgError && <p className="small text-danger mt-3 mb-0">{orgError}</p>}
-                </FormSection>
-              </Form>
-            )}
+                </section>
+              </div>
 
-            {step === 2 && (
+              <aside className="tc-aside">
+                <div className="tc-preview">
+                  <p className="tc-preview-label">Tenant preview</p>
+                  <div className="tc-preview-id">
+                    <span className="tc-preview-avatar">{initial ?? '–'}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <div className={`tc-preview-name${orgName.trim() ? '' : ' is-empty'}`}>{orgName.trim() || 'Organization name'}</div>
+                      <span className="tc-preview-code">{tenantCode ? tenantCode.toUpperCase() : 'TENANT-CODE'}</span>
+                    </div>
+                  </div>
+                  <div className="tc-preview-row">
+                    <span>User limit</span>
+                    <span>{Number.isFinite(limitNumber) && limitNumber > 0 ? `${limitNumber.toLocaleString()} users` : 'Not set'}</span>
+                  </div>
+                  <div className="tc-preview-row">
+                    <span>Industry</span>
+                    <span>{industry || 'Not set'}</span>
+                  </div>
+                  <div className="tc-preview-row">
+                    <span>Billing Email</span>
+                    <span>{billingEmail.trim() || 'Not set'}</span>
+                  </div>
+                  <div className="tc-preview-row">
+                    <span>Admin Email</span>
+                    <span>{lmsAdminEmail.trim() || 'Not set'}</span>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </Form>
+        )}
+
+        {step === 2 && (
+          <div className="tc-step-card">
+            <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
               <div>
-                <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
-                  <div>
-                    <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
-                    <p className="mb-0 small text-secondary">Choose which published courses this tenant should have access to.</p>
-                  </div>
-                  <span className="ct-selected-pill">
-                    <Check size={14} /> {selectedCourseIds.length} selected
-                  </span>
-                </div>
-
-                <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
-                  <div style={{ width: 320, maxWidth: '100%' }}>
-                    <Input
-                      size="large"
-                      allowClear
-                      value={courseQuery}
-                      onChange={(e) => setCourseQuery(e.target.value)}
-                      placeholder="Search courses"
-                      prefix={<Search size={14} color="#9b87b5" />}
-                    />
-                  </div>
-                  <div className="d-flex flex-wrap gap-2">
-                    {['All', ...categoryTypes].map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        className={`ct-chip${courseCategory === cat ? ' is-active' : ''}`}
-                        onClick={() => setCourseCategory(cat)}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="ms-auto d-flex gap-2">
-                    <Button onClick={selectAllVisible} disabled={visibleCourses.length === 0}>
-                      Select all{courseCategory !== 'All' || courseQuery ? ' shown' : ''}
-                    </Button>
-                    <Button onClick={() => setSelectedCourseIds([])} disabled={selectedCourseIds.length === 0}>
-                      Clear
-                    </Button>
-                  </div>
-                </div>
-
-                {visibleCourses.length === 0 ? (
-                  <div className="py-5">
-                    <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                  </div>
-                ) : (
-                  <CourseGroupPicker courses={visibleCourses} selected={selectedCourseIds} onToggle={toggleCourse} />
-                )}
+                <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
+                <p className="mb-0 small text-secondary">Choose which published courses this tenant should have access to.</p>
               </div>
-            )}
+              <span className="ct-selected-pill">
+                <Check size={14} /> {selectedCourseIds.length} selected
+              </span>
+            </div>
 
-            {step === 3 && (
-              <div className="mx-auto" style={{ maxWidth: 920 }}>
-                <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Review &amp; Proceed</h3>
-                <p className="mb-4 small text-secondary">Check the details below. Click Create Tenant to provision it.</p>
-
-                <div className="row g-3">
-                  <div className="col-12 col-lg-6">
-                    <ReviewCard icon={<Building2 size={18} />} title="Organization">
-                      <ReviewRow label="Name" value={orgName} />
-                      <ReviewRow label="Tenant code" value={tenantCode} mono />
-                      <ReviewRow label="Industry" value={industry} />
-                      <ReviewRow label="Country" value={country} />
-                      <ReviewRow label="User limit" value={userLimit} />
-                      <ReviewRow label="Address" value={address} />
-                    </ReviewCard>
-                  </div>
-                  <div className="col-12 col-lg-6 d-flex flex-column gap-3">
-                    <ReviewCard icon={<Mail size={18} />} title="Billing contact">
-                      <ReviewRow label="Name" value={billingContactName} />
-                      <ReviewRow label="Email" value={billingEmail} />
-                      <ReviewRow label="Phone" value={billingPhone} />
-                    </ReviewCard>
-                    <ReviewCard icon={<ShieldCheck size={18} />} title="LMS admin">
-                      <ReviewRow label="Name" value={lmsAdminName} />
-                      <ReviewRow label="Email" value={lmsAdminEmail} />
-                    </ReviewCard>
-                  </div>
-                  <div className="col-12">
-                    <ReviewCard icon={<BookOpen size={18} />} title={`Courses (${selectedCourses.length})`}>
-                      {selectedCourses.length === 0 ? (
-                        <p className="small text-secondary mb-0">No courses selected - you can assign courses later from the Tenants page.</p>
-                      ) : (
-                        <ReviewCourseGroups courses={selectedCourses} />
-                      )}
-                    </ReviewCard>
-                  </div>
-                </div>
-
-                {flowError && <p className="mt-3 small text-danger mb-0">{flowError}</p>}
+            <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+              <div style={{ width: 320, maxWidth: '100%' }}>
+                <Input
+                  size="middle"
+                  allowClear
+                  value={courseQuery}
+                  onChange={(e) => setCourseQuery(e.target.value)}
+                  placeholder="Search courses"
+                  prefix={<Search size={14} color="#9b87b5" />}
+                />
               </div>
-            )}
-          </div>
+              <div className="d-flex flex-wrap gap-2">
+                {['All', ...categoryTypes].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`ct-chip${courseCategory === cat ? ' is-active' : ''}`}
+                    onClick={() => setCourseCategory(cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              <div className="ms-auto d-flex gap-2">
+                <Button onClick={selectAllVisible} disabled={visibleCourses.length === 0}>
+                  Select all{courseCategory !== 'All' || courseQuery ? ' shown' : ''}
+                </Button>
+                <Button onClick={() => setSelectedCourseIds([])} disabled={selectedCourseIds.length === 0}>
+                  Clear
+                </Button>
+              </div>
+            </div>
 
-          <div className="ct-wizard-footer d-flex justify-content-between">
-            <Button onClick={goBack} disabled={busy} size="large" style={cancelBtnStyle}>
-              {step === 1 ? 'Cancel' : 'Back'}
-            </Button>
-            {step < 3 ? (
-              <Button type="primary" onClick={() => void goNext()} loading={busy} size="large" style={primaryBtnStyle}>
-                Next
-              </Button>
+            {visibleCourses.length === 0 ? (
+              <div className="py-5">
+                <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
             ) : (
-              <Button type="primary" onClick={() => void createTenant()} loading={busy} size="large" style={primaryBtnStyle}>
-                Create Tenant
-              </Button>
+              <CourseGroupPicker courses={visibleCourses} selected={selectedCourseIds} onToggle={toggleCourse} />
             )}
           </div>
-        </Card>
+        )}
+
+        {step === 3 && (
+          <div className="tc-step-card">
+            <div className="mx-auto" style={{ maxWidth: 920 }}>
+            <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Review &amp; Proceed</h3>
+            <p className="mb-4 small text-secondary">Check the details below. Click Create Tenant to provision it.</p>
+
+            <div className="row g-3">
+              <div className="col-12 col-lg-6">
+                <ReviewCard icon={<Building2 size={18} />} title="Organization">
+                  <ReviewRow label="Name" value={orgName} />
+                  <ReviewRow label="Tenant code" value={tenantCode} mono />
+                  <ReviewRow label="Industry" value={industry} />
+                  <ReviewRow label="Country" value={country} />
+                  <ReviewRow label="User limit" value={userLimit} />
+                  <ReviewRow label="Address" value={address} />
+                </ReviewCard>
+              </div>
+              <div className="col-12 col-lg-6 d-flex flex-column gap-3">
+                <ReviewCard icon={<Mail size={18} />} title="Billing contact">
+                  <ReviewRow label="Name" value={billingContactName} />
+                  <ReviewRow label="Email" value={billingEmail} />
+                  <ReviewRow label="Phone" value={billingPhone} />
+                </ReviewCard>
+                <ReviewCard icon={<ShieldCheck size={18} />} title="LMS admin">
+                  <ReviewRow label="Name" value={lmsAdminName} />
+                  <ReviewRow label="Email" value={lmsAdminEmail} />
+                </ReviewCard>
+              </div>
+              <div className="col-12">
+                <ReviewCard icon={<BookOpen size={18} />} title={`Courses (${selectedCourses.length})`}>
+                  {selectedCourses.length === 0 ? (
+                    <p className="small text-secondary mb-0">No courses selected - you can assign courses later from the Tenants page.</p>
+                  ) : (
+                    <ReviewCourseGroups courses={selectedCourses} />
+                  )}
+                </ReviewCard>
+              </div>
+            </div>
+
+            {flowError && <p className="mt-3 small text-danger mb-0">{flowError}</p>}
+          </div>
+          </div>
+        )}
+
+        <div className="tc-footer">
+          {step === 1 ? (
+            <Button type="text" onClick={goBack} disabled={busy}>
+              Cancel
+            </Button>
+          ) : (
+            <Button onClick={goBack} disabled={busy}>
+              Back
+            </Button>
+          )}
+          <Button
+            type="primary"
+            className={`tc-next${step === 1 && !requiredFilled ? ' is-pale' : ''}`}
+            loading={busy}
+            onClick={() => (step < 3 ? void goNext() : void createTenant())}
+            style={step === 1 && !requiredFilled ? undefined : { background: KANVAS_GRADIENT, border: 'none' }}
+          >
+            {nextLabel} {step < 3 && <ArrowRight size={15} />}
+          </Button>
+        </div>
       </div>
     </AppLayout>
   )

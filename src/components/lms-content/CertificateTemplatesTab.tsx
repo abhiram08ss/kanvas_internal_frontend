@@ -1,24 +1,30 @@
 import { useMemo, useState } from 'react'
+import { App } from 'antd'
+import { reasonDialog } from '../ui/reasonDialog'
 import { confirmDialog } from '../ui/confirmOptions'
-import { Award, CheckCircle2, Ban, Pencil } from 'lucide-react'
+import { Award, CheckCircle2, Ban, Eye, Pencil } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
 import { DataTable } from '../ui/DataTable'
 import { StatCard } from '../ui/StatCard'
 import { Toolbar } from '../ui/Toolbar'
 import { IconButton } from '../ui/IconButton'
+import { isLogoImage, logoImageUrl, resolveLogo, useDefaultLogo } from './logoImage'
 import { CertificateTemplateFormModal } from './CertificateTemplateFormModal'
+import { CertificateTemplatePreviewModal } from './CertificateTemplatePreviewModal'
 import { useData } from '../../context/DataContext'
-import type { CertificateTemplate } from '../../api'
+import { errorMessage, type CertificateTemplate } from '../../api'
 
 const statusFilters = ['All', 'Active', 'Inactive'] as const
 
 export function CertificateTemplatesTab() {
   const { certificateTemplates, addCertificateTemplate, updateCertificateTemplate } = useData()
+  const { defaultLogo } = useDefaultLogo()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<(typeof statusFilters)[number]>('All')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<CertificateTemplate | undefined>(undefined)
+  const [previewing, setPreviewing] = useState<CertificateTemplate | null>(null)
 
   const rows = useMemo(
     () =>
@@ -38,19 +44,35 @@ export function CertificateTemplatesTab() {
     setEditing(t)
     setModalOpen(true)
   }
-  const handleSave = (data: Parameters<typeof addCertificateTemplate>[0]) =>
-    editing ? updateCertificateTemplate(editing.id, data) : addCertificateTemplate(data)
-  const toggleStatus = (t: CertificateTemplate) =>
-    updateCertificateTemplate(t.id, {
-      status: t.status === 'Active' ? 'Inactive' : 'Active',
-    })
+  const { notification } = App.useApp()
+  const handleSave = async (data: Parameters<typeof addCertificateTemplate>[0]) => {
+    if (editing) await updateCertificateTemplate(editing.id, data)
+    else await addCertificateTemplate(data)
+    notification.success({ title: editing ? 'Template updated' : 'Template created', description: data.name })
+  }
+  const toggleStatus = async (t: CertificateTemplate, reason?: string) => {
+    const next = t.status === 'Active' ? 'Inactive' : 'Active'
+    try {
+      await updateCertificateTemplate(t.id, { status: next, ...(reason ? { reason } : {}) })
+      notification.success({ title: next === 'Active' ? 'Template re-activated' : 'Template deactivated', description: t.name })
+    } catch (e) {
+      notification.error({ title: 'Action failed', description: `${t.name}: ${errorMessage(e)}` })
+    }
+  }
   const confirmToggle = (t: CertificateTemplate) => {
-    const deactivating = t.status === 'Active'
+    if (t.status === 'Active') {
+      reasonDialog({
+        title: 'Deactivate template?',
+        content: `Are you sure you want to deactivate ${t.name}?`,
+        okText: 'Deactivate Template',
+        onOk: (reason) => toggleStatus(t, reason),
+      })
+      return
+    }
     confirmDialog({
-      title: deactivating ? 'Deactivate template?' : 'Activate template?',
-      content: `Are you sure you want to ${deactivating ? 'deactivate' : 'activate'} ${t.name}?`,
-      okText: deactivating ? 'Deactivate Template' : 'Activate Template',
-      okButtonProps: { danger: deactivating },
+      title: 'Re-activate template?',
+      content: `Are you sure you want to re-activate ${t.name}?`,
+      okText: 'Re-activate Template',
       onOk: () => toggleStatus(t),
     })
   }
@@ -81,27 +103,56 @@ export function CertificateTemplatesTab() {
           onNew={openCreate}
         />
         <DataTable<CertificateTemplate>
+          serial={false}
           rowKey="id"
           dataSource={rows}
           locale={{ emptyText: 'No certificate templates match your search.' }}
           columns={[
-            { title: 'Name', dataIndex: 'name', render: (name: string) => <span className="tenant-name">{name}</span> },
-            { title: 'Logo', width: 160, dataIndex: 'logo', render: (logo: string) => <span className="tenant-muted">{logo}</span> },
+            { title: 'Name', dataIndex: 'name', render: (name: string) => <span className="fw-semibold">{name}</span> },
             {
-              title: 'Colors', width: 140,
+              title: 'Logo', width: 200,
+              dataIndex: 'logo',
+              render: (raw: string) => {
+                const logo = resolveLogo(raw, defaultLogo)
+                return isLogoImage(logo) ? (
+                  <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 28, maxWidth: 140, objectFit: 'contain' }} />
+                ) : (
+                  <span className="d-inline-flex align-items-center gap-2" style={{ color: '#3d3450' }}>
+                    <Award size={15} style={{ color: '#7c3fc0' }} />
+                    {logo}
+                  </span>
+                )
+              },
+            },
+            {
+              title: 'Colors', width: 170,
               dataIndex: 'colors',
               render: (colors: string[]) => (
-                <div className="d-flex gap-1">
+                <div className="d-flex align-items-center gap-2">
                   {colors.map((c, i) => (
-                    <span key={i} className="rounded-1 border" style={{ width: 16, height: 16, background: c }} />
+                    <span
+                      key={i}
+                      title={c}
+                      className="rounded-circle"
+                      style={{ width: 22, height: 22, background: c, border: '2px solid #fff', boxShadow: '0 0 0 1px #e2dcee' }}
+                    />
                   ))}
                 </div>
               ),
             },
             {
-              title: 'Signatures', width: 160,
+              title: 'Signatures', width: 320,
               dataIndex: 'signatures',
-              render: (sigs: string[]) => <span className="tenant-muted">{sigs.length > 0 ? sigs.join(' · ') : '—'}</span>,
+              render: (sigs: string[]) =>
+                sigs.length > 0 ? (
+                  <div className="d-flex flex-wrap gap-1">
+                    {sigs.map((sg) => (
+                      <Badge key={sg} tone="slate">{sg}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="tenant-muted">—</span>
+                ),
             },
             { title: 'Status', width: 130, dataIndex: 'status', render: (status: CertificateTemplate['status']) => <Badge>{status}</Badge> },
             {
@@ -110,10 +161,11 @@ export function CertificateTemplatesTab() {
               render: (_: unknown, t: CertificateTemplate) => (
                 <div className="d-flex align-items-center gap-2">
                   <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(t)} title="Edit template" tone="blue" />
+                  <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(t)} title="Preview certificate" tone="purple" />
                   <IconButton
                     icon={t.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
                     onClick={() => confirmToggle(t)}
-                    title={t.status === 'Active' ? 'Deactivate' : 'Activate'}
+                    title={t.status === 'Active' ? 'Deactivate' : 'Re-activate'}
                     tone={t.status === 'Active' ? 'amber' : 'green'}
                   />
                 </div>
@@ -123,6 +175,7 @@ export function CertificateTemplatesTab() {
         />
       </ListCard>
 
+      {previewing && <CertificateTemplatePreviewModal template={previewing} onClose={() => setPreviewing(null)} />}
       {modalOpen && <CertificateTemplateFormModal template={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
     </div>
   )

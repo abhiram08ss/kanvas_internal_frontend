@@ -164,13 +164,14 @@ export function CourseApprovalsTab() {
 
       <ListCard>
         <DataTable<Course>
+          serial={false}
           rowKey="id"
           dataSource={courses}
           locale={{
             emptyText: isSuper ? 'Nothing is waiting for approval right now.' : 'You have no draft, pending, or rejected course submissions.',
           }}
           columns={[
-            { title: 'Course', dataIndex: 'name', render: (n: string) => <span className="tenant-name">{n}</span> },
+            { title: 'Course', dataIndex: 'name', render: (n: string) => <span>{n}</span> },
             { title: 'Category', width: 190, dataIndex: 'category' },
             { title: 'Price', width: 110, dataIndex: 'price', render: (p: number) => (p > 0 ? `₹${p.toLocaleString('en-IN')}` : 'Free') },
             ...(isSuper ? [{ title: 'Submitted By', width: 170, dataIndex: 'createdByName', render: (n: string | null) => n ?? '—' }] : []),

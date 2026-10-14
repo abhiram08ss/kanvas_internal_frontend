@@ -476,3 +476,21 @@
 .wz-title-row { margin-bottom: 16px; }
 .wz-stepper-card { padding: 20px 36px; margin-bottom: 18px; }
 .wz-line { margin: 0 24px; }
+
+/* ---- Responsive (kept last so it wins over the compact desktop sizing above) ---- */
+@media (max-width: 991px) {
+  .wz-section { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
+  .wz-section-icon { margin-bottom: 6px; }
+  .wz-stepper-card { padding: 14px 16px; }
+  .wz-line { margin: 0 12px; }
+  .ct-wizard-footer { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 575px) {
+  /* Only the current step keeps its text; the others show just their number dot */
+  .wz-step:not(.is-current) .wz-step-text { display: none; }
+  .wz-step-caption { display: none; }
+  .wz-step-label { font-size: 14px; }
+  .wz-line { margin: 0 6px; min-width: 10px; }
+  .wz-title-row { flex-wrap: wrap; gap: 4px; }
+  .wz-title { font-size: 20px; }
+}

@@ -1,15 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { HelpCircle, Plus, Trash2 } from 'lucide-react'
-import { Button, Input, Radio, Select } from 'antd'
+import { Button, Checkbox, Input, Radio, Select } from 'antd'
 import { Modal } from '../ui/Modal'
+import { scrollToFirstError } from '../ui/scrollToError'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
 import { errorMessage, type Course, type QuizQuestion, type QuizQuestionInput, type QuizQuestionType } from '../../api'
 
 const MAX_OPTIONS = 6
 const TYPE_OPTIONS: { value: QuizQuestionType; label: string }[] = [
-  { value: 'single choice', label: 'Single choice' },
   { value: 'true false', label: 'True false' },
+  { value: 'single choice', label: 'Single choice' },
+  { value: 'multi choice', label: 'Multi choice' },
 ]
 
 export function QuizQuestionFormModal({
@@ -32,6 +34,12 @@ export function QuizQuestionFormModal({
   const [options, setOptions] = useState<string[]>(question?.type === 'true false' ? ['', ''] : (question?.options ?? ['', '']))
   // Shared between both types: for "true false" it's just 0 (True) or 1 (False).
   const [correctIndex, setCorrectIndex] = useState(question?.correctIndex ?? 0)
+  // Multi choice: every ticked option is a correct answer.
+  const [correctSet, setCorrectSet] = useState<number[]>(question?.type === 'multi choice' ? question.correctIndices : [])
+  const toggleCorrect = (i: number) => {
+    setCorrectSet((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort((a, b) => a - b)))
+    clearError('options')
+  }
   const [marks, setMarks] = useState(String(question?.marks ?? 1))
   const [explanation, setExplanation] = useState(question?.explanation ?? '')
 
@@ -45,6 +53,7 @@ export function QuizQuestionFormModal({
   const removeOption = (i: number) => {
     setOptions((prev) => prev.filter((_, idx) => idx !== i))
     if (correctIndex >= i && correctIndex > 0) setCorrectIndex((c) => c - 1)
+    setCorrectSet((prev) => prev.filter((x) => x !== i).map((x) => (x > i ? x - 1 : x)))
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -68,11 +77,16 @@ export function QuizQuestionFormModal({
         else if (seen.has(o.toLowerCase())) next.optionRows[i] = `Option ${i + 1} repeats option ${(seen.get(o.toLowerCase()) ?? 0) + 1}.`
         else seen.set(o.toLowerCase(), i)
       })
-      if (!next.optionRows[correctIndex] && !trimmed[correctIndex]) next.options = 'Select the correct answer.'
+      if (type === 'multi choice') {
+        const ticked = correctSet.filter((i) => i < trimmed.length)
+        if (ticked.length < 2) next.options = 'Tick at least two correct answers.'
+        else if (ticked.some((i) => !trimmed[i])) next.options = 'A correct answer cannot be an empty option.'
+      } else if (!next.optionRows[correctIndex] && !trimmed[correctIndex]) next.options = 'Select the correct answer.'
     }
     setErrors(next)
     if (next.text || next.marks || next.category || next.explanation || next.options || Object.keys(next.optionRows).length > 0) {
       setError('Please fix the highlighted fields.')
+      scrollToFirstError(e.currentTarget as HTMLElement)
       return
     }
     setSaving(true)
@@ -84,7 +98,8 @@ export function QuizQuestionFormModal({
         category: category.trim() || 'Final Assessment',
         text: text.trim(),
         options: trimmed,
-        correctIndex,
+        correctIndex: type === 'multi choice' ? (correctSet[0] ?? 0) : correctIndex,
+        correctIndices: type === 'multi choice' ? correctSet.filter((i) => i < trimmed.length) : [correctIndex],
         marks: Number(marks) || 1,
         explanation: explanation.trim(),
       })
@@ -111,7 +126,7 @@ export function QuizQuestionFormModal({
         <div className="row g-3">
           <div className="col-md-6">
             <Field label="Course" required>
-              <Select value={courseId} onChange={setCourseId} options={courses.map((c) => ({ value: c.id, label: c.name }))} style={{ width: '100%' }} />
+              <Select disabled value={courseId} onChange={setCourseId} options={courses.map((c) => ({ value: c.id, label: c.name }))} style={{ width: '100%' }} />
             </Field>
           </div>
           <div className="col-md-6">
@@ -146,12 +161,12 @@ export function QuizQuestionFormModal({
             </Radio.Group>
           </Field>
         ) : (
-          <Field label="Options" required error={errors.options} hint="Select the radio button next to the correct answer">
+          <Field label="Options" required error={errors.options} hint={type === 'multi choice' ? 'Tick every correct answer (at least two)' : 'Select the radio button next to the correct answer'}>
             <Radio.Group value={correctIndex} onChange={(e) => setCorrectIndex(e.target.value)} className="w-100">
               <div className="d-flex flex-column gap-2">
                 {options.map((opt, i) => (
                   <div key={i} className="d-flex align-items-center gap-2">
-                    <Radio value={i} />
+                    {type === 'multi choice' ? <Checkbox checked={correctSet.includes(i)} onChange={() => toggleCorrect(i)} /> : <Radio value={i} />}
                     <div className="flex-grow-1">
                       <Input
                         value={opt}

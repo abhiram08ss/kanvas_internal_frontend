@@ -402,8 +402,8 @@ export function CoursePreviewModal({ course, onClose }: { course: Course; onClos
                         </p>
                         <div className="d-flex flex-column gap-1">
                           {q.options.map((opt, i) => (
-                            <div key={i} className="d-flex align-items-center gap-2 small" style={{ color: i === q.correctIndex ? '#16a34a' : '#7b6b94' }}>
-                              {i === q.correctIndex ? (
+                            <div key={i} className="d-flex align-items-center gap-2 small" style={{ color: q.correctIndices.includes(i) ? '#16a34a' : '#7b6b94' }}>
+                              {q.correctIndices.includes(i) ? (
                                 <CheckCircle2 size={14} className="flex-shrink-0" />
                               ) : (
                                 <XCircle size={14} className="flex-shrink-0 opacity-25" />

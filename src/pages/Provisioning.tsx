@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { CheckCircle2, XCircle, Clock, Copy, KeyRound, RefreshCw } from 'lucide-react'
-import { AppLayout } from '../components/layout/AppLayout'
 import { StatCard } from '../components/ui/StatCard'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -9,24 +8,29 @@ import { Notice } from '../components/ui/State'
 import { ListCard } from '../components/ui/ListCard'
 import { DataTable } from '../components/ui/DataTable'
 import { Toolbar } from '../components/ui/Toolbar'
+import { useFitRows } from '../components/ui/useFitRows'
 import { App, Button } from 'antd'
 import { confirmDialog } from '../components/ui/confirmOptions'
 import { api, errorMessage, type Credentials, type ProvisioningRecord } from '../api'
 import { useData, useDataNeeds } from '../context/DataContext'
 
+const statusFilters = ['All', 'Success', 'Failed', 'Pending'] as const
 const provisioningSteps = ['Create Kanvas Tenant', 'Setup LMS Tenant', 'Create Admin Account', 'Apply Configuration', 'Verify & Complete']
 
-export default function Provisioning() {
+/** Tenant provisioning status - shown as the "Provisioning" tab of the Tenants page. */
+export function ProvisioningPanel() {
   const { notification } = App.useApp()
   const { provisioningRecords, refresh } = useData()
   useDataNeeds('provisioningRecords')
   const [query, setQuery] = useState('')
+  const pageSize = useFitRows(520)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState('')
   // Credentials are only ever returned once by the server, so keep them on screen until dismissed.
   const [issued, setIssued] = useState<{ tenant: string; credentials: Credentials } | null>(null)
   const [copied, setCopied] = useState(false)
-  const rows = provisioningRecords.filter((r) => r.tenant.toLowerCase().includes(query.toLowerCase()))
+  const [filter, setFilter] = useState<(typeof statusFilters)[number]>('All')
+  const rows = provisioningRecords.filter((r) => r.tenant.toLowerCase().includes(query.toLowerCase()) && (filter === 'All' || r.status === filter))
 
   const run = async (record: ProvisioningRecord, action: () => Promise<Credentials | null>, done: string) => {
     setBusyId(record.id)
@@ -85,7 +89,7 @@ export default function Provisioning() {
   }
 
   return (
-    <AppLayout title="Provisioning" subtitle="Track tenant setup — Kanvas tenant, LMS, admin account, configuration">
+    <>
       <div className="row row-cols-1 row-cols-sm-3 g-3">
         <div className="col">
           <StatCard
@@ -136,13 +140,15 @@ export default function Provisioning() {
       </div>
 
       <ListCard className="mt-3">
-        <Toolbar query={query} onQueryChange={setQuery} searchPlaceholder="Search tenants..." />
+        <Toolbar query={query} onQueryChange={setQuery} searchPlaceholder="Search tenants..." filters={statusFilters} activeFilter={filter} onFilterChange={setFilter} />
         <DataTable<ProvisioningRecord>
+          serial={false}
           rowKey="id"
+          pageSize={pageSize}
           dataSource={rows}
           locale={{ emptyText: 'No provisioning records match your search.' }}
           columns={[
-            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span className="tenant-name">{t}</span> },
+            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span>{t}</span> },
             {
               title: 'LMS ID', width: 130,
               dataIndex: 'lmsId',
@@ -191,22 +197,27 @@ export default function Provisioning() {
         />
       </ListCard>
 
-      <Card className="mt-4 p-4">
-        <h3 className="mb-4 font-display fs-6 fw-bold text-dark">Provisioning Flow</h3>
-        <div className="d-flex flex-column flex-sm-row gap-4 align-items-sm-start justify-content-sm-between">
-          {provisioningSteps.map((step, i) => (
-            <div key={step} className="d-flex flex-grow-1 align-items-center gap-3 flex-sm-column text-sm-center">
-              <div
-                className="d-flex align-items-center justify-content-center rounded-circle bg-primary-subtle fw-semibold text-primary-emphasis flex-shrink-0"
-                style={{ width: 36, height: 36 }}
-              >
-                {i + 1}
+      <Card className="mt-3 px-4 py-3">
+        <div className="d-flex align-items-center gap-4">
+          <span className="fw-bold text-dark flex-shrink-0" style={{ fontSize: 14 }}>Provisioning flow</span>
+          <div className="d-flex align-items-center flex-grow-1" style={{ minWidth: 0 }}>
+            {provisioningSteps.map((step, i) => (
+              <div key={step} className="d-flex align-items-center" style={{ flex: i < provisioningSteps.length - 1 ? '1 1 auto' : '0 0 auto', minWidth: 0 }}>
+                <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                  <span
+                    className="d-flex align-items-center justify-content-center rounded-circle fw-bold flex-shrink-0"
+                    style={{ width: 26, height: 26, fontSize: 12, color: '#fff', background: 'linear-gradient(135deg, #5c2d91, #8a4bb0)', boxShadow: '0 2px 6px rgba(92, 45, 145, 0.3)' }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="fw-semibold text-nowrap" style={{ fontSize: 12.5, color: '#3d3450' }}>{step}</span>
+                </div>
+                {i < provisioningSteps.length - 1 && <span className="flex-grow-1 mx-3" style={{ height: 2, minWidth: 16, borderRadius: 2, background: 'linear-gradient(90deg, #d9cdee, #eee7f8)' }} />}
               </div>
-              <p className="small fw-medium text-dark mb-0">{step}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </Card>
-    </AppLayout>
+    </>
   )
 }

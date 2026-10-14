@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { App } from 'antd'
 import { confirmDialog } from '../ui/confirmOptions'
 import { Pencil, Trash2, Eye } from 'lucide-react'
+import { CourseSummary } from './CourseSummary'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
 import { DataTable } from '../ui/DataTable'
@@ -31,6 +33,13 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
   const [editing, setEditing] = useState<CourseModule | undefined>(undefined)
   const [previewing, setPreviewing] = useState<CourseModule | null>(null)
   const [error, setError] = useState('')
+  const fitRows = () => window.innerWidth < 992 ? 8 : Math.max(3, Math.floor((window.innerHeight - 210 - 72 - 200) / 57))
+  const [pageSize, setPageSize] = useState(fitRows)
+  useEffect(() => {
+    const onResize = () => setPageSize(fitRows())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const selectedCourse = editableCourses.find((c) => c.id === selectedCourseId)
   const scoped = selectedCourseId ? courseModules.filter((m) => m.courseId === selectedCourseId) : courseModules
@@ -51,7 +60,12 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
     setEditing(m)
     setModalOpen(true)
   }
-  const handleSave = (data: Parameters<typeof addCourseModule>[0]) => (editing ? updateCourseModule(editing.id, data) : addCourseModule(data))
+  const { notification } = App.useApp()
+  const handleSave = async (data: Parameters<typeof addCourseModule>[0]) => {
+    if (editing) await updateCourseModule(editing.id, data)
+    else await addCourseModule(data)
+    notification.success({ title: editing ? 'Module updated' : 'Module created', description: data.title })
+  }
   const handleDelete = (m: CourseModule) =>
     confirmDialog({
       title: 'Delete module?',
@@ -62,6 +76,7 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
         setError('')
         try {
           await deleteCourseModule(m.id)
+          notification.success({ title: 'Module deleted', description: m.title })
         } catch (e) {
           setError(errorMessage(e))
         }
@@ -69,31 +84,15 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
     })
 
   return (
-    <div className="d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
+    <div className="lms-split d-flex gap-3" style={{ height: 'calc(100vh - 210px)', minHeight: 320 }}>
       <CoursePicker courses={editableCourses} selectedId={selectedCourseId} onSelect={onSelectCourse} />
 
-      <div className="flex-grow-1" style={{ minWidth: 0, overflowY: 'auto' }}>
-        <div className="d-flex align-items-center flex-wrap gap-2 mb-3">
-          {selectedCourse && (
-            <>
-              <span className="d-inline-flex align-items-center px-3 rounded-pill fw-semibold" style={{ height: 30, fontSize: 13, lineHeight: 1, background: '#f3effb', color: '#6b3fa0', border: '1px solid #e4d9f5' }}>
-                {selectedCourse.category}
-              </span>
-              <span style={{ color: '#a8a3b3' }}>›</span>
-            </>
-          )}
-          <span className="d-inline-flex align-items-center px-3 rounded-pill fw-semibold" style={{ height: 30, fontSize: 13, lineHeight: 1, background: '#fff', color: '#1f1b2d', border: '1px solid #e2e0ea' }}>
-            {selectedCourse ? selectedCourse.name : 'All courses'}
-          </span>
-          <span style={{ color: '#a8a3b3' }}>·</span>
-          <span className="d-inline-flex align-items-center px-3 rounded-pill fw-semibold" style={{ height: 30, fontSize: 13, lineHeight: 1, background: '#eef2f7', color: '#475569', border: '1px solid #e2e8f0' }}>
-            {scoped.length} {scoped.length === 1 ? 'module' : 'modules'}
-          </span>
-        </div>
+      <div className="lms-split-main flex-grow-1 d-flex flex-column" style={{ minWidth: 0, overflow: 'hidden' }}>
+        <CourseSummary course={selectedCourse} count={scoped.length} noun="Module" />
 
         {error && <p className="small text-danger">{error}</p>}
 
-        <ListCard>
+        <ListCard className="fill-height">
           <Toolbar
             query={query}
             onQueryChange={setQuery}
@@ -106,6 +105,7 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
           />
           <DataTable<CourseModule>
             serial={false}
+            pageSize={pageSize}
             rowKey="id"
             dataSource={rows}
             locale={{ emptyText: 'No modules yet for this course.' }}

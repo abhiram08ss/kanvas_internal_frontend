@@ -6,13 +6,13 @@ import { Badge } from '../components/ui/Badge'
 import { ErrorBlock, LoadingBlock, Notice } from '../components/ui/State'
 import { ListCard } from '../components/ui/ListCard'
 import { DataTable } from '../components/ui/DataTable'
+import { useFitRows } from '../components/ui/useFitRows'
 import { Toolbar } from '../components/ui/Toolbar'
 import { Button, DatePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { api, errorMessage, type AuditCategory, type AuditLog } from '../api'
 import { useApi } from '../api/useApi'
 
-const PAGE_SIZE = 10
 const DEFAULT_DAYS = 90
 const DATE_FMT = 'YYYY-MM-DD'
 
@@ -31,6 +31,9 @@ export default function AuditLogs() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [filter, setFilter] = useState<(typeof filterChips)[number]>('All')
   const [page, setPage] = useState(1)
+  // Rows per page follow the window height so the page itself never scrolls (as on the other list pages).
+  const PAGE_SIZE = useFitRows(500)
+  useEffect(() => setPage(1), [PAGE_SIZE])
   // Date range of the entries shown; starts as the last 90 days (today included, so 89 days back).
   const [range, setRange] = useState<[Dayjs, Dayjs]>(() => [dayjs().subtract(DEFAULT_DAYS - 1, 'day'), dayjs()])
   const from = range[0].format(DATE_FMT)
@@ -49,7 +52,7 @@ export default function AuditLogs() {
 
   const { data, error, loading, reload } = useApi(
     () => api.auditLogs({ q: debouncedQuery, category: filter, page, pageSize: PAGE_SIZE, from, to }),
-    [debouncedQuery, filter, page, from, to],
+    [debouncedQuery, filter, page, from, to, PAGE_SIZE],
   )
 
   const firstShown = data && data.total > 0 ? (data.page - 1) * PAGE_SIZE + 1 : 0
@@ -137,6 +140,7 @@ export default function AuditLogs() {
           <ErrorBlock message={error ?? 'No data'} onRetry={reload} />
         ) : (
           <DataTable<AuditLog>
+            serial={false}
             rowKey="id"
             dataSource={data.items}
             locale={{ emptyText: 'No log entries match your filters.' }}
@@ -159,10 +163,10 @@ export default function AuditLogs() {
                   </span>
                 ),
               },
-              { title: 'Action', width: 220, dataIndex: 'action', render: (a: string) => <span className="tenant-name">{a}</span> },
+              { title: 'Action', width: 220, dataIndex: 'action', render: (a: string) => <span>{a}</span> },
               { title: 'Category', width: 130, dataIndex: 'category', render: (c: string) => <Badge tone="purple">{c}</Badge> },
-              { title: 'Performed By', width: 160, dataIndex: 'performedBy' },
-              { title: 'Details', dataIndex: 'details', render: (d: string) => <span className="tenant-muted">{d}</span> },
+              { title: 'Performed By', width: 210, dataIndex: 'performedBy' },
+              { title: 'Details', dataIndex: 'details', render: (d: string) => <span style={{ color: '#727587' }}>{d}</span> },
               { title: 'IP Address', width: 140, dataIndex: 'ip', render: (ip: string) => <span className="tenant-muted">{ip}</span> },
             ]}
           />
