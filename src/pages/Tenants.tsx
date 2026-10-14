@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Building2, CheckCircle2, PauseCircle, PlayCircle, Clock, Pencil, Trash2 } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Building2, CheckCircle2, PauseCircle, PlayCircle, Eye, Pencil, RefreshCw } from 'lucide-react'
 import { App } from 'antd'
 import { AppLayout } from '../components/layout/AppLayout'
+import { Tabs } from '../components/ui/Tabs'
+import { useFitRows } from '../components/ui/useFitRows'
+import { ProvisioningPanel } from './Provisioning'
 import { StatCard } from '../components/ui/StatCard'
 import { ListCard } from '../components/ui/ListCard'
 import { DataTable } from '../components/ui/DataTable'
@@ -11,13 +14,14 @@ import { IconButton } from '../components/ui/IconButton'
 import { Toolbar } from '../components/ui/Toolbar'
 import { Notice } from '../components/ui/State'
 import { confirmDialog } from '../components/ui/confirmOptions'
+import { reasonDialog } from '../components/ui/reasonDialog'
 import { ChangePlanModal } from '../components/tenants/ChangePlanModal'
 import { TenantDetailsModal } from '../components/tenants/TenantDetailsModal'
 import { useData, useDataNeeds } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { api, errorMessage, type Tenant } from '../api'
 
-const tenantFilters = ['All', 'Active', 'Suspended', 'Expired'] as const
+const tenantFilters = ['All', 'Active', 'Suspended'] as const
 const UNLIMITED = 999_999
 
 export default function Tenants() {
@@ -26,6 +30,11 @@ export default function Tenants() {
   const { tenants, plans, refresh } = useData()
   useDataNeeds('tenants', 'plans', 'courses')
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const pageSize = useFitRows(canManage ? 470 : 400)
+  // Provisioning (Super Admin only) lives here as a tab: /tenants?tab=provisioning
+  const tab = canManage && params.get('tab') === 'provisioning' ? 'Provisioning' : 'Tenants'
+  const setTab = (t: string) => setParams(t === 'Provisioning' ? { tab: 'provisioning' } : {}, { replace: true })
   const { notification } = App.useApp()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<(typeof tenantFilters)[number]>('All')
@@ -35,11 +44,11 @@ export default function Tenants() {
   const [actionError, setActionError] = useState('')
 
   // Suspend an active tenant / reactivate a suspended one; the server also keeps its subscription in step.
-  const toggleStatus = async (t: Tenant) => {
+  const toggleStatus = async (t: Tenant, reason?: string) => {
     setBusyId(t.id)
     setActionError('')
     try {
-      await api.setTenantStatus(t.id, t.status === 'Active' ? 'Suspended' : 'Active')
+      await api.setTenantStatus(t.id, t.status === 'Active' ? 'Suspended' : 'Active', reason)
       await refresh()
       notification.success({ title: t.status === 'Active' ? 'Tenant suspended' : 'Tenant activated', description: t.name })
     } catch (e) {
@@ -50,32 +59,23 @@ export default function Tenants() {
     }
   }
 
-  // The backend has no delete-tenant endpoint (tenants are only ever suspended/activated) — be upfront about that.
-  const deleteTenant = (t: Tenant) => {
-    notification.warning({ title: 'Cannot delete tenant', description: `${t.name}: Deleting tenants isn't supported yet.` })
-  }
-
   const confirmToggle = (t: Tenant) => {
-    const suspending = t.status === 'Active'
+    if (t.status === 'Active') {
+      reasonDialog({
+        title: 'Suspend tenant?',
+        content: `Are you sure you want to suspend ${t.name}?`,
+        okText: 'Suspend Tenant',
+        onOk: (reason) => toggleStatus(t, reason),
+      })
+      return
+    }
     confirmDialog({
-      title: suspending ? 'Suspend tenant?' : 'Activate tenant?',
-      content: suspending
-        ? `Are you sure you want to suspend ${t.name}?`
-        : `Are you sure you want to activate ${t.name}?`,
-      okText: suspending ? 'Suspend Tenant' : 'Activate Tenant',
-      okButtonProps: { danger: suspending },
+      title: 'Activate tenant?',
+      content: `Are you sure you want to activate ${t.name}?`,
+      okText: 'Activate Tenant',
       onOk: () => toggleStatus(t),
     })
   }
-
-  const confirmDelete = (t: Tenant) =>
-    confirmDialog({
-      title: 'Delete tenant?',
-      content: `Are you sure you want to delete ${t.name}?`,
-      okText: 'Delete Tenant',
-      okButtonProps: { danger: true },
-      onOk: () => deleteTenant(t),
-    })
 
   const rows = useMemo(
     () =>
@@ -89,7 +89,12 @@ export default function Tenants() {
 
   return (
     <AppLayout title="Tenants" subtitle="Create and manage all LMS tenant organisations">
-      <div className="row row-cols-2 row-cols-lg-4 g-3">
+      {canManage && <Tabs variant="pill" tabs={['Tenants', 'Provisioning']} active={tab} onChange={setTab} icons={{ Tenants: <Building2 size={15} />, Provisioning: <RefreshCw size={15} /> }} />}
+      {tab === 'Provisioning' ? (
+        <ProvisioningPanel />
+      ) : (
+        <>
+      <div className="row row-cols-2 row-cols-lg-3 g-3">
         <div className="col">
           <StatCard icon={<Building2 size={20} />} label="Total Tenants" value={tenants.length} tone="purple" />
         </div>
@@ -98,9 +103,6 @@ export default function Tenants() {
         </div>
         <div className="col">
           <StatCard icon={<PauseCircle size={20} />} label="Suspended" value={tenants.filter((t) => t.status === 'Suspended').length} tone="amber" />
-        </div>
-        <div className="col">
-          <StatCard icon={<Clock size={20} />} label="Expired" value={tenants.filter((t) => t.status === 'Expired').length} tone="red" />
         </div>
       </div>
 
@@ -124,17 +126,19 @@ export default function Tenants() {
           onNew={canManage ? () => navigate('/tenants/new') : undefined}
         />
         <DataTable<Tenant>
+          serial={false}
           rowKey="id"
+          pageSize={pageSize}
           // Fixed layout + set widths: columns keep their size when a filter tab changes the rows, so the header never shifts.
           tableLayout="fixed"
-          scroll={{ x: 1100 }}
+          scroll={{ x: 960 }}
           dataSource={rows}
           locale={{ emptyText: 'No tenants match your search.' }}
           columns={[
-            { title: 'Tenant name', dataIndex: 'name', width: 260, ellipsis: true, render: (name: string, t) => <a onClick={() => setViewTenant(t)} className="tenant-name">{name}</a> },
+            { title: 'Tenant name', dataIndex: 'name', width: 200, ellipsis: true, render: (name: string) => <span>{name}</span> },
             {
               title: 'Users / limit',
-              width: 260,
+              width: 220,
               key: 'users',
               render: (_: unknown, t) => {
                 const unlimited = t.userLimit >= UNLIMITED
@@ -157,31 +161,31 @@ export default function Tenants() {
                 )
               },
             },
-            { title: 'Status', dataIndex: 'status', width: 150, render: (status: Tenant['status']) => <Badge>{status}</Badge> },
-            { title: 'Created on', dataIndex: 'createdOn', width: 160, render: (d: string) => <span className="tenant-muted">{d}</span> },
-            { title: 'Courses', dataIndex: 'courseCount', width: 110, className: 'col-center', render: (n: number) => <span className="tenant-muted">{n}</span> },
-            ...(canManage
-              ? [
-                  {
-                    title: 'Actions',
-                    width: 160,
-                    key: 'actions',
-                    render: (_: unknown, t: Tenant) => (
-                      <div className="d-flex align-items-center gap-2">
-                        <IconButton icon={<Pencil size={16} />} onClick={() => navigate(`/tenants/${t.id}/edit`)} title="Edit tenant" tone="purple" />
-                        <IconButton
-                          icon={t.status === 'Active' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
-                          onClick={() => confirmToggle(t)}
-                          title={t.status === 'Active' ? 'Suspend' : 'Activate'}
-                          tone={t.status === 'Active' ? 'amber' : 'green'}
-                          disabled={busyId === t.id}
-                        />
-                        <IconButton icon={<Trash2 size={16} />} onClick={() => confirmDelete(t)} title="Delete tenant" tone="red" />
-                      </div>
-                    ),
-                  },
-                ]
-              : []),
+            { title: 'Status', dataIndex: 'status', width: 130, render: (status: Tenant['status']) => <Badge>{status}</Badge> },
+            { title: 'Created on', dataIndex: 'createdOn', width: 140, render: (d: string) => <span className="tenant-muted">{d}</span> },
+            { title: 'Courses', dataIndex: 'courseCount', width: 90, className: 'col-center', render: (n: number) => <span className="tenant-muted">{n}</span> },
+            {
+              title: 'Actions',
+              width: 130,
+              key: 'actions',
+              render: (_: unknown, t: Tenant) => (
+                <div className="d-flex align-items-center gap-2">
+                  <IconButton icon={<Eye size={16} />} onClick={() => setViewTenant(t)} title="Preview tenant" tone="blue" />
+                  {canManage && (
+                    <>
+                      <IconButton icon={<Pencil size={16} />} onClick={() => navigate(`/tenants/${t.id}/edit`)} title="Edit tenant" tone="purple" />
+                      <IconButton
+                        icon={t.status === 'Active' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
+                        onClick={() => confirmToggle(t)}
+                        title={t.status === 'Active' ? 'Suspend' : 'Activate'}
+                        tone={t.status === 'Active' ? 'amber' : 'green'}
+                        disabled={busyId === t.id}
+                      />
+                    </>
+                  )}
+                </div>
+              ),
+            },
           ]}
         />
       </ListCard>
@@ -189,14 +193,12 @@ export default function Tenants() {
       {viewTenant && (
         <TenantDetailsModal
           tenant={tenants.find((x) => x.id === viewTenant.id) ?? viewTenant}
-          canManage={canManage}
           onClose={() => setViewTenant(null)}
-          onEdit={() => {
-            navigate(`/tenants/${viewTenant.id}/edit`)
-          }}
         />
       )}
       {planTenant && <ChangePlanModal tenant={planTenant} plans={plans} onClose={() => setPlanTenant(null)} onSaved={refresh} />}
+        </>
+      )}
     </AppLayout>
   )
 }

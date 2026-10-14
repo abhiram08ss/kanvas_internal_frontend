@@ -5,6 +5,7 @@ import { AppLayout } from '../components/layout/AppLayout'
 import { StatCard } from '../components/ui/StatCard'
 import { Badge } from '../components/ui/Badge'
 import { confirmDialog } from '../components/ui/confirmOptions'
+import { reasonDialog } from '../components/ui/reasonDialog'
 import { IconButton } from '../components/ui/IconButton'
 import { ErrorBlock, LoadingBlock, Notice } from '../components/ui/State'
 import { ListCard } from '../components/ui/ListCard'
@@ -54,13 +55,20 @@ export default function PlatformUsers() {
   }
 
   const confirmToggle = (u: PlatformUser) => {
-    const deactivating = u.status === 'Active'
+    if (u.status === 'Active') {
+      reasonDialog({
+        title: 'Deactivate user?',
+        content: `Are you sure you want to deactivate ${u.name}?`,
+        okText: 'Deactivate User',
+        onOk: (reason) => act(u, () => api.updatePlatformUser(u.id, { status: 'Inactive', reason }), 'User deactivated'),
+      })
+      return
+    }
     confirmDialog({
-      title: deactivating ? 'Deactivate user?' : 'Activate user?',
-      content: `Are you sure you want to ${deactivating ? 'deactivate' : 'activate'} ${u.name}?`,
-      okText: deactivating ? 'Deactivate User' : 'Activate User',
-      okButtonProps: { danger: deactivating },
-      onOk: () => act(u, () => api.updatePlatformUser(u.id, { status: deactivating ? 'Inactive' : 'Active' }), deactivating ? 'User deactivated' : 'User activated'),
+      title: 'Activate user?',
+      content: `Are you sure you want to activate ${u.name}?`,
+      okText: 'Activate User',
+      onOk: () => act(u, () => api.updatePlatformUser(u.id, { status: 'Active' }), 'User activated'),
     })
   }
 
@@ -124,6 +132,7 @@ export default function PlatformUsers() {
               newIcon={<Plus size={14} />}
             />
             <DataTable<PlatformUser>
+              serial={false}
               rowKey="id"
               dataSource={rows}
               locale={{ emptyText: 'No users match your search.' }}
@@ -139,7 +148,7 @@ export default function PlatformUsers() {
                   render: (name: string, u) => (
                     <div className="d-flex align-items-center gap-3">
                       <Avatar style={{ background: '#5c2d91', fontSize: 12 }}>{u.initials}</Avatar>
-                      <span className="tenant-name">{name}</span>
+                      <span>{name}</span>
                     </div>
                   ),
                 },

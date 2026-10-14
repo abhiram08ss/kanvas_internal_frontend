@@ -54,28 +54,27 @@
 
 /* ---- Sidebar footer (light theme) ---- */
 .sidebar-brand-light {
-  margin: 8px 12px 14px; padding: 10px 6px; border-radius: 12px; border-top: 0;
-  background: #faf8fd; border: 1px solid #f0eaf8;
-  display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center;
+  padding: 14px 20px; border-top: 1px solid #ede8f5; font-size: 11.5px; color: #8f82a8; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.sidebar-brand-label { font-size: 10.5px; color: #a99bc0; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
-.sidebar-brand-name { font-size: 13px; font-weight: 700; color: #62309c; }
-.sidebar-brand-year { font-size: 11px; color: #a99bc0; white-space: nowrap; }
+.sidebar-brand-light strong { color: #62309c; font-weight: 700; }
+.sidebar-brand-light .sidebar-brand-year { color: #a99bc0; }
+.collapsed .sidebar-brand-light, .ant-layout-sider-collapsed .sidebar-brand-light { text-align: center; padding: 14px 4px; }
 
 /* Sidebar toggle: a gradient chevron badge sitting exactly where the sidebar's edge meets the header's bottom
    line, so it is attached to both. The chevron spins when the sidebar opens or closes; hover adds a soft ring. */
-.header-menu-toggle {
-  position: absolute; left: -16px; bottom: -16px; z-index: 40;
-  width: 32px; height: 32px; padding: 0; border: 3px solid #fff; border-radius: 50%; cursor: pointer;
+/* Collapse handle: a tall rounded tab sitting on the sidebar's right edge, halfway down. */
+.sidebar-edge-toggle {
+  position: absolute; top: 50%; right: -9px; transform: translateY(-50%); z-index: 60;
+  width: 18px; height: 40px; padding: 0 0 0 1px; border: 0; border-radius: 0 10px 10px 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center; color: #fff;
-  background: linear-gradient(135deg, #5c2d91, #8a4bb0);
-  box-shadow: 0 4px 12px rgba(92, 45, 145, 0.38);
-  transition: box-shadow 200ms ease, transform 200ms ease;
+  background: linear-gradient(180deg, #5c2d91, #8a4bb0);
+  box-shadow: 3px 0 10px rgba(92, 45, 145, 0.28);
+  transition: width 200ms ease, right 200ms ease, box-shadow 200ms ease;
 }
-.header-menu-toggle svg { transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1); }
-.header-menu-toggle.is-collapsed svg { transform: rotate(180deg); }
-.header-menu-toggle:hover { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(138, 75, 176, 0.2), 0 6px 16px rgba(92, 45, 145, 0.45); }
-.header-menu-toggle:active { transform: scale(0.94); }
+.sidebar-edge-toggle svg { transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1); }
+.sidebar-edge-toggle.is-collapsed svg { transform: rotate(180deg); }
+.sidebar-edge-toggle:hover { width: 22px; right: -11px; box-shadow: 6px 0 18px rgba(92, 45, 145, 0.45); }
+.sidebar-edge-toggle:active { filter: brightness(0.95); }
 
 /* ---- Tooltips (every antd Tooltip in the app): solid brand-purple bubble, big rounded corners, soft shadow ---- */
 .ant-tooltip .ant-tooltip-inner,
@@ -205,3 +204,59 @@
 .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-selected):not(.ant-select-item-option-disabled) { background: #f6f2fc !important; }
 .ant-select-open .ant-select-selection-item, .ant-select-open .ant-select-content, .ant-select-open .ant-select-content-value,
 .ant-select-open .ant-select-selection-placeholder { color: #1a1228 !important; opacity: 1 !important; }
+
+/* ---- Pill tabs (Tenants / Provisioning): a segmented switch in a soft rounded track ---- */
+.pill-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 14px; border-radius: 14px; background: #f1ebfa; border: 1px solid #e6ddf5; }
+.pill-tab {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 18px; border: 0; border-radius: 10px; cursor: pointer;
+  background: transparent; color: #7b6b94; font-size: 14px; font-weight: 600; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.pill-tab:hover { color: #5c2d91; }
+.pill-tab.is-active { background: #fff; color: #5c2d91; box-shadow: 0 2px 8px rgba(92, 45, 145, 0.16); }
+
+/* ================= Responsive: phone / tablet / desktop ================= */
+.app-header { padding: 0 24px; }
+.app-content { padding: 24px; }
+.header-hamburger {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; height: 38px; padding: 0;
+  border: 1px solid #e6ddf5; border-radius: 10px; background: #faf8fd; color: #5c2d91; cursor: pointer;
+}
+.header-hamburger:active { background: #f1ebfa; }
+
+/* Sidebar as an off-canvas drawer below 992px */
+.sidebar-backdrop { position: fixed; inset: 0; z-index: 1090; background: rgba(26, 18, 40, 0.45); opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+.sidebar-backdrop.is-open { opacity: 1; pointer-events: auto; }
+.ant-layout-sider.sidebar-drawer {
+  position: fixed !important; top: 0; left: 0; bottom: 0; z-index: 1100; max-width: 86vw !important; min-width: 0 !important;
+  transform: translateX(-105%); transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1); box-shadow: none;
+}
+.ant-layout-sider.sidebar-drawer.is-open { transform: translateX(0); box-shadow: 8px 0 32px rgba(26, 18, 40, 0.25); }
+
+@media (max-width: 991px) {
+  .app-header { padding: 0 14px; }
+  .app-content { padding: 14px; }
+  /* two-column "course picker + list" screens stack vertically */
+  .lms-split { flex-direction: column; height: auto !important; min-height: 0 !important; }
+  .lms-split > .course-picker { width: 100% !important; height: 320px !important; min-height: 0 !important; }
+  .lms-split > .lms-split-main { overflow: visible !important; }
+}
+@media (max-width: 575px) {
+  .app-header { padding: 0 10px; }
+  .app-header-subtitle { display: none; }
+  .app-content { padding: 10px; }
+  .pill-toolbar { flex-wrap: wrap; }
+  .pill-toolbar .ant-input-affix-wrapper { width: 100% !important; }
+  .pill-toolbar .ms-auto { margin-left: 0 !important; width: 100%; }
+  .pill-toolbar .ms-auto .ant-btn { flex: 1; }
+  .pill-tabs { display: flex; width: 100%; }
+  .pill-tab { flex: 1; justify-content: center; padding: 0 8px; }
+  .ant-modal { margin: 8px auto !important; max-width: calc(100vw - 16px) !important; }
+}
+@media (max-width: 575px) {
+  .course-summary { flex-direction: column; }
+  .course-summary > div { flex: 0 0 auto !important; border-left: 0 !important; border-top: 1px solid #eee7f8; }
+  .course-summary > div:first-child { border-top: 0; }
+}
+
+/* Sidebar labels are router links, but they should never look like hyperlinks (also in the collapsed-sidebar tooltip). */
+.app-menu a, .app-menu a:hover, .ant-tooltip a, .ant-tooltip a:hover, .ant-menu-inline-collapsed-tooltip a, .ant-menu-inline-collapsed-tooltip a:hover { text-decoration: none !important; color: inherit; }

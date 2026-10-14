@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { FileText, ImagePlus, Film, FileUp, X, Loader2 } from 'lucide-react'
 import { Button, Input, Select } from 'antd'
 import { Modal } from '../ui/Modal'
+import { scrollToFirstError } from '../ui/scrollToError'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
 import { RichTextEditor } from '../ui/RichTextEditor'
@@ -163,7 +164,10 @@ export function ModuleFormModal({
     e.preventDefault()
     const nextErrors = validate()
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0) {
+      scrollToFirstError(e.currentTarget as HTMLElement)
+      return
+    }
 
     setSaving(true)
     setError('')
@@ -206,7 +210,7 @@ export function ModuleFormModal({
     >
       {/* Same popup size for every Content Type: the form never gets shorter than the tallest one (Hybrid), and the
           buttons stay pinned to the bottom. */}
-      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3" style={{ minHeight: 'min(678px, calc(100vh - 240px))' }}>
+      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3" style={showMedia ? { height: 'min(678px, calc(100vh - 240px))' } : { minHeight: 'min(678px, calc(100vh - 240px))' }}>
         {error && <Notice tone="error">{error}</Notice>}
 
         <div className="row g-3">
@@ -272,6 +276,7 @@ export function ModuleFormModal({
           <Field
             label={`Module ${type[0].toUpperCase() + type.slice(1)}`}
             required
+            grow
             error={mediaError || errors.media}
             hint={
               (type === 'image' && `PNG/JPG/GIF/WEBP, up to ${MEDIA_MAX_MB} MB.`) ||

@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { KeyRound } from 'lucide-react'
-import { Button, Input } from 'antd'
+import { App, Button, Input } from 'antd'
 import { Modal } from '../../ui/Modal'
 import { Field } from '../../ui/Field'
 import { Notice } from '../../ui/State'
+import { scrollToFirstError } from '../../ui/scrollToError'
 import { api, errorMessage } from '../../../api'
 
 export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
@@ -13,24 +14,34 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<{ current?: string; next?: string; confirm?: string }>({})
+  const { notification } = App.useApp()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters.')
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      setError('New password and confirmation do not match.')
+    const errs: typeof fieldErrors = {}
+    if (!currentPassword) errs.current = 'Enter your current password.'
+    if (newPassword.length < 8) errs.next = 'New password must be at least 8 characters.'
+    else if (newPassword.length > 64) errs.next = 'New password must be 64 characters or fewer.'
+    else if (newPassword === currentPassword) errs.next = 'New password must be different from the current one.'
+    if (!confirmPassword) errs.confirm = 'Re-enter the new password.'
+    else if (newPassword !== confirmPassword) errs.confirm = 'New password and confirmation do not match.'
+    setFieldErrors(errs)
+    if (errs.current || errs.next || errs.confirm) {
+      setError('Please fix the highlighted fields.')
+      scrollToFirstError(e.currentTarget as HTMLElement)
       return
     }
     setSaving(true)
     setError('')
     try {
       await api.changePassword(currentPassword, newPassword)
+      notification.success({ title: 'Password changed', description: 'Your password has been updated.' })
       setDone(true)
     } catch (err) {
-      setError(errorMessage(err))
+      const message = errorMessage(err)
+      if (/current password/i.test(message)) setFieldErrors({ current: message })
+      else setError(message)
     } finally {
       setSaving(false)
     }
@@ -48,16 +59,16 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
           </div>
         </>
       ) : (
-        <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+        <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3">
           {error && <Notice tone="error">{error}</Notice>}
-          <Field label="Current Password" required>
-            <Input.Password value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required autoComplete="current-password" />
+          <Field label="Current Password" required error={fieldErrors.current}>
+            <Input.Password value={currentPassword} onChange={(e) => { setCurrentPassword(e.target.value); setFieldErrors((p) => ({ ...p, current: undefined })) }} status={fieldErrors.current ? 'error' : undefined} autoComplete="current-password" />
           </Field>
-          <Field label="New Password" required hint="At least 8 characters">
-            <Input.Password value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
+          <Field label="New Password" required error={fieldErrors.next} hint="At least 8 characters">
+            <Input.Password value={newPassword} onChange={(e) => { setNewPassword(e.target.value); setFieldErrors((p) => ({ ...p, next: undefined })) }} status={fieldErrors.next ? 'error' : undefined} autoComplete="new-password" />
           </Field>
-          <Field label="Confirm New Password" required>
-            <Input.Password value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
+          <Field label="Confirm New Password" required error={fieldErrors.confirm}>
+            <Input.Password value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setFieldErrors((p) => ({ ...p, confirm: undefined })) }} status={fieldErrors.confirm ? 'error' : undefined} autoComplete="new-password" />
           </Field>
           <div className="d-flex justify-content-end gap-3 pt-2">
             <Button onClick={onClose}>Cancel</Button>

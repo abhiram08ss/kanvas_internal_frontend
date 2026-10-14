@@ -1,10 +1,13 @@
-import { useState, type FormEvent } from 'react'
-import { Award } from 'lucide-react'
+import { useRef, useState, type FormEvent } from 'react'
+import { Award, Eye, Upload } from 'lucide-react'
 import { Button, Checkbox, ColorPicker, Input, Radio, Select } from 'antd'
 import { Modal } from '../ui/Modal'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
-import { errorMessage, type CertificateTemplate, type CertificateTemplateInput, type SignatureSlot } from '../../api'
+import { scrollToFirstError } from '../ui/scrollToError'
+import { CertificateTemplatePreviewModal } from './CertificateTemplatePreviewModal'
+import { isLogoImage, logoImageUrl, useDefaultLogo } from './logoImage'
+import { api, errorMessage, type CertificateTemplate, type CertificateTemplateInput, type SignatureSlot } from '../../api'
 
 const DEFAULT_COLORS = ['#5c2d91', '#f5b800', '#ffffff']
 const COLOR_LABELS = ['Primary Color', 'Accent Color', 'Background Color']
@@ -37,6 +40,9 @@ export function CertificateTemplateFormModal({
   const [name, setName] = useState(template?.name ?? '')
   const [customLogo, setCustomLogo] = useState(!!template && template.logo !== DEFAULT_LOGO)
   const [logo, setLogo] = useState(template && template.logo !== DEFAULT_LOGO ? template.logo : '')
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(template?.backgroundImage ?? null)
+  const bgRef = useRef<HTMLInputElement>(null)
+  const [bgBusy, setBgBusy] = useState(false)
   const [colors, setColors] = useState<string[]>(template?.colors ?? DEFAULT_COLORS)
   const [titleText, setTitleText] = useState(template?.titleText ?? 'CERTIFICATE OF COMPLETION')
   const [introText, setIntroText] = useState(template?.introText ?? 'This is to certify that')
@@ -45,9 +51,77 @@ export function CertificateTemplateFormModal({
   const [status, setStatus] = useState<CertificateTemplate['status']>(template?.status ?? 'Active')
 
   const [nameError, setNameError] = useState('')
-  const [errors, setErrors] = useState<{ logo?: string; titleText?: string; introText?: string; slots: Record<number, { title?: string; name?: string }> }>({ slots: {} })
+  const [errors, setErrors] = useState<{ logo?: string; background?: string; titleText?: string; introText?: string; slots: Record<number, { title?: string; name?: string }> }>({ slots: {} })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const defaultFileRef = useRef<HTMLInputElement>(null)
+  const { defaultLogo, upload: uploadDefault, clear: clearDefault } = useDefaultLogo()
+  const [defaultBusy, setDefaultBusy] = useState(false)
+
+  const changeDefaultLogo = async (file: File | undefined, remove = false) => {
+    if (!remove && !file) return
+    setDefaultBusy(true)
+    setErrors((p) => ({ ...p, logo: undefined }))
+    try {
+      if (remove) await clearDefault()
+      else if (file) await uploadDefault(file)
+    } catch (err) {
+      setErrors((p) => ({ ...p, logo: errorMessage(err) }))
+    } finally {
+      setDefaultBusy(false)
+      if (defaultFileRef.current) defaultFileRef.current.value = ''
+    }
+  }
+
+  const chooseLogo = async (file: File | undefined) => {
+    if (!file) return
+    setUploading(true)
+    setErrors((p) => ({ ...p, logo: undefined }))
+    try {
+      const { coverImage } = await api.uploadCourseCover(file)
+      setLogo(coverImage)
+    } catch (err) {
+      setErrors((p) => ({ ...p, logo: errorMessage(err) }))
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const chooseBackground = async (file: File | undefined) => {
+    if (!file) return
+    setBgBusy(true)
+    setErrors((p) => ({ ...p, background: undefined }))
+    try {
+      setBackgroundImage((await api.uploadCourseCover(file)).coverImage)
+    } catch (err) {
+      setErrors((p) => ({ ...p, background: errorMessage(err) }))
+    } finally {
+      setBgBusy(false)
+      if (bgRef.current) bgRef.current.value = ''
+    }
+  }
+
+  // The template as currently typed in the form, for the preview.
+  const draftTemplate = (): CertificateTemplate => {
+    const enabled = slots.filter((sl) => sl.enabled && sl.title.trim())
+    return {
+      id: template?.id ?? 0,
+      name: name.trim() || 'New template',
+      logo: customLogo && logo.trim() ? logo.trim() : DEFAULT_LOGO,
+      backgroundImage,
+      colors,
+      signatures: enabled.map((sl) => sl.title.trim()),
+      status,
+      titleText: titleText.trim() || 'CERTIFICATE OF COMPLETION',
+      introText: introText.trim() || 'This is to certify that',
+      showPassScore,
+      signatureDetails: slots,
+    }
+  }
 
   const setColor = (i: number, value: string) => setColors((prev) => prev.map((c, idx) => (idx === i ? value : c)))
   const setSlot = (i: number, patch: Partial<SignatureSlot>) =>
@@ -68,7 +142,7 @@ export function CertificateTemplateFormModal({
       setNameError('Template name must be 100 characters or fewer.')
       firstProblem = true
     }
-    if (customLogo && !logo.trim()) nextErrors.logo = 'Enter a logo name or image URL, or switch back to the company default logo.'
+    if (customLogo && !logo.trim()) nextErrors.logo = 'Upload a logo image, or switch back to the company default logo.'
     if (!titleText.trim()) nextErrors.titleText = 'Title text is required.'
     if (!introText.trim()) nextErrors.introText = 'Intro text is required.'
     colors.forEach((c, i) => {
@@ -86,6 +160,7 @@ export function CertificateTemplateFormModal({
     const hasSlotErrors = Object.keys(nextErrors.slots).length > 0
     if (firstProblem || nextErrors.logo || nextErrors.titleText || nextErrors.introText || hasSlotErrors) {
       setError('Please fix the highlighted fields.')
+      scrollToFirstError(e.currentTarget as HTMLElement)
       return
     }
     setSaving(true)
@@ -95,6 +170,7 @@ export function CertificateTemplateFormModal({
       await onSave({
         name: name.trim(),
         logo: customLogo ? logo.trim() || DEFAULT_LOGO : DEFAULT_LOGO,
+        backgroundImage,
         colors,
         signatures: cleanSlots.filter((sl) => sl.enabled && sl.title).map((sl) => sl.title),
         status,
@@ -120,7 +196,7 @@ export function CertificateTemplateFormModal({
       icon={<Award size={20} />}
     >
       {/* Same popup size as the module form (860px wide, fixed minimum height), buttons pinned to the bottom. */}
-      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3" style={{ minHeight: 'min(678px, calc(100vh - 240px))' }}>
+      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column" style={{ gap: 10, minHeight: 'min(678px, calc(100vh - 240px))' }}>
         {error && <Notice tone="error">{error}</Notice>}
 
         <Field label="Template Name" required error={nameError} hint={template ? "Name can't be changed after creation." : undefined}>
@@ -141,19 +217,40 @@ export function CertificateTemplateFormModal({
             <Radio value="default">Company Default Logo</Radio>
             <Radio value="custom">Custom Logo</Radio>
           </Radio.Group>
-          {customLogo && (
-            <Input
-              className="mt-2"
-              value={logo}
-              onChange={(e) => {
-                setLogo(e.target.value)
-                setErrors((p) => ({ ...p, logo: undefined }))
-              }}
-              status={errors.logo ? 'error' : undefined}
-              placeholder="Enter logo name or image URL"
-            />
+          {!customLogo && (
+            <div className="mt-2 d-flex align-items-center gap-3 rounded-2 border p-2" style={{ background: '#faf8fd' }}>
+              <input ref={defaultFileRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void changeDefaultLogo(e.target.files?.[0])} />
+              {defaultLogo ? (
+                <img src={logoImageUrl(defaultLogo)} alt="Default logo" style={{ height: 32, maxWidth: 160, objectFit: 'contain' }} />
+              ) : (
+                <span style={{ fontSize: 13, color: '#7b6b94' }}>No default logo set yet</span>
+              )}
+              <div className="ms-auto d-flex gap-2">
+                <Button icon={<Upload size={14} />} loading={defaultBusy} onClick={() => defaultFileRef.current?.click()}>
+                  {defaultLogo ? 'Change default logo' : 'Upload default logo'}
+                </Button>
+                {defaultLogo && (
+                  <Button danger disabled={defaultBusy} onClick={() => void changeDefaultLogo(undefined, true)}>
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
           )}
-          {errors.logo && <div className="mt-1" style={{ fontSize: 12, color: '#dc2626' }}>{errors.logo}</div>}
+          {customLogo && (
+            <div className="mt-2 d-flex align-items-center gap-3 rounded-2 border p-2" style={{ background: '#faf8fd' }}>
+              <input ref={fileRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void chooseLogo(e.target.files?.[0])} />
+              <Button icon={<Upload size={14} />} loading={uploading} onClick={() => fileRef.current?.click()}>
+                {logo ? 'Replace file' : 'Choose file'}
+              </Button>
+              {logo && isLogoImage(logo) ? (
+                <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 32, maxWidth: 160, objectFit: 'contain' }} />
+              ) : (
+                <span style={{ fontSize: 13, color: '#7b6b94' }}>{logo || 'No file chosen'}</span>
+              )}
+            </div>
+          )}
+          {errors.logo && <div className="mt-1" data-field-error style={{ fontSize: 12, color: '#dc2626' }}>{errors.logo}</div>}
         </Field>
 
         <div className="row g-3">
@@ -172,13 +269,37 @@ export function CertificateTemplateFormModal({
           ))}
         </div>
 
-        <Field label="Title Text" required error={errors.titleText}>
-          <Input value={titleText} onChange={(e) => { setTitleText(e.target.value); setErrors((p) => ({ ...p, titleText: undefined })) }} maxLength={120} status={errors.titleText ? 'error' : undefined} placeholder="Enter certificate title" />
+        <Field label="Background Image (optional)" error={errors.background}>
+          <div className="d-flex align-items-center gap-3 rounded-2 border p-2" style={{ background: '#faf8fd' }}>
+            <input ref={bgRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void chooseBackground(e.target.files?.[0])} />
+            <Button icon={<Upload size={14} />} loading={bgBusy} onClick={() => bgRef.current?.click()}>
+              {backgroundImage ? 'Replace image' : 'Choose image'}
+            </Button>
+            {backgroundImage ? (
+              <>
+                <img src={logoImageUrl(backgroundImage)} alt="Background" style={{ height: 40, width: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid #e2dcee' }} />
+                <Button danger onClick={() => setBackgroundImage(null)}>
+                  Remove
+                </Button>
+              </>
+            ) : (
+              <span style={{ fontSize: 13, color: '#7b6b94' }}>No image chosen</span>
+            )}
+          </div>
         </Field>
 
-        <Field label="Intro Text" required error={errors.introText}>
-          <Input value={introText} onChange={(e) => { setIntroText(e.target.value); setErrors((p) => ({ ...p, introText: undefined })) }} maxLength={200} status={errors.introText ? 'error' : undefined} placeholder="Enter introduction text" />
-        </Field>
+        <div className="row g-3">
+          <div className="col-12 col-md-6">
+                <Field label="Title Text" required error={errors.titleText}>
+                  <Input value={titleText} onChange={(e) => { setTitleText(e.target.value); setErrors((p) => ({ ...p, titleText: undefined })) }} maxLength={120} status={errors.titleText ? 'error' : undefined} placeholder="Enter certificate title" />
+                </Field>
+          </div>
+          <div className="col-12 col-md-6">
+                <Field label="Intro Text" required error={errors.introText}>
+                  <Input value={introText} onChange={(e) => { setIntroText(e.target.value); setErrors((p) => ({ ...p, introText: undefined })) }} maxLength={200} status={errors.introText ? 'error' : undefined} placeholder="Enter introduction text" />
+                </Field>
+          </div>
+        </div>
 
         <Checkbox checked={showPassScore} onChange={(e) => setShowPassScore(e.target.checked)}>
           Show Pass Score % on Certificate
@@ -231,11 +352,15 @@ export function CertificateTemplateFormModal({
 
         <div className="d-flex justify-content-end gap-3 pt-3 border-top mt-auto">
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={saving}>
+          <Button icon={<Eye size={14} />} onClick={() => setPreviewing(true)}>
+            Preview
+          </Button>
+          <Button type="primary" htmlType="submit" loading={saving} disabled={uploading || bgBusy}>
             {saving ? 'Saving…' : template ? 'Save Changes' : 'Save Template'}
           </Button>
         </div>
       </form>
+      {previewing && <CertificateTemplatePreviewModal template={draftTemplate()} onClose={() => setPreviewing(false)} />}
     </Modal>
   )
 }

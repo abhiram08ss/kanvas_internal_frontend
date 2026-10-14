@@ -8,6 +8,8 @@ import type { CourseModule } from '../../api'
 export function ModulePreviewModal({ module, onClose }: { module: CourseModule; onClose: () => void }) {
   return (
     <Modal title={module.title} subtitle={`${module.course} · module ${module.order}`} onClose={onClose} size="lg" tone="brand">
+      {/* Same popup size as the add / edit forms. */}
+      <div className="d-flex flex-column" style={{ minHeight: 'min(678px, calc(100vh - 240px))' }}>
       <div className="d-flex align-items-center gap-2 mb-3">
         <Badge tone="purple">{module.type}</Badge>
         <Badge>{module.status}</Badge>
@@ -15,6 +17,7 @@ export function ModulePreviewModal({ module, onClose }: { module: CourseModule; 
       </div>
       <div className="module-preview-body">
         <ModuleBody module={module} />
+      </div>
       </div>
     </Modal>
   )

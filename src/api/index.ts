@@ -67,8 +67,8 @@ export const api = {
   createTenant: (body: TenantCreateInput) => request<TenantCreateResult>('/tenants', { method: 'POST', body }),
   tenantDetail: (id: number) => request<TenantDetail>(`/tenants/${id}`),
   updateTenant: (id: number, body: TenantProfileUpdate) => request<Tenant>(`/tenants/${id}`, { method: 'PATCH', body }),
-  setTenantStatus: (id: number, status: Exclude<TenantStatus, 'Expired'>) =>
-    request<Tenant>(`/tenants/${id}/${status === 'Suspended' ? 'suspend' : 'activate'}`, { method: 'POST' }),
+  setTenantStatus: (id: number, status: Exclude<TenantStatus, 'Expired'>, reason?: string) =>
+    request<Tenant>(`/tenants/${id}/${status === 'Suspended' ? 'suspend' : 'activate'}`, { method: 'POST', ...(reason ? { body: { reason } } : {}) }),
 
   // ---- plans & courses
   plans: () => request<Plan[]>('/plans'),
@@ -83,7 +83,7 @@ export const api = {
   course: (id: number) => request<Course>(`/courses/${id}`),
   courseOptions: () => request<CourseOptions>('/courses/options'),
   createCourse: (body: CourseInput) => request<Course>('/courses', { method: 'POST', body }),
-  updateCourse: (id: number, body: Partial<CourseInput>) => request<Course>(`/courses/${id}`, { method: 'PATCH', body }),
+  updateCourse: (id: number, body: Partial<CourseInput> & { reason?: string }) => request<Course>(`/courses/${id}`, { method: 'PATCH', body }),
   deleteCourse: (id: number) => request<void>(`/courses/${id}`, { method: 'DELETE' }),
   courseCategories: () => request<CourseCategory[]>('/course-categories'),
   createCourseCategory: (body: CourseCategoryInput) => request<CourseCategory>('/course-categories', { method: 'POST', body }),
@@ -118,6 +118,15 @@ export const api = {
     return request<{ coverImage: string }>('/courses/upload-cover', { method: 'POST', body: form })
   },
 
+  /** The company logo used wherever a certificate template says "Company Default Logo" (null when none is set). */
+  defaultCertificateLogo: () => request<{ logo: string | null }>('/certificate-templates/default-logo'),
+  setDefaultCertificateLogo: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request<{ logo: string }>('/certificate-templates/default-logo', { method: 'POST', body: form })
+  },
+  clearDefaultCertificateLogo: () => request<void>('/certificate-templates/default-logo', { method: 'DELETE' }),
+
   // ---- LMS content: modules, quiz questions, certificate templates
   courseModules: () => request<CourseModule[]>('/course-modules'),
   /** Validate + store an image/video/document attachment for a module of that Content Type. */
@@ -137,7 +146,7 @@ export const api = {
 
   certificateTemplates: () => request<CertificateTemplate[]>('/certificate-templates'),
   createCertificateTemplate: (body: CertificateTemplateInput) => request<CertificateTemplate>('/certificate-templates', { method: 'POST', body }),
-  updateCertificateTemplate: (id: number, body: Partial<Omit<CertificateTemplateInput, 'name'>>) =>
+  updateCertificateTemplate: (id: number, body: Partial<Omit<CertificateTemplateInput, 'name'>> & { reason?: string }) =>
     request<CertificateTemplate>(`/certificate-templates/${id}`, { method: 'PATCH', body }),
 
   // ---- onboarding / payments
@@ -163,7 +172,7 @@ export const api = {
   // ---- platform users
   platformUsers: () => request<PlatformUser[]>('/platform-users'),
   createPlatformUser: (body: { name: string; email: string; role: PlatformRole; password: string }) => request<PlatformUser>('/platform-users', { method: 'POST', body }),
-  updatePlatformUser: (id: number, body: Partial<Pick<PlatformUser, 'name' | 'role' | 'status'>>) =>
+  updatePlatformUser: (id: number, body: Partial<Pick<PlatformUser, 'name' | 'role' | 'status'>> & { reason?: string }) =>
     request<PlatformUser>(`/platform-users/${id}`, { method: 'PATCH', body }),
   resetPlatformUserPassword: (id: number, password: string) =>
     request<PlatformUser>(`/platform-users/${id}/reset-password`, { method: 'POST', body: { password } }),

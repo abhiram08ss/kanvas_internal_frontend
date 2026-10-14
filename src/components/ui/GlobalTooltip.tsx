@@ -33,8 +33,8 @@ export function GlobalTooltip() {
       const target = e.target as HTMLElement | null
       const el = target?.closest?.('[title]') as HTMLElement | null
       if (!el || el.tagName === 'IFRAME' || el.tagName === 'SVG') return
-      if (el.closest('.ant-tabs-nav, .ant-segmented, .ant-select, .ant-select-dropdown')) {
-        // tabs, filter pills and dropdown lists never get a tooltip: drop antd's own title so the browser's grey box stays away too
+      if (el.closest('.ant-tabs-nav, .ant-segmented, .ant-select, .ant-select-dropdown') || (el.closest('.ant-table') && !el.closest('button'))) {
+        // tabs, filter pills, dropdown lists and table cell text never get a tooltip: drop antd's own title so the browser's grey box stays away too
         el.removeAttribute('title')
         return
       }

@@ -38,7 +38,7 @@ export function TenantStatusChart({ totalTenants }: { totalTenants: number }) {
 
   return (
     <Card className="p-4">
-      <div className="d-flex align-items-center justify-content-between mb-3">
+      <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div>
           <h3 className="font-value fw-semibold mb-0" style={{ fontSize: 14, color: '#1a1228' }}>
             Tenant Status Over Time

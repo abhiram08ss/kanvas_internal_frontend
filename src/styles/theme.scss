@@ -695,3 +695,10 @@ textarea:focus::placeholder,
 // Selects inside popups match the inputs beside them (40px)
 .ant-modal:not(.kv-confirm) .ant-modal-body .ant-select-single { height: 40px; }
 .ant-modal:not(.kv-confirm) .ant-modal-body .ant-select-single .ant-select-selector { height: 40px; align-items: center; }
+
+/* A list card that stretches to the bottom of its column, with the pager pinned to the bottom edge. */
+.list-card.fill-height { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.list-card.fill-height .ant-table-wrapper { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.list-card.fill-height .ant-table-wrapper > .ant-spin, .list-card.fill-height .ant-table-wrapper > .ant-spin-nested-loading { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.list-card.fill-height .ant-table-wrapper .ant-spin-container { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.list-card.fill-height .ant-table-wrapper .ant-pagination { margin-top: auto !important; padding: 12px 24px; }

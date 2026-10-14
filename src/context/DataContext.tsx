@@ -100,7 +100,7 @@ interface DataContextValue {
   updatePlan: (planId: number, updates: Partial<PlanInput>) => Promise<void>
   updatePlanCourses: (planId: number, courseIds: number[]) => Promise<void>
   addCourse: (course: CourseInput) => Promise<void>
-  updateCourse: (courseId: number, updates: Partial<CourseInput>) => Promise<void>
+  updateCourse: (courseId: number, updates: Partial<CourseInput> & { reason?: string }) => Promise<void>
   addCourseCategory: (category: CourseCategoryInput) => Promise<void>
   updateCourseCategory: (categoryId: number, updates: Partial<CourseCategoryInput> & { status?: CourseCategory['status'] }) => Promise<void>
   addCourseModule: (module: CourseModuleInput) => Promise<void>
@@ -110,7 +110,7 @@ interface DataContextValue {
   updateQuizQuestion: (questionId: number, updates: Partial<QuizQuestionInput>) => Promise<void>
   deleteQuizQuestion: (questionId: number) => Promise<void>
   addCertificateTemplate: (template: CertificateTemplateInput) => Promise<void>
-  updateCertificateTemplate: (templateId: number, updates: Partial<Omit<CertificateTemplateInput, 'name'>>) => Promise<void>
+  updateCertificateTemplate: (templateId: number, updates: Partial<Omit<CertificateTemplateInput, 'name'>> & { reason?: string }) => Promise<void>
 }
 
 const DataContext = createContext<DataContextValue | undefined>(undefined)
@@ -215,7 +215,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     upsert('editableCourses', course)
   }
   const addCourse = async (course: CourseInput) => syncCourse(await api.createCourse(course))
-  const updateCourse = async (courseId: number, updates: Partial<CourseInput>) => syncCourse(await api.updateCourse(courseId, updates))
+  const updateCourse = async (courseId: number, updates: Partial<CourseInput> & { reason?: string }) => syncCourse(await api.updateCourse(courseId, updates))
 
   const addCourseCategory = async (category: CourseCategoryInput) => upsert('courseCategories', await api.createCourseCategory(category))
   const updateCourseCategory = async (categoryId: number, updates: Partial<CourseCategoryInput> & { status?: CourseCategory['status'] }) =>
@@ -245,7 +245,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }
 
   const addCertificateTemplate = async (template: CertificateTemplateInput) => upsert('certificateTemplates', await api.createCertificateTemplate(template))
-  const updateCertificateTemplate = async (templateId: number, updates: Partial<Omit<CertificateTemplateInput, 'name'>>) =>
+  const updateCertificateTemplate = async (templateId: number, updates: Partial<Omit<CertificateTemplateInput, 'name'>> & { reason?: string }) =>
     upsert('certificateTemplates', await api.updateCertificateTemplate(templateId, updates))
 
   return (

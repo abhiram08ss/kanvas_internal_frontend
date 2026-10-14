@@ -5,7 +5,18 @@ import '../../pages/CreateTenant.css'
 /** The horizontal step tracker used by the Create / Edit tenant wizards: a numbered circle with its name (and
  *  "Current step" / "Completed" beneath), the steps joined by lines that fill with the brand colour as the
  *  steps are completed. `current` is 1-based. */
-export function WizardSteps({ steps, current }: { steps: string[]; current: number }) {
+export function WizardSteps({
+  steps,
+  current,
+  captions,
+  onStepClick,
+}: {
+  steps: string[]
+  current: number
+  captions?: string[]
+  /** When given, every step is a button that jumps to that step (1-based). */
+  onStepClick?: (step: number) => void
+}) {
   return (
     <ol className="wz-steps" aria-label="Progress">
       {steps.map((label, i) => {
@@ -13,11 +24,31 @@ export function WizardSteps({ steps, current }: { steps: string[]; current: numb
         const state = n < current ? 'is-done' : n === current ? 'is-current' : 'is-todo'
         return (
           <li key={label} className={`wz-step ${state}`} aria-current={n === current ? 'step' : undefined}>
-            <span className="wz-dot">{n < current ? <Check size={18} strokeWidth={3} /> : n}</span>
-            <span className="wz-step-text">
-              <span className="wz-step-label">{label}</span>
-              {n <= current && <span className="wz-step-caption">{n === current ? 'Current step' : 'Completed'}</span>}
-            </span>
+            {onStepClick ? (
+              <button type="button" className="wz-step-btn" onClick={() => onStepClick(n)}>
+                <span className="wz-dot">{n < current ? <Check size={18} strokeWidth={3} /> : n}</span>
+                <span className="wz-step-text">
+                  <span className="wz-step-label">{label}</span>
+                  {captions?.[i] ? (
+                    <span className="wz-step-caption">{captions[i]}</span>
+                  ) : (
+                    n <= current && <span className="wz-step-caption">{n === current ? 'Current step' : 'Completed'}</span>
+                  )}
+                </span>
+              </button>
+            ) : (
+              <>
+                <span className="wz-dot">{n < current ? <Check size={18} strokeWidth={3} /> : n}</span>
+                <span className="wz-step-text">
+                  <span className="wz-step-label">{label}</span>
+                  {captions?.[i] ? (
+                    <span className="wz-step-caption">{captions[i]}</span>
+                  ) : (
+                    n <= current && <span className="wz-step-caption">{n === current ? 'Current step' : 'Completed'}</span>
+                  )}
+                </span>
+              </>
+            )}
             {i < steps.length - 1 && <span className={`wz-line${n < current ? ' is-done' : ''}`} />}
           </li>
         )
