@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Building2, BookOpen, Check, Mail, Search, ShieldCheck, Receipt, UserCog } from 'lucide-react'
-import { App, Button, Empty, Input, Select, Spin } from 'antd'
+import { ArrowLeft, ArrowRight, Building2, Check, Copy, Globe, Receipt, UserCog } from 'lucide-react'
+import { App, Button, Input, Select, Spin } from 'antd'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Field } from '../components/ui/Field'
 import { Notice } from '../components/ui/State'
-import { ReviewCard, ReviewRow } from '../components/tenants/ReviewParts'
-import { CourseGroupPicker, ReviewCourseGroups } from '../components/tenants/CourseGroupPicker'
+import { ReviewStep } from '../components/tenants/ReviewStep'
+import { CourseSelectStep } from '../components/tenants/CourseSelectStep'
+import { TenantStatusCard, suspendReasonText, type TenantStatusChoice } from '../components/tenants/TenantStatusCard'
 import { COUNTRIES } from '../data/countries'
 import { useData, useDataNeeds } from '../context/DataContext'
 import { api, errorMessage, type Tenant, type TenantCourse } from '../api'
@@ -23,7 +24,7 @@ const PHONE_RE = /^[0-9]{10}$/
 const STEP_LABELS = ['Organization', 'Select courses', 'Review & proceed']
 const LIMIT_PRESETS = [50, 100, 250, 500]
 
-type Key = 'name' | 'userLimit' | 'billingContactName' | 'billingEmail' | 'billingPhone' | 'lmsAdminName' | 'lmsAdminEmail'
+type Key = 'name' | 'userLimit' | 'address' | 'billingContactName' | 'billingEmail' | 'billingPhone' | 'lmsAdminName' | 'lmsAdminEmail' | 'statusReason'
 type Errors = Partial<Record<Key, string>>
 
 /** Edit a tenant in the same three steps as creating one: Organization -> Courses -> Review. The tenant code
@@ -48,12 +49,16 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
   const [lmsAdminName, setLmsAdminName] = useState(tenant.lmsAdminName)
   const [lmsAdminEmail, setLmsAdminEmail] = useState(tenant.lmsAdminEmail)
   const [errors, setErrors] = useState<Errors>({})
+  const initialStatus: TenantStatusChoice = tenant.status === 'Suspended' ? 'Suspended' : 'Active'
+  const [tenantStatus, setTenantStatus] = useState<TenantStatusChoice>(initialStatus)
+  const [statusReason, setStatusReason] = useState('')
+  const [statusNote, setStatusNote] = useState('')
 
   // Step 2
   const [current, setCurrent] = useState<TenantCourse[] | null>(null)
+  const [lmsUrl, setLmsUrl] = useState('')
+  const [urlCopied, setUrlCopied] = useState(false)
   const [selected, setSelected] = useState<number[]>([])
-  const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('All')
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -65,6 +70,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
       .then((d) => {
         if (cancelled) return
         setCurrent(d.courses)
+        setLmsUrl(d.lmsUrl ?? '')
         setSelected(d.courses.map((c) => c.id))
       })
       .catch((e) => !cancelled && setError(errorMessage(e)))
@@ -76,24 +82,11 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
   // Courses this tenant already had when the page opened; anything selected beyond these is new and gets a star.
   const originalIds = new Set((current ?? []).map((c) => c.id))
   const isNew = (id: number) => current !== null && selected.includes(id) && !originalIds.has(id)
-  const newCount = selected.filter((id) => isNew(id)).length
   // Every course can be ticked or unticked, including the ones the tenant already has: unticking an existing
   // course removes it from the tenant when the changes are saved. Existing courses stay visible (even if inactive).
   const activeCourses = courses.filter((c) => c.status === 'Active' || selected.includes(c.id) || originalIds.has(c.id))
   const removedCount = [...originalIds].filter((id) => !selected.includes(id)).length
-  const categoryTypes = Array.from(new Set(activeCourses.map((c) => c.category)))
-  const visible = activeCourses.filter(
-    (c) =>
-      (category === 'All' || c.category === category) &&
-      (c.name.toLowerCase().includes(query.toLowerCase()) || c.code.toLowerCase().includes(query.toLowerCase())),
-  )
   const selectedCourses = courses.filter((c) => selected.includes(c.id))
-
-  const toggle = (id: number) => {
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-  }
-  const selectAllVisible = () => setSelected((prev) => Array.from(new Set([...prev, ...visible.map((c) => c.id)])))
-  const clearAll = () => setSelected([])
 
   const clear = (key: Key) => setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev))
   const status = (key: Key) => (errors[key] ? 'error' : undefined)
@@ -107,14 +100,19 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
       if (!Number.isInteger(n) || n < 1) e.userLimit = 'Enter a whole number of 1 or more.'
       else if (n < tenant.users) e.userLimit = `Cannot be below the current ${tenant.users} active users.`
     }
-    if (billingContactName.trim() && !NAME_RE.test(billingContactName.trim())) e.billingContactName = "Name can only contain letters, spaces, . - and '"
+    if (!address.trim()) e.address = 'Address is required.'
+    else if (address.trim().length < 5) e.address = 'Enter the full address (at least 5 characters).'
+    if (!billingContactName.trim()) e.billingContactName = 'Billing name is required.'
+    else if (!NAME_RE.test(billingContactName.trim())) e.billingContactName = "Name can only contain letters, spaces, . - and '"
     if (!billingEmail.trim()) e.billingEmail = 'Billing email is required.'
     else if (!EMAIL_RE.test(billingEmail.trim())) e.billingEmail = 'Enter a valid email address.'
-    if (billingPhone.trim() && !PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Phone number must be exactly 10 digits.'
+    if (!billingPhone.trim()) e.billingPhone = 'Contact number is required.'
+    else if (!PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Contact number must be exactly 10 digits.'
     if (!lmsAdminName.trim()) e.lmsAdminName = 'Admin name is required.'
     else if (!NAME_RE.test(lmsAdminName.trim())) e.lmsAdminName = "Name can only contain letters, spaces, . - and '"
     if (!lmsAdminEmail.trim()) e.lmsAdminEmail = 'Admin email is required.'
     else if (!EMAIL_RE.test(lmsAdminEmail.trim())) e.lmsAdminEmail = 'Enter a valid email address.'
+    if (tenantStatus === 'Suspended' && tenantStatus !== initialStatus && !statusReason) e.statusReason = 'Select a reason for suspending this tenant.'
     return e
   }
 
@@ -124,6 +122,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
       setErrors(errs)
       if (Object.keys(errs).length > 0) {
         setError('Please fix the highlighted fields.')
+        scrollToFirstError(document.querySelector('.tc-page'))
         return
       }
       setError('')
@@ -148,8 +147,11 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
         ...(userLimit.trim() ? { userLimit: Number(userLimit) } : {}),
         courseIds: selected,
       })
+      if (tenantStatus !== initialStatus) {
+        await api.setTenantStatus(tenant.id, tenantStatus, tenantStatus === 'Suspended' ? suspendReasonText(statusReason, statusNote) : undefined)
+      }
       await onSaved()
-      notification.success({ title: 'Tenant updated', description: `${name.trim()} was updated successfully.` })
+      notification.success({ title: 'Tenant Updated', description: `${name.trim()} was updated successfully.` })
       onClose()
     } catch (err) {
       setError(errorMessage(err))
@@ -158,7 +160,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
   }
 
 
-  const requiredFilled = !!(name.trim() && billingEmail.trim() && lmsAdminName.trim() && lmsAdminEmail.trim())
+  const requiredFilled = !!(name.trim() && address.trim() && billingContactName.trim() && billingEmail.trim() && billingPhone.trim() && lmsAdminName.trim() && lmsAdminEmail.trim())
   const nextLabel = step === 1 ? 'Next: Select courses' : step === 2 ? 'Next: Review' : 'Save changes'
   const limitNumber = userLimit.trim() ? Number(userLimit) : tenant.userLimit
   const initial = name.trim()[0]?.toUpperCase()
@@ -183,21 +185,31 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
   return (
     <AppLayout title="Edit tenant" subtitle={`${tenant.name} · ${tenant.code}`} crumbs={[{ label: 'Tenants', to: '/tenants' }, { label: 'Edit tenant' }]}>
       <div className="tc-page">
-        <button type="button" className="tc-back" onClick={onClose}>
-          <ArrowLeft size={15} /> Back to tenants
-        </button>
         <div className="tc-title-row">
-          <div>
-            <h2 className="font-display tc-title">Edit tenant</h2>
-            <p className="tc-sub">Update the organization, billing contact and LMS administrator for {tenant.name}.</p>
+          <button type="button" className="tc-back" onClick={onClose}>
+            <span className="tc-back-ico">
+              <ArrowLeft size={14} />
+            </span>
+            Back to tenants
+          </button>
+          <div className="tc-hero">
+            <span className="tc-hero-icon">
+              <Building2 size={22} />
+            </span>
+            <div className="tc-hero-text">
+              <h2 className="font-display tc-title">Edit tenant</h2>
+              <p className="tc-sub">{step === 2 ? "Pick the courses this tenant's learners will get. Untick a course to remove it." : step === 3 ? 'Check the changes below, then save.' : `Update the organization, billing contact and LMS administrator for ${tenant.name}.`}</p>
+            </div>
+            <span className="tc-required">
+              <b>*</b> Required fields
+            </span>
           </div>
-          <span className="tc-required">
-            <b>*</b> Required
-          </span>
         </div>
 
         <div className="tc-stepper">
           <WizardSteps
+            variant="dots"
+            jumpAnywhere
             steps={STEP_LABELS}
             current={step}
             onStepClick={goToStep}
@@ -219,8 +231,8 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                     <p className="tc-card-desc">Who this tenant is and how many people can use it.</p>
                   </div>
                 </div>
-                <div className="tc-fields">
-                  <Field label="Organization name" required error={errors.name}>
+                <div className="tc-fields tc-fields-4">
+                  <Field label="Organization Name" required error={errors.name}>
                     <Input
                       size="middle"
                       value={name}
@@ -230,10 +242,10 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                         setName(e.target.value)
                         clear('name')
                       }}
-                      placeholder="e.g. Acme Industries"
+                      placeholder="Enter organization name"
                     />
                   </Field>
-                  <Field label="Tenant code" hint="Can't be changed after creation.">
+                  <Field label="Tenant Code" hint="Can't be changed after creation.">
                     <Input size="middle" className="tc-mono" value={tenant.code} disabled />
                   </Field>
                   <Field label="Industry">
@@ -257,9 +269,9 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                       style={{ width: '100%' }}
                     />
                   </Field>
-                  <div>
+                  <div className="tc-span2">
                   <Field
-                      label="User limit"
+                      label="User Limit"
                       error={errors.userLimit}
                       hint={tenant.userLimit >= UNLIMITED ? 'Currently unlimited. Leave blank to keep it.' : `${tenant.users} users active now. You can raise the limit any time.`}
                     >
@@ -294,128 +306,144 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                       </div>
                     </Field>
                   </div>
-                  <div>
-                    <Field
-                      label={
-                        <>
-                          Address <span className="tc-opt">(optional)</span>
-                        </>
-                      }
-                    >
-                      <Input size="middle" maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, state, PIN" />
+                  <div className="tc-span2">
+                    <Field label="Address" required error={errors.address}>
+                      <Input.TextArea
+                        rows={2}
+                        maxLength={300}
+                        value={address}
+                        status={status('address')}
+                        onChange={(e) => {
+                          setAddress(e.target.value)
+                          clear('address')
+                        }}
+                        placeholder="Enter the full address: street, city, state and PIN code"
+                      />
                     </Field>
                   </div>
                 </div>
               </section>
 
-              <section className="tc-card">
-                <div className="tc-card-head">
-                  <span className="tc-card-icon">
-                    <Receipt size={20} />
-                  </span>
-                  <div>
-                    <h3 className="tc-card-title">Billing contact</h3>
-                    <p className="tc-card-desc">Where invoices and renewal reminders go.</p>
+              <div className="tc-pair">
+                <section className="tc-card">
+                  <div className="tc-card-head">
+                    <span className="tc-card-icon">
+                      <Receipt size={20} />
+                    </span>
+                    <div>
+                      <h3 className="tc-card-title">Billing Contact</h3>
+                      <p className="tc-card-desc">Where invoices and renewal reminders go.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="tc-fields">
-                  <Field
-                    label={
-                      <>
-                        Contact name <span className="tc-opt">(optional)</span>
-                      </>
-                    }
-                    error={errors.billingContactName}
-                  >
-                    <Input
-                      size="middle"
-                      value={billingContactName}
-                      maxLength={120}
-                      status={status('billingContactName')}
-                      onChange={(e) => {
-                        setBillingContactName(e.target.value)
-                        clear('billingContactName')
-                      }}
-                      placeholder="Full name"
-                    />
-                  </Field>
-                  <Field label="Billing email" required error={errors.billingEmail}>
-                    <Input
-                      size="middle"
-                      type="email"
-                      value={billingEmail}
-                      status={status('billingEmail')}
-                      onChange={(e) => {
-                        setBillingEmail(e.target.value)
-                        clear('billingEmail')
-                      }}
-                      placeholder="billing@company.com"
-                    />
-                  </Field>
-                  <Field
-                    label={
-                      <>
-                        Phone <span className="tc-opt">(optional)</span>
-                      </>
-                    }
-                    error={errors.billingPhone}
-                  >
-                    <Input
-                      size="middle"
-                      addonBefore="+91"
-                      inputMode="tel"
-                      maxLength={10}
-                      value={billingPhone}
-                      status={status('billingPhone')}
-                      onChange={(e) => {
-                        setBillingPhone(e.target.value.replace(/\D/g, ''))
-                        clear('billingPhone')
-                      }}
-                      placeholder="98765 43210"
-                    />
-                  </Field>
-                </div>
-              </section>
+                  <div className="tc-fields">
+                    <Field label="Billing Name" required error={errors.billingContactName}>
+                      <Input
+                        size="middle"
+                        value={billingContactName}
+                        maxLength={120}
+                        status={status('billingContactName')}
+                        onChange={(e) => {
+                          setBillingContactName(e.target.value)
+                          clear('billingContactName')
+                        }}
+                        placeholder="Enter billing contact name"
+                      />
+                    </Field>
+                    <Field label="Billing Email" required error={errors.billingEmail}>
+                      <Input
+                        size="middle"
+                        type="email"
+                        value={billingEmail}
+                        status={status('billingEmail')}
+                        onChange={(e) => {
+                          setBillingEmail(e.target.value)
+                          clear('billingEmail')
+                        }}
+                        placeholder="Enter billing email address"
+                      />
+                    </Field>
+                    <div>
+                      <Field label="Contact Number" required error={errors.billingPhone}>
+                      <Input
+                        size="middle"
+                        addonBefore="+91"
+                        inputMode="tel"
+                        maxLength={10}
+                        value={billingPhone}
+                        status={status('billingPhone')}
+                        onChange={(e) => {
+                          setBillingPhone(e.target.value.replace(/\D/g, ''))
+                          clear('billingPhone')
+                        }}
+                        placeholder="Enter 10-digit mobile number"
+                      />
+                    </Field>
+                    </div>
+                  </div>
+                </section>
 
-              <section className="tc-card">
-                <div className="tc-card-head">
-                  <span className="tc-card-icon">
-                    <UserCog size={20} />
-                  </span>
-                  <div>
-                    <h3 className="tc-card-title">LMS administrator</h3>
-                    <p className="tc-card-desc">The person who manages courses and users for this tenant.</p>
+                <section className="tc-card">
+                  <div className="tc-card-head">
+                    <span className="tc-card-icon">
+                      <UserCog size={20} />
+                    </span>
+                    <div>
+                      <h3 className="tc-card-title">LMS Administrator</h3>
+                      <p className="tc-card-desc">The person who manages courses and users for this tenant.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="tc-fields">
-                  <Field label="Admin name" required error={errors.lmsAdminName}>
-                    <Input
-                      size="middle"
-                      value={lmsAdminName}
-                      maxLength={120}
-                      status={status('lmsAdminName')}
-                      onChange={(e) => {
-                        setLmsAdminName(e.target.value)
-                        clear('lmsAdminName')
-                      }}
-                      placeholder="Full name"
-                    />
-                  </Field>
-                  <Field label="Admin email" required error={errors.lmsAdminEmail}>
-                    <Input
-                      size="middle"
-                      type="email"
-                      value={lmsAdminEmail}
-                      status={status('lmsAdminEmail')}
-                      onChange={(e) => {
-                        setLmsAdminEmail(e.target.value)
-                        clear('lmsAdminEmail')
-                      }}
-                      placeholder="admin@company.com"
-                    />
-                  </Field>
-                </div>
-              </section>
+                  <div className="tc-fields">
+                    <Field label="Admin Name" required error={errors.lmsAdminName}>
+                      <Input
+                        size="middle"
+                        value={lmsAdminName}
+                        maxLength={120}
+                        status={status('lmsAdminName')}
+                        onChange={(e) => {
+                          setLmsAdminName(e.target.value)
+                          clear('lmsAdminName')
+                        }}
+                        placeholder="Enter admin name"
+                      />
+                    </Field>
+                    <Field label="Admin Email" required error={errors.lmsAdminEmail}>
+                      <Input
+                        size="middle"
+                        type="email"
+                        value={lmsAdminEmail}
+                        status={status('lmsAdminEmail')}
+                        onChange={(e) => {
+                          setLmsAdminEmail(e.target.value)
+                          clear('lmsAdminEmail')
+                        }}
+                        placeholder="Enter admin email address"
+                      />
+                    </Field>
+                  <div>
+                    <Field label="Tenant URL">
+                      <div className="tc-url">
+                        <Globe size={14} />
+                        <span>{lmsUrl || 'https://[tenant-url]'}</span>
+                        <button
+                          type="button"
+                          className="tc-url-copy"
+                          aria-label="Copy tenant URL"
+                          disabled={!lmsUrl}
+                          onClick={() => {
+                            void navigator.clipboard?.writeText(lmsUrl).then(() => {
+                              setUrlCopied(true)
+                              window.setTimeout(() => setUrlCopied(false), 1500)
+                            })
+                          }}
+                        >
+                          {urlCopied ? <Check size={14} /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </Field>
+                  </div>
+                  </div>
+                </section>
+              </div>
             </div>
 
             <aside className="tc-aside">
@@ -429,7 +457,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                   </div>
                 </div>
                 <div className="tc-preview-row">
-                  <span>User limit</span>
+                  <span>User Limit</span>
                   <span>{limitText}</span>
                 </div>
                 <div className="tc-preview-row">
@@ -445,125 +473,81 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                   <span>{lmsAdminEmail.trim() || 'Not set'}</span>
                 </div>
               </div>
+              <TenantStatusCard
+                status={tenantStatus}
+                onStatusChange={(v) => {
+                  setTenantStatus(v)
+                  clear('statusReason')
+                }}
+                reason={statusReason}
+                onReasonChange={(r) => {
+                  setStatusReason(r)
+                  clear('statusReason')
+                }}
+                note={statusNote}
+                onNoteChange={setStatusNote}
+                reasonError={errors.statusReason}
+              />
             </aside>
           </div>
         )}
 
         {step === 2 && (
-          <div className="tc-step-card">
+          <>
             {error && (
               <div className="mb-3">
                 <Notice tone="error">{error}</Notice>
               </div>
             )}
-            <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
-              <div>
-                <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
-                <p className="mb-0 small text-secondary">
-                  Tick a course to add it, untick one to remove it from this tenant. Changes apply when you save.
-                </p>
-              </div>
-              <span className="ct-selected-pill">
-                <Check size={14} /> {selected.length} selected{newCount > 0 ? ` · ${newCount} new` : ''}{removedCount > 0 ? ` · ${removedCount} removed` : ''}
-              </span>
-            </div>
-
             {!current && !error ? (
               <div className="py-5 text-center">
                 <Spin />
               </div>
             ) : (
-              <>
-                <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
-                  <div style={{ width: 280, maxWidth: '100%' }}>
-                    <Input allowClear value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search courses" prefix={<Search size={14} color="#9b87b5" />} />
-                  </div>
-                  <div className="d-flex flex-wrap gap-2">
-                    {['All', ...categoryTypes].map((cat) => (
-                      <button key={cat} type="button" className={`ct-chip${category === cat ? ' is-active' : ''}`} onClick={() => setCategory(cat)}>
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="ms-auto d-flex gap-2">
-                    <Button onClick={selectAllVisible} disabled={visible.length === 0}>
-                      Select all{category !== 'All' || query ? ' shown' : ''}
-                    </Button>
-                    <Button onClick={clearAll}>Clear</Button>
-                  </div>
-                </div>
-
-
-                {visible.length === 0 ? (
-                  <div className="py-5">
-                    <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                  </div>
-                ) : (
-                  <CourseGroupPicker courses={visible} selected={selected} isNew={isNew} onToggle={toggle} />
-                )}
-              </>
+              <CourseSelectStep
+                courses={activeCourses}
+                selected={selected}
+                onChange={setSelected}
+                tenantName={name.trim()}
+                tenantCode={tenant.code}
+                isNew={isNew}
+                removedCount={removedCount}
+              />
             )}
-          </div>
+          </>
         )}
 
         {step === 3 && (
-          <div className="tc-step-card">
-            <div className="mx-auto" style={{ maxWidth: 920 }}>
-            <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Review &amp; Proceed</h3>
-            <p className="mb-4 small text-secondary">Check the changes below. Click Save Changes to update the tenant.</p>
-            <div className="row g-3">
-              <div className="col-12 col-lg-6">
-                <ReviewCard icon={<Building2 size={18} />} title="Organization">
-                  <ReviewRow label="Name" value={name} />
-                  <ReviewRow label="Tenant code" value={tenant.code} mono />
-                  <ReviewRow label="Industry" value={industry} />
-                  <ReviewRow label="Country" value={country} />
-                  <ReviewRow label="User limit" value={userLimit || (tenant.userLimit >= UNLIMITED ? 'Unlimited' : String(tenant.userLimit))} />
-                  <ReviewRow label="Address" value={address} />
-                </ReviewCard>
-              </div>
-              <div className="col-12 col-lg-6 d-flex flex-column gap-3">
-                <ReviewCard icon={<Mail size={18} />} title="Billing contact">
-                  <ReviewRow label="Name" value={billingContactName} />
-                  <ReviewRow label="Email" value={billingEmail} />
-                  <ReviewRow label="Phone" value={billingPhone} />
-                </ReviewCard>
-                <ReviewCard icon={<ShieldCheck size={18} />} title="LMS admin">
-                  <ReviewRow label="Name" value={lmsAdminName} />
-                  <ReviewRow label="Email" value={lmsAdminEmail} />
-                </ReviewCard>
-              </div>
-              <div className="col-12">
-                <ReviewCard icon={<BookOpen size={18} />} title={`Courses (${selectedCourses.length})`}>
-                  {selectedCourses.length === 0 ? (
-                    <p className="small text-secondary mb-0">No courses selected.</p>
-                  ) : (
-                    <ReviewCourseGroups courses={selectedCourses} isNew={isNew} />
-                  )}
-                  {removedCount > 0 && (
-                    <div className="mt-3 pt-3" style={{ borderTop: '1px dashed #e2dcee' }}>
-                      <p className="mb-2 fw-semibold" style={{ fontSize: 13, color: '#b42318' }}>
-                        Will be removed ({removedCount})
-                      </p>
-                      <div className="d-flex flex-wrap gap-2">
-                        {courses
-                          .filter((c) => originalIds.has(c.id) && !selected.includes(c.id))
-                          .map((c) => (
-                            <span key={c.id} className="ct-review-chip" style={{ background: '#fdecea', color: '#b42318', textDecoration: 'line-through' }}>
-                              {c.name}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </ReviewCard>
-              </div>
-            </div>
-          </div>
-          </div>
+          <ReviewStep
+            mode="edit"
+            summary={{ name: name.trim(), code: tenant.code, industry, country, users: userLimit || (tenant.userLimit >= UNLIMITED ? 'Unlimited' : String(tenant.userLimit)), status: tenantStatus === 'Suspended' && tenantStatus !== initialStatus ? `Suspended (${statusReason})` : tenantStatus }}
+            organization={[
+              ['Organization name', name],
+              ['Tenant code', tenant.code, { mono: true }],
+              ['User limit', userLimit ? `${userLimit} users` : tenant.userLimit >= UNLIMITED ? 'Unlimited' : `${tenant.userLimit} users`],
+              ['Industry', industry],
+              ['Country', country],
+              ['Address', address],
+            ]}
+            billing={[
+              ['Name', billingContactName],
+              ['Email', billingEmail],
+              ['Phone', billingPhone ? `+91 ${billingPhone}` : ''],
+            ]}
+            admin={[
+              ['Name', lmsAdminName],
+              ['Email', lmsAdminEmail],
+              ['Role', 'Tenant LMS admin'],
+              ['Tenant URL', lmsUrl || 'https://[tenant-url]', { mono: true }],
+            ]}
+            courses={selectedCourses}
+            isNew={isNew}
+            removed={courses.filter((c) => originalIds.has(c.id) && !selected.includes(c.id))}
+            emptyCoursesNote="No courses selected."
+          />
         )}
 
-        <div className="tc-footer">
+        <div className="tc-bottom">
           <Button type={step === 1 ? 'text' : 'default'} onClick={step === 1 ? onClose : () => setStep((s) => s - 1)} disabled={saving}>
             {step === 1 ? 'Cancel' : 'Back'}
           </Button>

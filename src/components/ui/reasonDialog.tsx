@@ -13,7 +13,7 @@ function ReasonField({ label, bridge }: { label: string; bridge: { value: string
   return (
     <div className="mt-2">
       <label className="d-block mb-1 fw-semibold" style={{ fontSize: 13, color: '#1a1228' }}>
-        {label} <span style={{ color: '#dc2626' }}>*</span>
+        {label} <span className="kv-req">*</span>
       </label>
       <Input.TextArea
         autoFocus
@@ -47,10 +47,13 @@ export function reasonDialog({
   content,
   okText,
   onOk,
+  label = 'Reason for deactivating',
 }: {
   title: string
   content: string
   okText: string
+  /** Label above the box, e.g. "Reason for suspending". */
+  label?: string
   onOk: (reason: string) => Promise<void> | void
 }) {
   const bridge = { value: '', setError: (_: string) => {} }
@@ -59,7 +62,7 @@ export function reasonDialog({
     content: (
       <div>
         <div>{content}</div>
-        <ReasonField label="Reason for deactivating" bridge={bridge} />
+        <ReasonField label={label} bridge={bridge} />
       </div>
     ),
     okText,

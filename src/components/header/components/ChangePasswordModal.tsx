@@ -36,7 +36,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     setError('')
     try {
       await api.changePassword(currentPassword, newPassword)
-      notification.success({ title: 'Password changed', description: 'Your password has been updated.' })
+      notification.success({ title: 'Password Changed', description: 'Your password has been updated.' })
       setDone(true)
     } catch (err) {
       const message = errorMessage(err)

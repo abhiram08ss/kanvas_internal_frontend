@@ -52,14 +52,14 @@ export function Sidebar() {
     <Layout.Sider
       className={mobile ? `sidebar-drawer${drawerOpen ? ' is-open' : ''}` : undefined}
       theme="light"
-      width={256}
-      collapsedWidth={80}
+      width={224}
+      collapsedWidth={72}
       collapsed={collapsed}
       trigger={null}
       style={{ height: '100vh', borderRight: '1px solid #ede8f5' }}
       styles={{ body: { display: 'flex', flexDirection: 'column', height: '100%' } }}
     >
-      <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ minHeight: 64, borderBottom: '1px solid #ede8f5' }}>
+      <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ minHeight: 56, borderBottom: '1px solid #ede8f5' }}>
         {collapsed ? (
           <span className="font-display fs-4 fw-bold text-primary">K</span>
         ) : (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { App, Form, Input, Select, Button, Empty } from 'antd'
+import { App, Form, Input, Select, Button } from 'antd'
 import './CreateTenant.css'
 import './CreateTenantPage.css'
 import { WizardSteps } from '../components/tenants/WizardSteps'
@@ -14,9 +14,6 @@ import {
   XCircle,
   Loader2,
   Copy,
-  Search,
-  ShieldCheck,
-  BookOpen,
   Mail,
   RefreshCw,
   Receipt,
@@ -25,8 +22,11 @@ import {
 import { AppLayout } from '../components/layout/AppLayout'
 import { Card } from '../components/ui/Card'
 import { COUNTRIES } from '../data/countries'
-import { ReviewCard, ReviewRow } from '../components/tenants/ReviewParts'
-import { CourseGroupPicker, ReviewCourseGroups } from '../components/tenants/CourseGroupPicker'
+import { ReviewStep } from '../components/tenants/ReviewStep'
+import { CourseSelectStep } from '../components/tenants/CourseSelectStep'
+import { TenantStatusCard, suspendReasonText, type TenantStatusChoice } from '../components/tenants/TenantStatusCard'
+import { scrollToFirstError } from '../components/ui/scrollToError'
+import { TENANT_CODE_MAX, validateTenantCode } from '../utils/validation'
 import { useData, useDataNeeds } from '../context/DataContext'
 import { api, errorMessage, type Credentials, type ProvisioningRecord } from '../api'
 
@@ -34,17 +34,15 @@ const KANVAS_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
 
 const formSteps = ['Organization', 'Select courses', 'Review & proceed']
 const LIMIT_PRESETS = [50, 100, 250, 500]
+const STEP_SUBTITLES = [
+  'Set up the organization, who gets billed, and who manages their LMS.',
+  "Pick the published courses this tenant's learners will get. You can add more later.",
+  'Check everything below, then create the tenant.',
+]
 
 type Phase = 'form' | 'provisioning' | 'credentials'
 
 const industries = ['IT Services', 'Manufacturing', 'Healthcare', 'Education', 'Retail', 'Finance', 'Other']
-
-// Tenant codes are lowercase letters/digits only (the backend enforces the same rule).
-const normalizeCode = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '')
-    .slice(0, 40)
 
 const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/
@@ -60,6 +58,8 @@ type OrgField =
   | 'billingPhone'
   | 'lmsAdminName'
   | 'lmsAdminEmail'
+  | 'address'
+  | 'statusReason'
 type OrgErrors = Partial<Record<OrgField, string>>
 
 export default function CreateTenant() {
@@ -74,7 +74,9 @@ export default function CreateTenant() {
   // Step 1 — Organization / Billing / LMS Admin
   const [orgName, setOrgName] = useState('')
   const [tenantCode, setTenantCode] = useState('')
-  const [codeTouched, setCodeTouched] = useState(false)
+  const [tenantStatus, setTenantStatus] = useState<TenantStatusChoice>('Active')
+  const [statusReason, setStatusReason] = useState('')
+  const [statusNote, setStatusNote] = useState('')
   const [industry, setIndustry] = useState(industries[0])
   const [country, setCountry] = useState('India')
   const [address, setAddress] = useState('')
@@ -98,30 +100,35 @@ export default function CreateTenant() {
     else if (orgName.trim().length < 2) e.orgName = 'Organization name must be at least 2 characters.'
     else if (orgName.trim().length > 200) e.orgName = 'Organization name must be 200 characters or fewer.'
 
-    if (!tenantCode) e.tenantCode = 'Tenant code is required.'
-    else if (tenantCode.length < 2) e.tenantCode = 'Tenant code must be at least 2 letters or digits.'
+    const codeProblem = validateTenantCode(tenantCode)
+    if (codeProblem) e.tenantCode = codeProblem
 
     if (!userLimit.trim()) e.userLimit = 'User limit is required.'
     else if (!Number.isInteger(limit) || limit < 1) e.userLimit = 'Enter a whole number of 1 or more.'
     else if (limit > 1000000) e.userLimit = 'User limit is too large.'
 
-    if (billingContactName.trim() && !NAME_RE.test(billingContactName.trim())) e.billingContactName = 'Name can only contain letters, spaces, . - and \'.'
+    if (!address.trim()) e.address = 'Address is required.'
+    else if (address.trim().length < 5) e.address = 'Enter the full address (at least 5 characters).'
+
+    if (!billingContactName.trim()) e.billingContactName = 'Billing name is required.'
+    else if (!NAME_RE.test(billingContactName.trim())) e.billingContactName = 'Name can only contain letters, spaces, . - and \'.'
 
     if (!billingEmail.trim()) e.billingEmail = 'Billing email is required.'
     else if (!EMAIL_RE.test(billingEmail.trim())) e.billingEmail = 'Enter a valid email address.'
 
-    if (billingPhone.trim() && !PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Phone number must be exactly 10 digits.'
+    if (!billingPhone.trim()) e.billingPhone = 'Contact number is required.'
+    else if (!PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Contact number must be exactly 10 digits.'
 
     if (!lmsAdminName.trim()) e.lmsAdminName = 'Admin name is required.'
     else if (!NAME_RE.test(lmsAdminName.trim())) e.lmsAdminName = 'Name can only contain letters, spaces, . - and \'.'
 
     if (!lmsAdminEmail.trim()) e.lmsAdminEmail = 'Admin email is required.'
     else if (!EMAIL_RE.test(lmsAdminEmail.trim())) e.lmsAdminEmail = 'Enter a valid email address.'
+    if (tenantStatus === 'Suspended' && !statusReason) e.statusReason = 'Select a reason for suspending this tenant.'
     return e
   }
 
   // Step 2 — course selection
-  const [courseQuery, setCourseQuery] = useState('')
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([])
 
   // Result state, once the tenant is actually created
@@ -132,15 +139,6 @@ export default function CreateTenant() {
   const [copied, setCopied] = useState(false)
   const [ticked, setTicked] = useState(0)
 
-  const [courseCategory, setCourseCategory] = useState('All')
-  const categoryTypes = Array.from(new Set(courses.filter((c) => c.status === 'Active').map((c) => c.category)))
-  const visibleCourses = courses.filter(
-    (c) =>
-      c.status === 'Active' &&
-      (courseCategory === 'All' || c.category === courseCategory) &&
-      (c.name.toLowerCase().includes(courseQuery.toLowerCase()) || c.code.toLowerCase().includes(courseQuery.toLowerCase())),
-  )
-  const selectAllVisible = () => setSelectedCourseIds((prev) => Array.from(new Set([...prev, ...visibleCourses.map((c) => c.id)])))
   const selectedCourses = courses.filter((c) => selectedCourseIds.includes(c.id))
   const provSteps = provisioning?.steps ?? []
 
@@ -150,6 +148,7 @@ export default function CreateTenant() {
       setFieldErrors(errs)
       if (Object.keys(errs).length > 0) {
         setOrgError('Please fix the highlighted fields.')
+        scrollToFirstError(document.querySelector('.tc-page'))
         return
       }
       setBusy(true)
@@ -158,6 +157,7 @@ export default function CreateTenant() {
         if (!available) {
           setFieldErrors((prev) => ({ ...prev, tenantCode: `Tenant code "${tenantCode}" is already in use - choose another.` }))
           setOrgError('Please fix the highlighted fields.')
+          scrollToFirstError(document.querySelector('.tc-page'))
           return
         }
       } catch (e) {
@@ -177,10 +177,6 @@ export default function CreateTenant() {
       return
     }
     setStep((s) => Math.max(1, s - 1))
-  }
-
-  const toggleCourse = (id: number) => {
-    setSelectedCourseIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
   }
 
   const attempt = async (fn: () => Promise<void>) => {
@@ -211,10 +207,17 @@ export default function CreateTenant() {
         userLimit: Number(userLimit),
         courseIds: selectedCourseIds,
       })
+      if (tenantStatus === 'Suspended') {
+        try {
+          await api.setTenantStatus(created.tenant.id, 'Suspended', suspendReasonText(statusReason, statusNote))
+        } catch (e) {
+          notification.warning({ title: 'Tenant Created, But Not Suspended', description: errorMessage(e) })
+        }
+      }
       setProvisioning(created.provisioning)
       setCredentials(created.credentials)
       setPhase('provisioning')
-      notification.success({ title: 'Tenant created', description: `${orgName.trim()} was created successfully.` })
+      notification.success({ title: 'Tenant Created', description: `${orgName.trim()} was created successfully.` })
       void refresh()
     })
 
@@ -373,7 +376,7 @@ export default function CreateTenant() {
 
   // ---- 3-step form (antd) ----
 
-  const requiredFilled = !!(orgName.trim() && tenantCode && userLimit.trim() && billingEmail.trim() && lmsAdminName.trim() && lmsAdminEmail.trim())
+  const requiredFilled = !!(orgName.trim() && tenantCode && userLimit.trim() && address.trim() && billingContactName.trim() && billingEmail.trim() && billingPhone.trim() && lmsAdminName.trim() && lmsAdminEmail.trim())
   const nextLabel = step === 1 ? 'Next: Select courses' : step === 2 ? 'Next: Review' : 'Create tenant'
   const limitNumber = Number(userLimit)
   const initial = orgName.trim()[0]?.toUpperCase()
@@ -382,21 +385,29 @@ export default function CreateTenant() {
   return (
     <AppLayout title="Create tenant" subtitle={`Step ${step} of 3`} crumbs={[{ label: 'Tenants', to: '/tenants' }, { label: 'Create tenant' }]}>
       <div className="tc-page">
-        <button type="button" className="tc-back" onClick={() => navigate('/tenants')}>
-          <ArrowLeft size={15} /> Back to tenants
-        </button>
         <div className="tc-title-row">
-          <div>
-            <h2 className="font-display tc-title">Create new tenant</h2>
-            <p className="tc-sub">Set up the organization, who gets billed, and who manages their LMS.</p>
+          <button type="button" className="tc-back" onClick={() => navigate('/tenants')}>
+            <span className="tc-back-ico">
+              <ArrowLeft size={14} />
+            </span>
+            Back to tenants
+          </button>
+          <div className="tc-hero">
+            <span className="tc-hero-icon">
+              <Building2 size={22} />
+            </span>
+            <div className="tc-hero-text">
+              <h2 className="font-display tc-title">Create new tenant</h2>
+              <p className="tc-sub">{STEP_SUBTITLES[step - 1]}</p>
+            </div>
+            <span className="tc-required">
+              <b>*</b> Required fields
+            </span>
           </div>
-          <span className="tc-required">
-            <b>*</b> Required
-          </span>
         </div>
 
         <div className="tc-stepper">
-          <WizardSteps steps={formSteps} current={step} onStepClick={(n) => n < step && !busy && setStep(n)} captions={['Profile, billing & admin', 'Choose the course catalog', 'Confirm and provision']} />
+          <WizardSteps variant="dots" steps={formSteps} current={step} onStepClick={(n) => n < step && !busy && setStep(n)} captions={['Profile, billing & admin', 'Choose the course catalog', 'Confirm and provision']} />
         </div>
 
         {step === 1 && (
@@ -413,41 +424,38 @@ export default function CreateTenant() {
                       <p className="tc-card-desc">Who this tenant is and how many people can use it.</p>
                     </div>
                   </div>
-                  <div className="tc-fields">
-                    <Form.Item label="Organization name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
+                  <div className="tc-fields tc-fields-4">
+                    <Form.Item label="Organization Name" required validateStatus={fieldErrors.orgName ? 'error' : ''} help={fieldErrors.orgName}>
                       <Input
                         size="middle"
                         value={orgName}
                         maxLength={200}
                         onChange={(e) => {
                           setOrgName(e.target.value)
-                          // The code follows the name until the admin types their own.
-                          if (!codeTouched) {
-                            setTenantCode(normalizeCode(e.target.value))
-                            clearField('tenantCode')
-                          }
                           clearField('orgName')
                         }}
-                        placeholder="e.g. Acme Industries"
+                        placeholder="Enter organization name"
                       />
                     </Form.Item>
                     <Form.Item
-                      label="Tenant code"
+                      label="Tenant Code"
                       required
                       validateStatus={fieldErrors.tenantCode ? 'error' : ''}
-                      help={fieldErrors.tenantCode ?? <span className="tc-hint" style={hintStyle}>Lowercase letters and numbers only.</span>}
+                      help={fieldErrors.tenantCode ?? <span className="tc-hint" style={hintStyle}>A–Z, 0–9 and hyphens only</span>}
                     >
                       <Input
                         size="middle"
                         className="tc-mono"
                         value={tenantCode}
+                        maxLength={TENANT_CODE_MAX}
                         onChange={(e) => {
-                          const v = normalizeCode(e.target.value)
+                          // Capitals are applied as you type; anything else that isn't allowed is flagged straight away.
+                          const v = e.target.value.toUpperCase()
                           setTenantCode(v)
-                          setCodeTouched(v !== '')
-                          clearField('tenantCode')
+                          setFieldErrors((prev) => ({ ...prev, tenantCode: v ? (validateTenantCode(v.replace(/-$/, '')) ?? undefined) : undefined }))
+                          setOrgError('')
                         }}
-                        placeholder="Auto-filled from the name"
+                        placeholder="e.g. ACME-01"
                       />
                     </Form.Item>
                     <Form.Item label="Industry">
@@ -468,9 +476,9 @@ export default function CreateTenant() {
                         style={{ width: '100%' }}
                       />
                     </Form.Item>
-                    <div>
+                    <div className="tc-span2">
                       <Form.Item
-                        label="User limit"
+                        label="User Limit"
                         required
                         validateStatus={fieldErrors.userLimit ? 'error' : ''}
                         help={fieldErrors.userLimit ?? <span className="tc-hint" style={hintStyle}>Learners who can sign in at the same time. You can raise it later.</span>}
@@ -506,136 +514,133 @@ export default function CreateTenant() {
                         </div>
                       </Form.Item>
                     </div>
-                    <div>
+                    <div className="tc-span2">
+                      <Form.Item label="Address" required validateStatus={fieldErrors.address ? 'error' : ''} help={fieldErrors.address}>
+                        <Input.TextArea
+                          rows={2}
+                          maxLength={300}
+                          value={address}
+                          onChange={(e) => {
+                            setAddress(e.target.value)
+                            clearField('address')
+                          }}
+                          placeholder="Enter the full address: street, city, state and PIN code"
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="tc-pair">
+                  <section className="tc-card">
+                    <div className="tc-card-head">
+                      <span className="tc-card-icon">
+                        <Receipt size={20} />
+                      </span>
+                      <div>
+                        <h3 className="tc-card-title">Billing Contact</h3>
+                        <p className="tc-card-desc">Where invoices and renewal reminders go.</p>
+                      </div>
+                    </div>
+                    <div className="tc-fields">
                       <Form.Item
-                        label={
-                          <>
-                            Address <span className="tc-opt">(optional)</span>
-                          </>
-                        }
+                        label="Billing Name"
+                        required
+                        validateStatus={fieldErrors.billingContactName ? 'error' : ''}
+                        help={fieldErrors.billingContactName}
                       >
-                        <Input size="middle" maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, state, PIN" />
+                        <Input
+                          size="middle"
+                          value={billingContactName}
+                          maxLength={120}
+                          onChange={(e) => {
+                            setBillingContactName(e.target.value)
+                            clearField('billingContactName')
+                          }}
+                          placeholder="Enter billing contact name"
+                        />
+                      </Form.Item>
+                      <Form.Item label="Billing Email" required validateStatus={fieldErrors.billingEmail ? 'error' : ''} help={fieldErrors.billingEmail}>
+                        <Input
+                          size="middle"
+                          type="email"
+                          value={billingEmail}
+                          onChange={(e) => {
+                            setBillingEmail(e.target.value)
+                            clearField('billingEmail')
+                          }}
+                          placeholder="Enter billing email address"
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        label="Contact Number"
+                        required
+                        validateStatus={fieldErrors.billingPhone ? 'error' : ''}
+                        help={fieldErrors.billingPhone}
+                      >
+                        <Input
+                          size="middle"
+                          addonBefore="+91"
+                          inputMode="tel"
+                          value={billingPhone}
+                          maxLength={10}
+                          onChange={(e) => {
+                            setBillingPhone(e.target.value.replace(/\D/g, ''))
+                            clearField('billingPhone')
+                          }}
+                          placeholder="Enter 10-digit mobile number"
+                        />
                       </Form.Item>
                     </div>
-                  </div>
-                </section>
+                  </section>
 
-                <section className="tc-card">
-                  <div className="tc-card-head">
-                    <span className="tc-card-icon">
-                      <Receipt size={20} />
-                    </span>
-                    <div>
-                      <h3 className="tc-card-title">Billing contact</h3>
-                      <p className="tc-card-desc">Where invoices and renewal reminders go.</p>
+                  <section className="tc-card">
+                    <div className="tc-card-head">
+                      <span className="tc-card-icon">
+                        <UserCog size={20} />
+                      </span>
+                      <div>
+                        <h3 className="tc-card-title">LMS Administrator</h3>
+                        <p className="tc-card-desc">The person who will manage courses and users for this tenant.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="tc-fields">
-                    <Form.Item
-                      label={
-                        <>
-                          Contact name <span className="tc-opt">(optional)</span>
-                        </>
-                      }
-                      validateStatus={fieldErrors.billingContactName ? 'error' : ''}
-                      help={fieldErrors.billingContactName}
-                    >
-                      <Input
-                        size="middle"
-                        value={billingContactName}
-                        maxLength={120}
-                        onChange={(e) => {
-                          setBillingContactName(e.target.value)
-                          clearField('billingContactName')
-                        }}
-                        placeholder="Full name"
-                      />
-                    </Form.Item>
-                    <Form.Item label="Billing email" required validateStatus={fieldErrors.billingEmail ? 'error' : ''} help={fieldErrors.billingEmail}>
-                      <Input
-                        size="middle"
-                        type="email"
-                        value={billingEmail}
-                        onChange={(e) => {
-                          setBillingEmail(e.target.value)
-                          clearField('billingEmail')
-                        }}
-                        placeholder="billing@company.com"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      label={
-                        <>
-                          Phone <span className="tc-opt">(optional)</span>
-                        </>
-                      }
-                      validateStatus={fieldErrors.billingPhone ? 'error' : ''}
-                      help={fieldErrors.billingPhone}
-                    >
-                      <Input
-                        size="middle"
-                        addonBefore="+91"
-                        inputMode="tel"
-                        value={billingPhone}
-                        maxLength={10}
-                        onChange={(e) => {
-                          setBillingPhone(e.target.value.replace(/\D/g, ''))
-                          clearField('billingPhone')
-                        }}
-                        placeholder="98765 43210"
-                      />
-                    </Form.Item>
-                  </div>
-                </section>
-
-                <section className="tc-card">
-                  <div className="tc-card-head">
-                    <span className="tc-card-icon">
-                      <UserCog size={20} />
-                    </span>
-                    <div>
-                      <h3 className="tc-card-title">LMS administrator</h3>
-                      <p className="tc-card-desc">The person who will manage courses and users for this tenant.</p>
-                    </div>
-                  </div>
-                  <div className="tc-fields">
-                    <Form.Item label="Admin name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
-                      <Input
-                        size="middle"
-                        value={lmsAdminName}
-                        maxLength={120}
-                        onChange={(e) => {
-                          setLmsAdminName(e.target.value)
-                          clearField('lmsAdminName')
-                        }}
-                        placeholder="Full name"
-                      />
-                    </Form.Item>
-                    <Form.Item label="Admin email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
-                      <Input
-                        size="middle"
-                        type="email"
-                        value={lmsAdminEmail}
-                        onChange={(e) => {
-                          setLmsAdminEmail(e.target.value)
-                          clearField('lmsAdminEmail')
-                        }}
-                        placeholder="admin@company.com"
-                      />
-                    </Form.Item>
-                    <div>
-                      <Form.Item label="Tenant URL">
-                        <div className="tc-url">
-                          <Globe size={15} />
-                          <span>https://[tenant-url]</span>
-                          <Copy size={14} style={{ opacity: 0.5 }} />
-                        </div>
-                        <p className="tc-hint">Generated when the tenant is created.</p>
+                    <div className="tc-fields">
+                      <Form.Item label="Admin Name" required validateStatus={fieldErrors.lmsAdminName ? 'error' : ''} help={fieldErrors.lmsAdminName}>
+                        <Input
+                          size="middle"
+                          value={lmsAdminName}
+                          maxLength={120}
+                          onChange={(e) => {
+                            setLmsAdminName(e.target.value)
+                            clearField('lmsAdminName')
+                          }}
+                          placeholder="Enter admin name"
+                        />
                       </Form.Item>
+                      <Form.Item label="Admin Email" required validateStatus={fieldErrors.lmsAdminEmail ? 'error' : ''} help={fieldErrors.lmsAdminEmail}>
+                        <Input
+                          size="middle"
+                          type="email"
+                          value={lmsAdminEmail}
+                          onChange={(e) => {
+                            setLmsAdminEmail(e.target.value)
+                            clearField('lmsAdminEmail')
+                          }}
+                          placeholder="Enter admin email address"
+                        />
+                      </Form.Item>
+                      <div>
+                        <Form.Item label="Tenant URL">
+                          <div className="tc-url" title="Generated when the tenant is created">
+                            <Globe size={15} />
+                            <span>https://[tenant-url]</span>
+                            <Copy size={14} style={{ opacity: 0.5 }} />
+                          </div>
+                        </Form.Item>
+                      </div>
                     </div>
-                  </div>
-                  {orgError && <p className="small text-danger mt-3 mb-0">{orgError}</p>}
-                </section>
+                    </section>
+                </div>
               </div>
 
               <aside className="tc-aside">
@@ -649,7 +654,7 @@ export default function CreateTenant() {
                     </div>
                   </div>
                   <div className="tc-preview-row">
-                    <span>User limit</span>
+                    <span>User Limit</span>
                     <span>{Number.isFinite(limitNumber) && limitNumber > 0 ? `${limitNumber.toLocaleString()} users` : 'Not set'}</span>
                   </div>
                   <div className="tc-preview-row">
@@ -665,111 +670,66 @@ export default function CreateTenant() {
                     <span>{lmsAdminEmail.trim() || 'Not set'}</span>
                   </div>
                 </div>
+                <TenantStatusCard
+                  status={tenantStatus}
+                  onStatusChange={(v) => {
+                    setTenantStatus(v)
+                    clearField('statusReason')
+                  }}
+                  reason={statusReason}
+                  onReasonChange={(r) => {
+                    setStatusReason(r)
+                    clearField('statusReason')
+                  }}
+                  note={statusNote}
+                  onNoteChange={setStatusNote}
+                  reasonError={fieldErrors.statusReason}
+                />
               </aside>
             </div>
           </Form>
         )}
 
         {step === 2 && (
-          <div className="tc-step-card">
-            <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
-              <div>
-                <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Select Courses</h3>
-                <p className="mb-0 small text-secondary">Choose which published courses this tenant should have access to.</p>
-              </div>
-              <span className="ct-selected-pill">
-                <Check size={14} /> {selectedCourseIds.length} selected
-              </span>
-            </div>
-
-            <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
-              <div style={{ width: 320, maxWidth: '100%' }}>
-                <Input
-                  size="middle"
-                  allowClear
-                  value={courseQuery}
-                  onChange={(e) => setCourseQuery(e.target.value)}
-                  placeholder="Search courses"
-                  prefix={<Search size={14} color="#9b87b5" />}
-                />
-              </div>
-              <div className="d-flex flex-wrap gap-2">
-                {['All', ...categoryTypes].map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    className={`ct-chip${courseCategory === cat ? ' is-active' : ''}`}
-                    onClick={() => setCourseCategory(cat)}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-              <div className="ms-auto d-flex gap-2">
-                <Button onClick={selectAllVisible} disabled={visibleCourses.length === 0}>
-                  Select all{courseCategory !== 'All' || courseQuery ? ' shown' : ''}
-                </Button>
-                <Button onClick={() => setSelectedCourseIds([])} disabled={selectedCourseIds.length === 0}>
-                  Clear
-                </Button>
-              </div>
-            </div>
-
-            {visibleCourses.length === 0 ? (
-              <div className="py-5">
-                <Empty description="No courses match your filters." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              </div>
-            ) : (
-              <CourseGroupPicker courses={visibleCourses} selected={selectedCourseIds} onToggle={toggleCourse} />
-            )}
-          </div>
+          <CourseSelectStep
+            courses={courses.filter((c) => c.status === 'Active')}
+            selected={selectedCourseIds}
+            onChange={setSelectedCourseIds}
+            tenantName={orgName.trim()}
+            tenantCode={tenantCode}
+          />
         )}
 
         {step === 3 && (
-          <div className="tc-step-card">
-            <div className="mx-auto" style={{ maxWidth: 920 }}>
-            <h3 className="mb-1 font-display fs-5 fw-bold text-dark">Review &amp; Proceed</h3>
-            <p className="mb-4 small text-secondary">Check the details below. Click Create Tenant to provision it.</p>
-
-            <div className="row g-3">
-              <div className="col-12 col-lg-6">
-                <ReviewCard icon={<Building2 size={18} />} title="Organization">
-                  <ReviewRow label="Name" value={orgName} />
-                  <ReviewRow label="Tenant code" value={tenantCode} mono />
-                  <ReviewRow label="Industry" value={industry} />
-                  <ReviewRow label="Country" value={country} />
-                  <ReviewRow label="User limit" value={userLimit} />
-                  <ReviewRow label="Address" value={address} />
-                </ReviewCard>
-              </div>
-              <div className="col-12 col-lg-6 d-flex flex-column gap-3">
-                <ReviewCard icon={<Mail size={18} />} title="Billing contact">
-                  <ReviewRow label="Name" value={billingContactName} />
-                  <ReviewRow label="Email" value={billingEmail} />
-                  <ReviewRow label="Phone" value={billingPhone} />
-                </ReviewCard>
-                <ReviewCard icon={<ShieldCheck size={18} />} title="LMS admin">
-                  <ReviewRow label="Name" value={lmsAdminName} />
-                  <ReviewRow label="Email" value={lmsAdminEmail} />
-                </ReviewCard>
-              </div>
-              <div className="col-12">
-                <ReviewCard icon={<BookOpen size={18} />} title={`Courses (${selectedCourses.length})`}>
-                  {selectedCourses.length === 0 ? (
-                    <p className="small text-secondary mb-0">No courses selected - you can assign courses later from the Tenants page.</p>
-                  ) : (
-                    <ReviewCourseGroups courses={selectedCourses} />
-                  )}
-                </ReviewCard>
-              </div>
-            </div>
-
-            {flowError && <p className="mt-3 small text-danger mb-0">{flowError}</p>}
-          </div>
-          </div>
+          <ReviewStep
+            mode="create"
+            summary={{ name: orgName.trim(), code: tenantCode, industry, country, users: userLimit, status: tenantStatus === 'Suspended' ? `Suspended (${statusReason})` : 'Active' }}
+            organization={[
+              ['Organization name', orgName],
+              ['Tenant code', tenantCode, { mono: true }],
+              ['User limit', userLimit ? `${userLimit} users` : ''],
+              ['Industry', industry],
+              ['Country', country],
+              ['Address', address],
+            ]}
+            billing={[
+              ['Name', billingContactName],
+              ['Email', billingEmail],
+              ['Phone', billingPhone ? `+91 ${billingPhone}` : ''],
+            ]}
+            admin={[
+              ['Name', lmsAdminName],
+              ['Email', lmsAdminEmail],
+              ['Role', 'Tenant LMS admin'],
+              ['Tenant URL', 'https://[tenant-url]', { mono: true }],
+            ]}
+            courses={selectedCourses}
+            emptyCoursesNote="No courses selected - you can assign courses later from the Tenants page."
+            error={flowError}
+          />
         )}
 
-        <div className="tc-footer">
+        <div className="tc-bottom">
           {step === 1 ? (
             <Button type="text" onClick={goBack} disabled={busy}>
               Cancel
@@ -779,6 +739,7 @@ export default function CreateTenant() {
               Back
             </Button>
           )}
+          {step === 1 && orgError && <span className="tc-bottom-msg">{orgError}</span>}
           <Button
             type="primary"
             className={`tc-next${step === 1 && !requiredFilled ? ' is-pale' : ''}`}

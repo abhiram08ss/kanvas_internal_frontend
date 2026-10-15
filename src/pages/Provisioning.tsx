@@ -44,7 +44,7 @@ export function ProvisioningPanel() {
       notification.success({ title: done, description: record.tenant })
       await refresh()
     } catch (e) {
-      notification.error({ title: 'Action failed', description: `${record.tenant}: ${errorMessage(e)}` })
+      notification.error({ title: 'Action Failed', description: `${record.tenant}: ${errorMessage(e)}` })
       setError(`${record.tenant}: ${errorMessage(e)}`)
     } finally {
       setBusyId(null)
@@ -62,7 +62,7 @@ export function ProvisioningPanel() {
 
   const confirmReset = (r: ProvisioningRecord) =>
     confirmDialog({
-      title: 'Reset admin password?',
+      title: 'Reset Admin Password?',
       content: `Are you sure you want to reset the admin password for ${r.tenant}?`,
       okText: 'Reset Password',
       okButtonProps: { danger: true },
@@ -71,7 +71,7 @@ export function ProvisioningPanel() {
 
   const confirmRetry = (r: ProvisioningRecord) =>
     confirmDialog({
-      title: 'Retry provisioning?',
+      title: 'Retry Provisioning?',
       content: `Are you sure you want to retry provisioning for ${r.tenant}?`,
       okText: 'Retry Provisioning',
       onOk: () => retry(r),

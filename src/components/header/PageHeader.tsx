@@ -16,7 +16,7 @@ export function PageHeader({ title, subtitle, crumbs }: { title: string; subtitl
   return (
     <Layout.Header
       className="app-header d-flex align-items-center justify-content-between gap-3 flex-shrink-0"
-      style={{ height: 64, lineHeight: 'normal', position: 'relative', background: '#fff', borderBottom: '1px solid #ede8f5' }}
+      style={{ height: 56, lineHeight: 'normal', position: 'relative', background: '#fff', borderBottom: '1px solid #ede8f5' }}
     >
       <div className="d-flex align-items-center gap-3 min-w-0">
         {mobile && (

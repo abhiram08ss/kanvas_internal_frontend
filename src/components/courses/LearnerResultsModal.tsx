@@ -66,7 +66,7 @@ export function LearnerResultsModal({ course, onClose }: { course: Course; onClo
                   { title: 'Module', key: 'title', render: (_, m) => m.moduleTitle ?? data.title },
                   { title: 'Status', key: 'status', render: (_, m) => <Badge tone={moduleTone(m.lessonStatus)}>{m.lessonStatus}</Badge> },
                   { title: 'Score', key: 'score', render: (_, m) => formatScore(m.score) },
-                  { title: 'Time spent', dataIndex: 'totalTime', key: 'time' },
+                  { title: 'Time Spent', dataIndex: 'totalTime', key: 'time' },
                   { title: 'Finished', key: 'done', render: (_, m) => formatDateTime(m.completedAt) },
                 ]}
               />
@@ -101,7 +101,7 @@ export function LearnerResultsModal({ course, onClose }: { course: Course; onClo
                   <span className="tenant-muted">—</span>
                 ),
             },
-            { title: 'Last activity', key: 'last', render: (_, l) => <span className="tenant-muted">{formatDateTime(lastActivity(l))}</span> },
+            { title: 'Last Activity', key: 'last', render: (_, l) => <span className="tenant-muted">{formatDateTime(lastActivity(l))}</span> },
           ]}
         />
       )}

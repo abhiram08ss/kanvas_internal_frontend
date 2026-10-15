@@ -10,13 +10,116 @@ export function WizardSteps({
   current,
   captions,
   onStepClick,
+  variant = 'line',
+  jumpAnywhere = false,
 }: {
   steps: string[]
   current: number
   captions?: string[]
   /** When given, every step is a button that jumps to that step (1-based). */
   onStepClick?: (step: number) => void
+  /** 'chevron': arrow-shaped segments. 'meter': labelled segments of one bar. 'line': numbered circles joined by lines. */
+  variant?: 'line' | 'meter' | 'chevron' | 'dots'
+  /** Edit pages: every step (also the ones ahead) can be clicked, not only the finished ones. */
+  jumpAnywhere?: boolean
 }) {
+  const clickable = !!onStepClick
+  if (variant === 'dots') {
+    return (
+      <ol className="wz-dots" aria-label="Progress">
+        {steps.map((label, i) => {
+          const n = i + 1
+          const state = n < current ? 'is-done' : n === current ? 'is-current' : 'is-todo'
+          const caption = n < current ? `Completed${clickable ? ' · Edit' : ''}` : (captions?.[i] ?? '')
+          const canJump = clickable && (jumpAnywhere || n < current) && n !== current
+          const body = (
+            <>
+              <span className="wz-dots-circle">{n < current ? <Check size={15} strokeWidth={3} /> : n}</span>
+              <span className="wz-dots-text">
+                <span className="wz-dots-label">{label}</span>
+                {caption && <span className="wz-dots-caption">{caption}</span>}
+              </span>
+            </>
+          )
+          return (
+            <li key={label} className={`wz-dots-step ${state}`} aria-current={n === current ? 'step' : undefined}>
+              {canJump ? (
+                <button type="button" className="wz-dots-head is-link" onClick={() => onStepClick?.(n)}>
+                  {body}
+                </button>
+              ) : (
+                <div className="wz-dots-head">{body}</div>
+              )}
+              {i < steps.length - 1 && <span className="wz-dots-line" />}
+            </li>
+          )
+        })}
+      </ol>
+    )
+  }
+  if (variant === 'chevron') {
+    return (
+      <ol className="wz-chev" aria-label="Progress">
+        {steps.map((label, i) => {
+          const n = i + 1
+          const state = n < current ? 'is-done' : n === current ? 'is-current' : 'is-todo'
+          const caption = n < current ? `Completed${clickable ? ' · Edit' : ''}` : (captions?.[i] ?? (n === current ? 'Current step' : ''))
+          const body = (
+            <>
+              <span className="wz-chev-num">{n < current ? <Check size={15} strokeWidth={3} /> : n}</span>
+              <span className="wz-chev-text">
+                <span className="wz-chev-label">{label}</span>
+                <span className="wz-chev-caption">{caption}</span>
+              </span>
+            </>
+          )
+          return (
+            <li key={label} className={`wz-chev-step ${state}${i === 0 ? ' is-first' : ''}`} aria-current={n === current ? 'step' : undefined}>
+              {clickable && (jumpAnywhere || n < current) && n !== current ? (
+                <button type="button" className="wz-chev-inner is-link" onClick={() => onStepClick?.(n)}>
+                  {body}
+                </button>
+              ) : (
+                <div className="wz-chev-inner">{body}</div>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    )
+  }
+  if (variant === 'meter') {
+    return (
+      <ol className="wz-meter" aria-label="Progress">
+        {steps.map((label, i) => {
+          const n = i + 1
+          const state = n < current ? 'is-done' : n === current ? 'is-current' : 'is-todo'
+          const caption = n < current ? `Completed${clickable ? ' · Edit' : ''}` : (captions?.[i] ?? (n === current ? 'Current step' : ''))
+          const body = (
+            <>
+              <span className="wz-meter-num">{n < current ? <Check size={15} strokeWidth={3} /> : n}</span>
+              <span className="wz-meter-text">
+                <span className="wz-meter-label">{label}</span>
+                <span className="wz-meter-caption">{caption}</span>
+              </span>
+            </>
+          )
+          return (
+            <li key={label} className={`wz-meter-step ${state}`} aria-current={n === current ? 'step' : undefined}>
+              {clickable && n < current ? (
+                <button type="button" className="wz-meter-head is-link" onClick={() => onStepClick?.(n)}>
+                  {body}
+                </button>
+              ) : (
+                <div className="wz-meter-head">{body}</div>
+              )}
+              <span className="wz-meter-bar" />
+            </li>
+          )
+        })}
+      </ol>
+    )
+  }
   return (
     <ol className="wz-steps" aria-label="Progress">
       {steps.map((label, i) => {
@@ -29,12 +132,16 @@ export function WizardSteps({
                 <span className="wz-dot">{n < current ? <Check size={18} strokeWidth={3} /> : n}</span>
                 <span className="wz-step-text">
                   <span className="wz-step-label">{label}</span>
-                  {captions?.[i] ? (
-                    <span className="wz-step-caption">{captions[i]}</span>
-                  ) : (
-                    n <= current && <span className="wz-step-caption">{n === current ? 'Current step' : 'Completed'}</span>
-                  )}
+                  {n < current ? (
+                <span className="wz-step-caption is-done">
+                  Completed{clickable ? ' · Edit' : ''}
                 </span>
+              ) : captions?.[i] ? (
+                <span className="wz-step-caption">{captions[i]}</span>
+              ) : (
+                n <= current && <span className="wz-step-caption">Current step</span>
+              )}
+            </span>
               </button>
             ) : (
               <>
