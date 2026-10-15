@@ -33,7 +33,7 @@ export function CertificateSheet({
   const signatures = cert.design.signatures.length ? cert.design.signatures : ['Kanvas LMS']
 
   return (
-    <div style={{ background, padding: 12, fontFamily: "'Inter', Arial, sans-serif", color: '#1a1228' }}>
+    <div style={{ background, padding: 12, fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif", color: '#1a1228' }}>
       <div
         style={{
           border: `4px double ${primary}`,

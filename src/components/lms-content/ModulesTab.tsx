@@ -64,11 +64,11 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
   const handleSave = async (data: Parameters<typeof addCourseModule>[0]) => {
     if (editing) await updateCourseModule(editing.id, data)
     else await addCourseModule(data)
-    notification.success({ title: editing ? 'Module updated' : 'Module created', description: data.title })
+    notification.success({ title: editing ? 'Module Updated' : 'Module Created', description: data.title })
   }
   const handleDelete = (m: CourseModule) =>
     confirmDialog({
-      title: 'Delete module?',
+      title: 'Delete Module?',
       content: `Are you sure you want to delete ${m.title}?`,
       okText: 'Delete Module',
       okButtonProps: { danger: true },
@@ -76,7 +76,7 @@ export function ModulesTab({ selectedCourseId, onSelectCourse }: { selectedCours
         setError('')
         try {
           await deleteCourseModule(m.id)
-          notification.success({ title: 'Module deleted', description: m.title })
+          notification.success({ title: 'Module Deleted', description: m.title })
         } catch (e) {
           setError(errorMessage(e))
         }

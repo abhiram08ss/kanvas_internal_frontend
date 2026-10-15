@@ -21,7 +21,7 @@ export const antdTheme: ThemeConfig = {
     colorError: '#dc2626',
     borderRadius: 8,
     fontSize: 13,
-    fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
+    fontFamily: "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
   },
   components: {
     Table: {

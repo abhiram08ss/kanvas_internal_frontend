@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 // ---- Kanvas brand palette ----
 $kanvas-50: #f6f4fd;
@@ -18,7 +18,7 @@ $primary: $kanvas-600;
 $body-bg: $surface;
 $body-color: #0f172a;
 
-$font-family-sans-serif: 'Inter', ui-sans-serif, system-ui, sans-serif;
+$font-family-sans-serif: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 $font-family-base: $font-family-sans-serif;
 
 $border-radius: 0.75rem; // 12px — matches the app's previous "rounded-xl" (buttons, inputs, badges)
@@ -40,10 +40,10 @@ $card-border-radius: $border-radius-lg;
 
 // ---- App-wide utility classes (framework-agnostic, kept as-is) ----
 .font-display {
-  font-family: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 .font-value {
-  font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -286,7 +286,7 @@ textarea:focus::placeholder,
 
 // Typography for the LMS Courses tab.
 .course-group-title {
-  font-family: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -667,7 +667,7 @@ textarea:focus::placeholder,
 // Popup forms: one consistent field look - 14px bold labels, 40px controls with the same border/radius,
 // matching placeholder, 12px hints/errors, 40px buttons. (Field.tsx sets small inline sizes, hence !important.)
 .ant-modal:not(.kv-confirm) .ant-modal-body {
-  label.d-block { font-size: 14px !important; font-weight: 600 !important; margin-bottom: 6px !important; color: #1a1228 !important; }
+  label.d-block { font-size: 13px !important; font-weight: 600 !important; margin-bottom: 6px !important; color: #1a1228 !important; }
   .ant-input, .ant-input-affix-wrapper, .ant-input-number, .ant-select .ant-select-selector {
     min-height: 40px; border-radius: 10px !important; border-color: #e2d9f0 !important; font-size: 14px !important;
   }

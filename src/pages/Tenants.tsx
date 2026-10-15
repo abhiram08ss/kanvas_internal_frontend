@@ -50,9 +50,9 @@ export default function Tenants() {
     try {
       await api.setTenantStatus(t.id, t.status === 'Active' ? 'Suspended' : 'Active', reason)
       await refresh()
-      notification.success({ title: t.status === 'Active' ? 'Tenant suspended' : 'Tenant activated', description: t.name })
+      notification.success({ title: t.status === 'Active' ? 'Tenant Suspended' : 'Tenant Activated', description: t.name })
     } catch (e) {
-      notification.error({ title: 'Action failed', description: `${t.name}: ${errorMessage(e)}` })
+      notification.error({ title: 'Action Failed', description: `${t.name}: ${errorMessage(e)}` })
       setActionError(`${t.name}: ${errorMessage(e)}`)
     } finally {
       setBusyId(null)
@@ -62,15 +62,16 @@ export default function Tenants() {
   const confirmToggle = (t: Tenant) => {
     if (t.status === 'Active') {
       reasonDialog({
-        title: 'Suspend tenant?',
+        title: 'Suspend Tenant?',
         content: `Are you sure you want to suspend ${t.name}?`,
         okText: 'Suspend Tenant',
+        label: 'Reason for suspending',
         onOk: (reason) => toggleStatus(t, reason),
       })
       return
     }
     confirmDialog({
-      title: 'Activate tenant?',
+      title: 'Activate Tenant?',
       content: `Are you sure you want to activate ${t.name}?`,
       okText: 'Activate Tenant',
       onOk: () => toggleStatus(t),
@@ -80,7 +81,9 @@ export default function Tenants() {
   const rows = useMemo(
     () =>
       tenants.filter((t) => {
-        const matchesQuery = t.name.toLowerCase().includes(query.toLowerCase())
+        // Search by name or code; surrounding spaces never break a match.
+        const needle = query.trim().toLowerCase()
+        const matchesQuery = !needle || (t.name ?? '').toLowerCase().includes(needle) || (t.code ?? '').toLowerCase().includes(needle)
         const matchesFilter = filter === 'All' || t.status === filter
         return matchesQuery && matchesFilter
       }),
@@ -118,7 +121,7 @@ export default function Tenants() {
         <Toolbar
           query={query}
           onQueryChange={setQuery}
-          searchPlaceholder="Search tenants..."
+          searchPlaceholder="Search by name or code"
           filters={tenantFilters}
           activeFilter={filter}
           onFilterChange={setFilter}
@@ -126,6 +129,8 @@ export default function Tenants() {
           onNew={canManage ? () => navigate('/tenants/new') : undefined}
         />
         <DataTable<Tenant>
+          // A new search or filter always starts again at page 1 (never an empty page 3 of a short list).
+          key={`${filter}|${query.trim()}`}
           serial={false}
           rowKey="id"
           pageSize={pageSize}
@@ -133,22 +138,23 @@ export default function Tenants() {
           tableLayout="fixed"
           scroll={{ x: 960 }}
           dataSource={rows}
-          locale={{ emptyText: 'No tenants match your search.' }}
+          locale={{ emptyText: tenants.length === 0 ? 'No tenants yet. Create the first one with New Tenant.' : 'No tenants match your search or filter.' }}
           columns={[
-            { title: 'Tenant name', dataIndex: 'name', width: 200, ellipsis: true, render: (name: string) => <span>{name}</span> },
+            { title: 'Tenant Name', dataIndex: 'name', width: 200, ellipsis: true, render: (name: string) => <span>{name}</span> },
             {
-              title: 'Users / limit',
+              title: 'Users / Limit',
               width: 220,
               key: 'users',
               render: (_: unknown, t) => {
                 const unlimited = t.userLimit >= UNLIMITED
-                const percent = unlimited ? 0 : Math.min(100, Math.round((t.users / t.userLimit) * 100))
+                // A limit of 0 (or a missing one) must not divide by zero; over-limit tenants show a full bar.
+                const percent = unlimited || !(t.userLimit > 0) ? (t.users > 0 && !unlimited ? 100 : 0) : Math.min(100, Math.round((t.users / t.userLimit) * 100))
                 const hot = !unlimited && percent >= 90
                 return (
                   <div className="tenant-usage">
                     <div className="d-flex justify-content-between align-items-baseline">
                       <span className={hot ? 'is-hot' : ''}>
-                        <strong>{t.users}</strong> / {unlimited ? '∞' : t.userLimit}
+                        <strong>{t.users ?? 0}</strong> / {unlimited ? '∞' : (t.userLimit ?? 0)}
                       </span>
                       {!unlimited && <span className={`tenant-usage-pct${hot ? ' is-hot' : ''}`}>{percent}%</span>}
                     </div>
@@ -162,8 +168,8 @@ export default function Tenants() {
               },
             },
             { title: 'Status', dataIndex: 'status', width: 130, render: (status: Tenant['status']) => <Badge>{status}</Badge> },
-            { title: 'Created on', dataIndex: 'createdOn', width: 140, render: (d: string) => <span className="tenant-muted">{d}</span> },
-            { title: 'Courses', dataIndex: 'courseCount', width: 90, className: 'col-center', render: (n: number) => <span className="tenant-muted">{n}</span> },
+            { title: 'Created On', dataIndex: 'createdOn', width: 140, render: (d: string) => <span className="tenant-muted">{d || '—'}</span> },
+            { title: 'Courses', dataIndex: 'courseCount', width: 90, className: 'col-center', render: (n: number) => <span className="tenant-muted">{n ?? 0}</span> },
             {
               title: 'Actions',
               width: 130,

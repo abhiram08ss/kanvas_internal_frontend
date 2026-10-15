@@ -41,7 +41,7 @@ export default function PlatformUsers() {
       notification.success({ title: done, description: u.name })
       reload()
     } catch (e) {
-      notification.error({ title: 'Action failed', description: `${u.name}: ${errorMessage(e)}` })
+      notification.error({ title: 'Action Failed', description: `${u.name}: ${errorMessage(e)}` })
       setActionError(`${u.name}: ${errorMessage(e)}`)
     } finally {
       setBusyId(null)
@@ -50,14 +50,14 @@ export default function PlatformUsers() {
 
   const addUser = async (data: { name: string; email: string; role: PlatformRole; password: string }) => {
     const created = await api.createPlatformUser(data)
-    notification.success({ title: 'User created', description: `${created.name} was created successfully.` })
+    notification.success({ title: 'User Created', description: `${created.name} was created successfully.` })
     reload()
   }
 
   const confirmToggle = (u: PlatformUser) => {
     if (u.status === 'Active') {
       reasonDialog({
-        title: 'Deactivate user?',
+        title: 'Deactivate User?',
         content: `Are you sure you want to deactivate ${u.name}?`,
         okText: 'Deactivate User',
         onOk: (reason) => act(u, () => api.updatePlatformUser(u.id, { status: 'Inactive', reason }), 'User deactivated'),
@@ -65,7 +65,7 @@ export default function PlatformUsers() {
       return
     }
     confirmDialog({
-      title: 'Activate user?',
+      title: 'Activate User?',
       content: `Are you sure you want to activate ${u.name}?`,
       okText: 'Activate User',
       onOk: () => act(u, () => api.updatePlatformUser(u.id, { status: 'Active' }), 'User activated'),
@@ -77,7 +77,7 @@ export default function PlatformUsers() {
 
   const removeUser = (u: PlatformUser) =>
     confirmDialog({
-      title: 'Delete user?',
+      title: 'Delete User?',
       content: `Are you sure you want to delete ${u.name}?`,
       okText: 'Delete User',
       okButtonProps: { danger: true },
@@ -86,10 +86,10 @@ export default function PlatformUsers() {
         setActionError('')
         try {
           await api.deletePlatformUser(u.id)
-          notification.success({ title: 'User deleted', description: u.name })
+          notification.success({ title: 'User Deleted', description: u.name })
           reload()
         } catch (e) {
-          notification.error({ title: 'Action failed', description: `${u.name}: ${errorMessage(e)}` })
+          notification.error({ title: 'Action Failed', description: `${u.name}: ${errorMessage(e)}` })
           setActionError(`${u.name}: ${errorMessage(e)}`)
         } finally {
           setBusyId(null)
@@ -142,7 +142,7 @@ export default function PlatformUsers() {
               scroll={undefined}
               columns={[
                 {
-                  title: 'User',
+                  title: 'User Name',
                   dataIndex: 'name',
                   align: 'left',
                   render: (name: string, u) => (

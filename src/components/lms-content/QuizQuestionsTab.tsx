@@ -10,10 +10,14 @@ import { CoursePicker } from './CoursePicker'
 import { CourseSummary } from './CourseSummary'
 import { QuizQuestionFormModal } from './QuizQuestionFormModal'
 import { useData } from '../../context/DataContext'
+import { useAuth } from '../../context/AuthContext'
 import { errorMessage, type QuizQuestion } from '../../api'
 
 export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selectedCourseId: number | null; onSelectCourse: (id: number) => void }) {
   const { editableCourses, quizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion } = useData()
+  const { user } = useAuth()
+  // Quiz questions are written by a Super Admin; a content user can read them (and see them in a course preview).
+  const isSuper = user?.role === 'Super Admin'
   const [query, setQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [page, setPage] = useState(1)
@@ -49,11 +53,11 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
   const handleSave = async (data: Parameters<typeof addQuizQuestion>[0]) => {
     if (editing) await updateQuizQuestion(editing.id, data)
     else await addQuizQuestion(data)
-    notification.success({ title: editing ? 'Question updated' : 'Question created', description: data.text.slice(0, 80) })
+    notification.success({ title: editing ? 'Question Updated' : 'Question Created', description: data.text.slice(0, 80) })
   }
   const handleDelete = (q: QuizQuestion) =>
     confirmDialog({
-      title: 'Delete question?',
+      title: 'Delete Question?',
       content: 'Are you sure you want to delete this question?',
       okText: 'Delete Question',
       okButtonProps: { danger: true },
@@ -61,7 +65,7 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
         setError('')
         try {
           await deleteQuizQuestion(q.id)
-          notification.success({ title: 'Question deleted', description: q.text.slice(0, 80) })
+          notification.success({ title: 'Question Deleted', description: q.text.slice(0, 80) })
         } catch (e) {
           setError(errorMessage(e))
         }
@@ -82,8 +86,8 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
             query={query}
             onQueryChange={setQuery}
             searchPlaceholder="Search questions..."
-            newLabel="Create Question"
-            onNew={openCreate}
+            newLabel={isSuper ? "Create Question" : undefined}
+            onNew={isSuper ? openCreate : undefined}
             newIcon={<Plus size={14} />}
           />
 
@@ -96,10 +100,12 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
                     <Badge tone="purple">{q.category}</Badge>
                     <Badge tone="slate">{q.course}</Badge>
                   </div>
-                  <div className="d-flex flex-shrink-0 align-items-center gap-2">
-                    <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(q)} title="Edit question" tone="blue" />
-                    <IconButton icon={<Trash2 size={14} />} onClick={() => void handleDelete(q)} title="Delete question" tone="red" />
-                  </div>
+                  {isSuper && (
+                    <div className="d-flex flex-shrink-0 align-items-center gap-2">
+                      <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(q)} title="Edit question" tone="blue" />
+                      <IconButton icon={<Trash2 size={14} />} onClick={() => void handleDelete(q)} title="Delete question" tone="red" />
+                    </div>
+                  )}
                 </div>
 
                 <p className="mt-3 mb-2 fw-semibold" style={{ color: '#1a1228' }}>

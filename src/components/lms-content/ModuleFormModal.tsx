@@ -5,16 +5,27 @@ import { Modal } from '../ui/Modal'
 import { scrollToFirstError } from '../ui/scrollToError'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
+import { useAuth } from '../../context/AuthContext'
 import { RichTextEditor } from '../ui/RichTextEditor'
 import { DISPLAY_SIZES, displaySizeMarker, parseDisplaySize, parseVideoUrl, videoUrlMarker } from './displaySize'
 import { isDirectVideoUrl, toEmbedUrl } from '../ui/embedUrl'
 import { ScormUpload, type ScormSelection } from '../courses/ScormUpload'
 import { discardIfStaged } from '../courses/scormStaging'
+import {
+  MEDIA_MAX_MB,
+  MODULE_TITLE_MAX,
+  normalizeDuration,
+  validateModuleContent,
+  validateModuleDuration,
+  validateModuleFile,
+  validateModuleTitle,
+  validateOrder,
+  validateVideoLink,
+} from '../../utils/moduleValidation'
 import { api, errorMessage, API_ORIGIN, type Course, type CourseModule, type CourseModuleInput } from '../../api'
 
 const types: CourseModule['type'][] = ['text', 'image', 'video', 'document', 'hybrid', 'scorm']
 
-const MEDIA_MAX_MB = 100
 // Mirrors the backend's per-Content-Type allow-list (services/module_media.py); "hybrid" accepts any of them.
 const MEDIA_ACCEPT: Record<string, string> = {
   image: 'image/png,image/jpeg,image/gif,image/webp',
@@ -33,7 +44,7 @@ const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp'])
 const VIDEO_EXT = new Set(['.mp4', '.webm', '.mov', '.ogg'])
 const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase()
 
-type Errors = Partial<Record<'title' | 'order' | 'media' | 'scorm' | 'videoUrl', string>>
+type Errors = Partial<Record<'title' | 'order' | 'duration' | 'content' | 'media' | 'scorm' | 'videoUrl', string>>
 
 export function ModuleFormModal({
   module,
@@ -56,6 +67,8 @@ export function ModuleFormModal({
   const [type, setType] = useState<CourseModule['type']>(module?.type ?? 'text')
   const [duration, setDuration] = useState(module?.duration ?? '')
   const [order, setOrder] = useState(String(module?.order ?? nextOrder))
+  const { user } = useAuth()
+  const isSuper = user?.role === 'Super Admin'
   const [status, setStatus] = useState<CourseModule['status']>(module?.status ?? 'Active')
   const [content, setContent] = useState(module?.content ?? '')
   const [displaySize, setDisplaySize] = useState(parseDisplaySize(module?.content))
@@ -121,13 +134,9 @@ export function ModuleFormModal({
   const handleMediaChange = async (file: File | undefined) => {
     if (!file) return
     setMediaError('')
-    const allowed = MEDIA_EXTENSIONS[type] ?? []
-    if (!allowed.includes(extOf(file.name))) {
-      setMediaError(`That file type isn't allowed for a ${type} module. Allowed: ${allowed.join(', ')}`)
-      return
-    }
-    if (file.size > MEDIA_MAX_MB * 1024 * 1024) {
-      setMediaError(`File exceeds the ${MEDIA_MAX_MB} MB limit.`)
+    const problem = await validateModuleFile(file, type)
+    if (problem) {
+      setMediaError(problem)
       return
     }
     setUploadingMedia(true)
@@ -135,6 +144,7 @@ export function ModuleFormModal({
       const { media: id } = await api.uploadModuleMedia(file, type)
       setMedia(id)
       setMediaFileName(file.name)
+      setErrors((prev) => ({ ...prev, media: undefined }))
     } catch (e) {
       setMediaError(errorMessage(e))
     } finally {
@@ -142,26 +152,42 @@ export function ModuleFormModal({
     }
   }
 
+  /** One field's current problem (or null): the single source for blur, change and submit. */
+  const check = (key: keyof Errors): string | null => {
+    switch (key) {
+      case 'title':
+        return validateModuleTitle(title)
+      case 'order':
+        return validateOrder(order)
+      case 'duration':
+        return validateModuleDuration(duration)
+      case 'content':
+        return showEditor ? validateModuleContent(content, type === 'hybrid' ? 'hybrid' : 'text') : null
+      case 'videoUrl':
+        return type === 'video' ? validateVideoLink(videoUrl, (u) => !!toEmbedUrl(u) || isDirectVideoUrl(u)) : null
+      case 'media':
+        if (type === 'video') return !media && !videoUrl.trim() ? 'Upload a video file, or paste a video link below.' : null
+        return showMedia && !media ? `Upload a file for this ${type} module.` : null
+      case 'scorm':
+        return showScorm && !scorm ? 'Upload a SCORM package for this module.' : null
+      default:
+        return null
+    }
+  }
+  const touch = (key: keyof Errors) => setErrors((prev) => ({ ...prev, [key]: check(key) ?? undefined }))
+  const recheck = (key: keyof Errors, next: () => string | null) => setErrors((prev) => (prev[key] ? { ...prev, [key]: next() ?? undefined } : prev))
   const validate = (): Errors => {
     const next: Errors = {}
-    if (!title.trim()) next.title = 'Module title is required.'
-    else if (title.trim().length > 200) next.title = 'Title must be 200 characters or fewer.'
-
-    const n = Number(order)
-    if (order.trim() === '' || !Number.isInteger(n) || n < 1) next.order = 'Enter a whole number of 1 or more.'
-
-    if (type === 'video' && !media && !videoUrl.trim()) next.media = 'Upload a video file, or paste a video link below.'
-    else if (showMedia && type !== 'video' && !media) next.media = `Upload a file for this ${type} module.`
-    if (type === 'video' && videoUrl.trim() && !toEmbedUrl(videoUrl) && !isDirectVideoUrl(videoUrl)) {
-      next.videoUrl = 'Paste a YouTube or Vimeo link, or a direct .mp4 / .webm link.'
+    for (const key of ['title', 'order', 'duration', 'content', 'media', 'videoUrl', 'scorm'] as const) {
+      const msg = check(key)
+      if (msg) next[key] = msg
     }
-    if (showScorm && !scorm) next.scorm = 'Upload a SCORM package for this module.'
-
     return next
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving || uploadingMedia) return // never submit twice
     const nextErrors = validate()
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
@@ -174,9 +200,9 @@ export function ModuleFormModal({
     try {
       const data: CourseModuleInput = {
         courseId,
-        title: title.trim(),
+        title: title.trim().replace(/\s+/g, ' '),
         type,
-        duration: duration.trim() || null,
+        duration: normalizeDuration(duration) || null,
         order: Number(order),
         status,
         // image / video modules keep their display size in `content`; text and hybrid keep what was written
@@ -234,8 +260,9 @@ export function ModuleFormModal({
         <Field label="Module Title" required error={errors.title}>
           <Input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={200}
+            onChange={(e) => { setTitle(e.target.value); recheck('title', () => validateModuleTitle(e.target.value)) }}
+            onBlur={() => touch('title')}
+            maxLength={MODULE_TITLE_MAX}
             placeholder="Enter module title"
             status={errors.title ? 'error' : undefined}
           />
@@ -244,15 +271,23 @@ export function ModuleFormModal({
         <div className="row g-3">
           <div className={type === 'hybrid' ? 'col-md-6' : 'col-6 col-md-4'}>
             <Field label="Sequence Order" error={errors.order}>
-              <Input type="number" min={1} value={order} onChange={(e) => setOrder(e.target.value)} status={errors.order ? 'error' : undefined} />
+              <Input inputMode="numeric" maxLength={4} value={order} onChange={(e) => { setOrder(e.target.value); recheck('order', () => validateOrder(e.target.value)) }} onBlur={() => touch('order')} status={errors.order ? 'error' : undefined} />
             </Field>
           </div>
           <div className={type === 'hybrid' ? 'col-md-6' : 'col-6 col-md-4'}>
-            <Field label="Duration (minutes)">
-              <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Enter duration" />
+            <Field label="Duration (minutes)" error={errors.duration}>
+              <Input
+                inputMode="numeric"
+                maxLength={12}
+                value={duration}
+                onChange={(e) => { setDuration(e.target.value); recheck('duration', () => validateModuleDuration(e.target.value)) }}
+                onBlur={() => touch('duration')}
+                status={errors.duration ? 'error' : undefined}
+                placeholder="Enter duration"
+              />
             </Field>
           </div>
-          {type !== 'hybrid' && (
+          {type !== 'hybrid' && isSuper && (
           <div className="col-12 col-md-4">
             <Field label="Status">
               <Select
@@ -358,7 +393,7 @@ export function ModuleFormModal({
 
         {type === 'video' && (
           <Field label="External Video URL (used only if no file is uploaded)" error={errors.videoUrl}>
-            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="e.g. YouTube or Vimeo link" status={errors.videoUrl ? 'error' : undefined} />
+            <Input value={videoUrl} onChange={(e) => { setVideoUrl(e.target.value); recheck('videoUrl', () => validateVideoLink(e.target.value, (u) => !!toEmbedUrl(u) || isDirectVideoUrl(u))); recheck('media', () => null) }} onBlur={() => touch('videoUrl')} placeholder="e.g. YouTube or Vimeo link" status={errors.videoUrl ? 'error' : undefined} />
           </Field>
         )}
 
@@ -369,10 +404,10 @@ export function ModuleFormModal({
         )}
 
         {showEditor && (
-          <Field label="Module Content (HTML supported)">
+          <Field label="Module Content (HTML supported)" required error={errors.content}>
             <RichTextEditor
               value={content}
-              onChange={setContent}
+              onChange={(html) => { setContent(html); recheck('content', () => validateModuleContent(html, type === 'hybrid' ? 'hybrid' : 'text')) }}
               placeholder="Enter module content"
               allowDocuments={type !== 'hybrid'} // Hybrid modules take pictures and videos only; documents have their own Document module type
               // Hybrid modules can embed images and videos right inside the content.
@@ -387,7 +422,7 @@ export function ModuleFormModal({
 
         <div className="d-flex justify-content-end gap-3 pt-3 border-top mt-auto">
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={saving} disabled={uploadingMedia || scormBusy}>
+          <Button type="primary" htmlType="submit" loading={saving} disabled={saving || uploadingMedia || scormBusy}>
             {saving ? 'Saving…' : uploadingMedia || scormBusy ? 'Uploading…' : module ? 'Save Changes' : 'Create Module'}
           </Button>
         </div>

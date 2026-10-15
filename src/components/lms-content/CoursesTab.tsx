@@ -35,6 +35,7 @@ import { IconButton } from '../ui/IconButton'
 import { ManualCourseModal } from '../courses/ManualCourseModal'
 import { CoursePreviewModal } from './CoursePreviewModal'
 import { useData, useDataNeeds } from '../../context/DataContext'
+import { useAuth } from '../../context/AuthContext'
 import { API_ORIGIN, errorMessage, type CategoryType, type Course, type CourseInput, type CourseModule } from '../../api'
 
 // Per-category look: accent colour, icon and a one-line description for the group header.
@@ -72,6 +73,7 @@ function CourseGridCard({
   onEdit,
   onToggleStatus,
   onPreview,
+  canToggle,
 }: {
   course: Course
   modules: CourseModule[]
@@ -79,6 +81,8 @@ function CourseGridCard({
   onEdit: () => void
   onToggleStatus: () => void
   onPreview: () => void
+  /** Only a Super Admin can activate / deactivate a course. */
+  canToggle: boolean
 }) {
   const outcomes = (course.learningOutcomes ?? []).filter(Boolean)
   // Without quiz questions there is nothing to score, so neither the question count nor a pass score is shown.
@@ -247,12 +251,14 @@ function CourseGridCard({
         </div>
         <div className="d-flex align-items-center gap-2 mt-auto pt-3" style={{ borderTop: '1px solid #ede8f5' }}>
           <IconButton icon={<Pencil size={14} />} onClick={onEdit} title="Edit course" tone="blue" />
-          <IconButton
-            icon={course.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
-            onClick={onToggleStatus}
-            title={course.status === 'Active' ? 'Deactivate' : 'Re-activate'}
-            tone={course.status === 'Active' ? 'amber' : 'green'}
-          />
+          {canToggle && (
+            <IconButton
+              icon={course.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
+              onClick={onToggleStatus}
+              title={course.status === 'Active' ? 'Deactivate' : 'Re-Activate'}
+              tone={course.status === 'Active' ? 'amber' : 'green'}
+            />
+          )}
           <IconButton icon={<Eye size={14} />} onClick={onPreview} title="Full preview" tone="purple" />
         </div>
       </div>
@@ -273,6 +279,8 @@ function CourseGridCard({
 }
 
 export function CoursesTab() {
+  const { user } = useAuth()
+  const isSuper = user?.role === 'Super Admin'
   const { courses, courseOptions, courseModules, quizQuestions, certificateTemplates, addCourse, updateCourse } = useData()
   useDataNeeds('courseOptions')
   const [query, setQuery] = useState('')
@@ -331,21 +339,21 @@ export function CoursesTab() {
   const handleSave = async (data: Partial<CourseInput>) => {
     if (editing) await updateCourse(editing.id, data)
     else await addCourse(data as CourseInput)
-    notification.success({ title: editing ? 'Course updated' : 'Course created', description: data.name ?? editing?.name })
+    notification.success({ title: editing ? 'Course Updated' : 'Course Created', description: data.name ?? editing?.name })
   }
   const toggleStatus = async (course: Course, reason?: string) => {
     const next = course.status === 'Active' ? 'Inactive' : 'Active'
     try {
       await updateCourse(course.id, { status: next, ...(reason ? { reason } : {}) })
-      notification.success({ title: next === 'Active' ? 'Course re-activated' : 'Course deactivated', description: course.name })
+      notification.success({ title: next === 'Active' ? 'Course Re-Activated' : 'Course Deactivated', description: course.name })
     } catch (e) {
-      notification.error({ title: 'Action failed', description: `${course.name}: ${errorMessage(e)}` })
+      notification.error({ title: 'Action Failed', description: `${course.name}: ${errorMessage(e)}` })
     }
   }
   const confirmToggle = (course: Course) => {
     if (course.status === 'Active') {
       reasonDialog({
-        title: 'Deactivate course?',
+        title: 'Deactivate Course?',
         content: `Are you sure you want to deactivate ${course.name}?`,
         okText: 'Deactivate Course',
         onOk: (reason) => toggleStatus(course, reason),
@@ -353,9 +361,9 @@ export function CoursesTab() {
       return
     }
     confirmDialog({
-      title: 'Re-activate course?',
+      title: 'Re-Activate Course?',
       content: `Are you sure you want to re-activate ${course.name}?`,
-      okText: 'Re-activate Course',
+      okText: 'Re-Activate Course',
       onOk: () => toggleStatus(course),
     })
   }
@@ -474,6 +482,7 @@ export function CoursesTab() {
                           questionCount={quizQuestions.filter((q) => q.courseId === c.id).length}
                           onEdit={() => openEdit(c)}
                           onToggleStatus={() => confirmToggle(c)}
+                          canToggle={isSuper}
                           onPreview={() => setPreviewing(c)}
                         />
                       </div>
@@ -511,12 +520,14 @@ export function CoursesTab() {
                             </span>
                             <div className="d-flex align-items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(c)} title="Edit course" tone="blue" />
-                              <IconButton
-                                icon={c.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
-                                onClick={() => confirmToggle(c)}
-                                title={c.status === 'Active' ? 'Deactivate' : 'Re-activate'}
-                                tone={c.status === 'Active' ? 'amber' : 'green'}
-                              />
+                              {isSuper && (
+                                <IconButton
+                                  icon={c.status === 'Active' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
+                                  onClick={() => confirmToggle(c)}
+                                  title={c.status === 'Active' ? 'Deactivate' : 'Re-Activate'}
+                                  tone={c.status === 'Active' ? 'amber' : 'green'}
+                                />
+                              )}
                               <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Full preview" tone="purple" />
                             </div>
                           </div>

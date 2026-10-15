@@ -1,5 +1,5 @@
 /* Create tenant page: stacked section cards + a live "tenant preview" panel, with a sticky action bar. */
-.tc-page { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; min-height: calc(100vh - 64px - 48px); }
+.tc-page { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; min-height: calc(100vh - 56px - 32px); }
 .tc-page > :nth-last-child(2) { margin-bottom: 18px; }
 .tc-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; padding: 0; border: 0; background: none; color: #7b6b94; font-size: 13.5px; font-weight: 600; cursor: pointer; }
 .tc-back:hover { color: #5c2d91; }
@@ -25,7 +25,7 @@
 .tc-span2 { grid-column: 1 / -1; }
 .tc-card .ant-form-item { margin-bottom: 0; }
 .tc-card .ant-form-item-label { padding-bottom: 6px; }
-.tc-card .ant-form-item-label > label { font-size: 13.5px; font-weight: 600; color: #1a1228; }
+.tc-card .ant-form-item-label > label { font-size: 13px; font-weight: 600; color: #1a1228; }
 .tc-opt { font-weight: 400; color: #727587; margin-left: 4px; }
 .tc-card .ant-input, .tc-card .ant-input-affix-wrapper, .tc-card .ant-input-number { font-size: 14px; border-radius: 10px; }
 .tc-card .ant-select { font-size: 14px; }
@@ -82,11 +82,11 @@
 .wz-step-btn { display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; cursor: pointer; text-align: left; font: inherit; }
 .wz-step-btn:hover .wz-step-label { color: #62309c; }
 .wz-step-btn:hover .wz-dot { border-color: #62309c; }
-.tc-card label.d-block { font-size: 13.5px !important; font-weight: 600 !important; margin-bottom: 6px !important; color: #1a1228 !important; }
+.tc-card label.d-block { font-size: 13px !important; font-weight: 600 !important; margin-bottom: 6px !important; color: #1a1228 !important; }
 
 
 /* ---- Compact density: smaller gaps, 3-column field rows, full-width action bar ---- */
-.tc-page { max-width: none; min-height: calc(100vh - 64px - 40px); }
+.tc-page { max-width: none; min-height: calc(100vh - 56px - 32px); }
 .tc-back { margin-bottom: 2px; font-size: 13px; }
 .tc-title-row { margin-bottom: 8px; }
 .tc-title { font-size: 21px; }
@@ -110,7 +110,7 @@
 .tc-span2 { grid-column: span 2; }
 .tc-span3 { grid-column: 1 / -1; }
 .tc-card .ant-form-item-label { padding-bottom: 3px; }
-.tc-card .ant-form-item-label > label, .tc-card label.d-block { font-size: 12.5px !important; margin-bottom: 3px !important; }
+.tc-card .ant-form-item-label > label, .tc-card label.d-block { font-size: 13px !important; margin-bottom: 3px !important; }
 .tc-card .ant-input, .tc-card .ant-input-affix-wrapper, .tc-card .ant-input-group-wrapper { font-size: 13.5px; }
 .tc-card .ant-input:not(textarea), .tc-card .ant-input-affix-wrapper, .tc-card .ant-select .ant-select-selector { min-height: 34px; }
 .tc-card .ant-select, .tc-card .ant-select-single, .tc-card .ant-select .ant-select-selector { height: 34px; }
@@ -140,3 +140,712 @@
 @media (max-width: 575px) {
   .tc-fields { grid-template-columns: 1fr; }
 }
+
+.wz-step-caption.is-done { color: #15803d; font-weight: 600; }
+
+/* ---- Tenant status card (Active / Suspended + reason) ---- */
+.tc-status { margin-top: 10px; background: #fff; border: 1px solid #ede8f5; border-radius: 14px; padding: 14px 16px; }
+.tc-status-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.tc-status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #e7f7ee; color: #15803d; font-size: 12px; font-weight: 700; }
+.tc-status-badge i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tc-status-badge.is-suspended { background: #fef3e2; color: #b45309; }
+.tc-status-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: #f1ebfa; }
+.tc-status-switch button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #7b6b94; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 140ms ease; }
+.tc-status-switch button.is-on { background: #fff; color: #15803d; box-shadow: 0 2px 8px rgba(92, 45, 145, 0.16); }
+.tc-status-switch button.is-on.is-suspended { color: #b45309; }
+.tc-status-warn { display: flex; gap: 10px; margin: 12px 0 10px; padding: 10px 12px; border: 1px solid #f6d9a8; border-radius: 10px; background: #fff8ec; color: #6b4a14; font-size: 12.5px; line-height: 1.5; }
+.tc-status-warn svg { flex-shrink: 0; margin-top: 2px; color: #b45309; }
+.tc-status-warn p { margin: 0; }
+.tc-status-label { display: block; margin: 8px 0 4px; font-size: 12.5px; font-weight: 600; color: #1a1228; }
+.tc-status-error { margin-top: 3px; font-size: 11.5px; color: #dc2626; }
+.tc-status .ant-select { height: 34px; }
+.tc-status .ant-select .ant-select-selector { min-height: 34px; border-radius: 9px; }
+
+
+/* ---- Placeholders: readable (not washed out) and the same size in every field ---- */
+.tc-card input::placeholder, .tc-card textarea::placeholder, .tc-status textarea::placeholder { color: #9b8fb3; opacity: 1; font-size: 13.5px; }
+.tc-card .ant-select-selection-placeholder, .tc-status .ant-select-selection-placeholder { color: #9b8fb3; opacity: 1; font-size: 13.5px; }
+.tc-card textarea.ant-input { padding-block: 7px; min-height: 64px; line-height: 1.45; resize: vertical; border-radius: 10px; }
+.tc-card .ant-input-textarea-show-count::after { font-size: 11.5px; color: #9b8fb3; }
+.tc-fields > div, .tc-fields > .ant-form-item { min-width: 0; }
+
+/* ---- Final tightening so the whole first step fits a normal laptop screen ---- */
+.tc-card { padding: 11px 16px 13px; }
+.tc-card-head { margin-bottom: 8px; }
+.tc-fields { gap: 7px 16px; }
+.tc-card textarea.ant-input { min-height: 52px; }
+.tc-main { gap: 10px; }
+.tc-stepper { margin-bottom: 10px; }
+.tc-title-row { margin-bottom: 6px; }
+.tc-page > :nth-last-child(2) { margin-bottom: 8px; }
+.tc-footer { padding-top: 8px; padding-bottom: 8px; }
+
+/* =====================================================================================
+   Visual polish: depth, a brand-coloured accent on every card, calmer inputs, clearer steps.
+   (Only colours, borders and shadows - the layout and sizes above are unchanged.)
+   ===================================================================================== */
+.tc-title { background: linear-gradient(90deg, #1a1228 0%, #3d2470 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tc-sub { color: #6f6489; }
+.tc-back { transition: color 140ms ease, transform 140ms ease; }
+.tc-back:hover { transform: translateX(-2px); }
+
+/* stepper */
+.tc-stepper { background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%); border-color: #e9e2f5; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 6px 18px rgba(92, 45, 145, 0.05); }
+.tc-stepper .wz-step.is-current .wz-dot { background: linear-gradient(135deg, #5c2d91, #8a4bb0); border-color: transparent; box-shadow: 0 0 0 4px rgba(98, 48, 156, 0.16), 0 4px 10px rgba(92, 45, 145, 0.3); }
+.tc-stepper .wz-step.is-done .wz-dot { background: #15803d; border-color: #15803d; }
+.tc-stepper .wz-line { height: 3px; background: #ece7f5; }
+.tc-stepper .wz-line.is-done { background: linear-gradient(90deg, #15803d, #5c2d91); }
+.tc-stepper .wz-step.is-current .wz-step-label { color: #4b2480; }
+
+/* cards */
+.tc-card, .tc-preview, .tc-status, .cs-toolbar, .cs-group, .cs-summary { border-color: #e9e2f5; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 8px 22px rgba(92, 45, 145, 0.05); }
+.tc-card { position: relative; overflow: hidden; }
+.tc-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #5c2d91, #9a63c8); }
+.tc-card-head { padding-bottom: 9px; border-bottom: 1px solid #f1ecf9; }
+.tc-card-icon { background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; box-shadow: 0 4px 10px rgba(92, 45, 145, 0.28); }
+.tc-card-title { color: #1f1535; letter-spacing: -0.005em; }
+.tc-card-desc { color: #7a6f94; }
+
+/* inputs */
+.tc-card .ant-form-item-label > label, .tc-card label.d-block { color: #1a1228 !important; }
+.tc-card .ant-input, .tc-card .ant-input-affix-wrapper, .tc-card .ant-input-group-addon, .tc-card .ant-select .ant-select-selector { background-color: #fcfbff; border-color: #e4ddf0; transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease; }
+.tc-card .ant-input:hover, .tc-card .ant-input-affix-wrapper:hover, .tc-card .ant-select:not(.ant-select-disabled):hover .ant-select-selector { border-color: #c7b3ea; background-color: #fff; }
+.tc-card .ant-input:focus, .tc-card .ant-input-focused, .tc-card .ant-select-focused .ant-select-selector { border-color: #62309c !important; background-color: #fff; box-shadow: 0 0 0 3px rgba(98, 48, 156, 0.13) !important; }
+.tc-card .ant-input-disabled, .tc-card .ant-input[disabled] { background-color: #f4f1f9; color: #8a7ba3; }
+.tc-card .ant-input-status-error, .tc-card .ant-input-affix-wrapper-status-error { background-color: #fff8f8 !important; }
+.tc-limit-pick { background: #fcfbff; border-color: #e4ddf0; }
+.tc-limit-pick.is-active { background: linear-gradient(135deg, #f4eefb, #ece0fa); border-color: #62309c; box-shadow: 0 0 0 3px rgba(98, 48, 156, 0.12); }
+
+/* preview panel */
+.tc-preview { background: linear-gradient(180deg, #f8f3ff 0%, #ffffff 120px); }
+.tc-preview-avatar { box-shadow: 0 6px 14px rgba(92, 45, 145, 0.32); }
+.tc-preview-code { background: #ece1fb; }
+.tc-preview-row + .tc-preview-row { border-top: 1px dashed #efe9f8; }
+
+/* action bar */
+.tc-footer { box-shadow: 0 -8px 24px rgba(60, 30, 100, 0.06); border-top-color: #ebe5f6; }
+.tc-footer .tc-next:not(.is-pale) { box-shadow: 0 6px 16px rgba(92, 45, 145, 0.32); transition: transform 140ms ease, box-shadow 140ms ease; }
+.tc-footer .tc-next:not(.is-pale):hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(92, 45, 145, 0.4); }
+.tc-footer .tc-next.is-pale { background: #dccdf1 !important; color: #5c2d91 !important; }
+
+/* course step */
+.cs-card { background: #fff; }
+.cs-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(92, 45, 145, 0.1); }
+.cs-card.is-on { background: linear-gradient(135deg, #faf6ff, #f3ebfd); }
+.cs-group-tile, .cs-card-tile { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03); }
+.cs-selected-pill { background: linear-gradient(135deg, #f4eefb, #ebdffa); }
+.cs-summary-head span { background: linear-gradient(135deg, #5c2d91, #8a4bb0); box-shadow: 0 3px 8px rgba(92, 45, 145, 0.3); }
+
+/* keep the polished version on one screen */
+.tc-card-head { padding-bottom: 7px; margin-bottom: 6px; }
+.tc-card { padding-top: 10px; padding-bottom: 11px; }
+.tc-card textarea.ant-input { min-height: 46px; }
+.tc-fields { gap: 6px 16px; }
+
+
+/* =====================================================================================
+   Header redo: pill back button, bigger heading with the actions on the right (no footer bar),
+   and a progress bar made of three step tiles.
+   ===================================================================================== */
+.tc-page { min-height: 0; display: block; }
+.tc-page > :nth-last-child(2) { margin-bottom: 0; }
+.tc-footer { display: none; }
+
+.tc-back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 4px 14px 4px 5px; border: 1px solid #e4ddf0; border-radius: 999px; background: #fff; color: #4b2480; font-size: 13px; font-weight: 600; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.05); transition: all 140ms ease; }
+.tc-back:hover { transform: none; border-color: #c7b3ea; box-shadow: 0 4px 12px rgba(92, 45, 145, 0.12); }
+.tc-back-ico { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #f1ebfa; color: #5c2d91; transition: transform 140ms ease; }
+.tc-back:hover .tc-back-ico { transform: translateX(-2px); background: #5c2d91; color: #fff; }
+
+.tc-title-row { position: sticky; top: 0; z-index: 6; align-items: center; margin: 0 0 10px; padding: 4px 0 8px; background: linear-gradient(180deg, var(--tc-page-bg, #f6f4fb) 82%, rgba(246, 244, 251, 0)); }
+.tc-title { font-size: 27px; font-weight: 800; line-height: 1.15; letter-spacing: -0.015em; }
+.tc-sub { margin-top: 3px; font-size: 13.5px; }
+.tc-required { margin-left: 8px; padding-left: 10px; border-left: 1px solid #ddd5ec; font-size: 12.5px; color: #8a7ba3; }
+.tc-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.tc-actions .ant-btn { height: 38px; border-radius: 10px; font-weight: 600; padding-inline: 18px; }
+.tc-actions .ant-btn-text { color: #5a4d73; }
+.tc-actions .tc-next:not(.is-pale) { box-shadow: 0 6px 16px rgba(92, 45, 145, 0.32); }
+.tc-actions .tc-next.is-pale { background: #dccdf1 !important; color: #5c2d91 !important; border: 0 !important; box-shadow: none !important; }
+
+/* progress bar: three tiles */
+.tc-stepper { padding: 6px; border-radius: 16px; background: #fff; }
+.tc-stepper .wz-steps { gap: 6px; }
+.tc-stepper .wz-step { flex: 1 1 0 !important; min-width: 0; padding: 0; border: 1px solid transparent; border-radius: 12px; background: #faf8fd; transition: background 160ms ease, border-color 160ms ease; }
+.tc-stepper .wz-step > .wz-dot, .tc-stepper .wz-step > .wz-step-text { margin: 0; }
+.tc-stepper .wz-step:not(:has(.wz-step-btn)) { padding: 8px 14px; }
+.tc-stepper .wz-step-btn { width: 100%; padding: 8px 14px; border-radius: 12px; }
+.tc-stepper .wz-step.is-current { background: linear-gradient(135deg, #f6f0fd, #ebdffa); border-color: #cdb6ee; }
+.tc-stepper .wz-step.is-done { background: #f2faf5; border-color: #cfe9d8; }
+.tc-stepper .wz-step.is-done .wz-step-btn:hover { background: #e8f6ee; }
+.tc-stepper .wz-line { display: none; }
+.tc-stepper .wz-dot { width: 30px; height: 30px; }
+.tc-stepper .wz-step.is-todo .wz-step-label { color: #7b6b94; }
+
+@media (max-width: 991px) {
+  .tc-title-row { flex-wrap: wrap; gap: 8px; }
+  .tc-actions { width: 100%; justify-content: flex-end; }
+  .tc-stepper .wz-step-text { display: none; }
+  .tc-stepper .wz-step.is-current .wz-step-text { display: flex; }
+}
+@media (max-width: 575px) {
+  .tc-title { font-size: 22px; }
+  .tc-required { display: block; margin: 4px 0 0; padding: 0; border: 0; }
+}
+.tc-stepper { margin-bottom: 11px !important; }
+
+
+/* =====================================================================================
+   Header alignment: title + actions share the first row, subtitle + required note share the second,
+   everything sits on the same left / right edges as the cards below.
+   ===================================================================================== */
+.tc-page { padding-inline: 1px; }
+.tc-back { margin-bottom: 10px; }
+.tc-title-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'title actions' 'sub req';
+  align-items: center; column-gap: 16px; row-gap: 2px; margin: 0 0 12px; padding: 2px 0 8px;
+}
+.tc-title { grid-area: title; margin: 0; font-size: 26px; line-height: 1.2; }
+.tc-sub { grid-area: sub; margin: 0; font-size: 13.5px; line-height: 1.4; }
+.tc-actions { grid-area: actions; align-self: center; justify-self: end; }
+.tc-required { grid-area: req; justify-self: end; margin: 0; padding: 0; border: 0; font-size: 12.5px; color: #8a7ba3; white-space: nowrap; }
+.tc-required b { color: #dc2626; }
+.tc-actions .ant-btn { height: 40px; }
+
+/* stepper: text vertically centred in every tile, equal tile heights */
+.tc-stepper .wz-step { align-self: stretch; }
+.tc-stepper .wz-step-btn, .tc-stepper .wz-step:not(:has(.wz-step-btn)) { min-height: 52px; align-items: center; }
+.tc-stepper .wz-step-text { justify-content: center; }
+.tc-stepper .wz-step-label { line-height: 1.25; }
+
+/* form rows: labels share one baseline and equal control heights */
+.tc-fields { align-items: start; }
+.tc-card .ant-form-item-label, .tc-card .ant-form-item-label > label { height: auto; min-height: 20px; }
+.tc-card .ant-form-item-label > label::after { display: none; }
+
+@media (max-width: 767px) {
+  .tc-title-row { grid-template-columns: 1fr; grid-template-areas: 'title' 'sub' 'req' 'actions'; row-gap: 6px; }
+  .tc-actions, .tc-required { justify-self: start; }
+  .tc-actions { width: 100%; justify-content: flex-end; margin-top: 4px; }
+}
+
+/* trim the extra height the alignment pass added */
+.tc-card .ant-form-item-label, .tc-card .ant-form-item-label > label { min-height: 0; }
+.tc-back { margin-bottom: 6px; }
+.tc-title-row { margin-bottom: 8px; padding: 0 0 4px; row-gap: 0; }
+.tc-title { font-size: 25px; }
+.tc-actions .ant-btn { height: 36px; }
+.tc-stepper .wz-step-btn, .tc-stepper .wz-step:not(:has(.wz-step-btn)) { min-height: 46px; }
+.tc-stepper { margin-bottom: 9px !important; }
+
+
+/* =====================================================================================
+   Progress meter (three segments of one bar) and the action buttons at the bottom of the page.
+   ===================================================================================== */
+.tc-title-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'title req' 'sub sub'; }
+.tc-required { align-self: end; }
+
+.tc-stepper { padding: 12px 18px 14px; border-radius: 16px; }
+.wz-meter { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.wz-meter-step { min-width: 0; }
+.wz-meter-head { display: flex; align-items: center; gap: 11px; width: 100%; padding: 0; border: 0; background: none; text-align: left; font: inherit; }
+.wz-meter-head.is-link { cursor: pointer; }
+.wz-meter-num { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 10px; background: #f1ecf8; color: #8a7ba3; font-size: 13.5px; font-weight: 800; transition: all 160ms ease; }
+.wz-meter-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.wz-meter-label { font-size: 14px; font-weight: 700; color: #7b6b94; }
+.wz-meter-caption { font-size: 12px; color: #9b8fb3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wz-meter-bar { position: relative; display: block; height: 6px; margin-top: 10px; border-radius: 999px; background: #ece7f5; overflow: hidden; }
+.wz-meter-bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; transition: width 360ms cubic-bezier(0.4, 0, 0.2, 1); }
+
+.wz-meter-step.is-current .wz-meter-num { background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; box-shadow: 0 4px 10px rgba(92, 45, 145, 0.3); }
+.wz-meter-step.is-current .wz-meter-label { color: #3b1f6b; }
+.wz-meter-step.is-current .wz-meter-caption { color: #7a6f94; }
+.wz-meter-step.is-current .wz-meter-bar::after { width: 55%; background: linear-gradient(90deg, #5c2d91, #9a63c8); }
+
+.wz-meter-step.is-done .wz-meter-num { background: #e3f6ea; color: #15803d; }
+.wz-meter-step.is-done .wz-meter-label { color: #1f1535; }
+.wz-meter-step.is-done .wz-meter-caption { color: #15803d; font-weight: 600; }
+.wz-meter-step.is-done .wz-meter-bar::after { width: 100%; background: linear-gradient(90deg, #22a35a, #15803d); }
+.wz-meter-head.is-link:hover .wz-meter-label { color: #5c2d91; }
+.wz-meter-head.is-link:hover .wz-meter-num { background: #cdeed8; }
+
+.tc-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.tc-bottom .ant-btn { height: 40px; border-radius: 10px; font-weight: 600; padding-inline: 20px; }
+.tc-bottom .ant-btn-text { color: #5a4d73; }
+.tc-bottom .tc-next:not(.is-pale) { box-shadow: 0 6px 16px rgba(92, 45, 145, 0.32); }
+.tc-bottom .tc-next.is-pale { background: #dccdf1 !important; color: #5c2d91 !important; border: 0 !important; box-shadow: none !important; }
+
+@media (max-width: 767px) {
+  .tc-title-row { grid-template-columns: 1fr; grid-template-areas: 'title' 'sub' 'req'; }
+  .wz-meter { gap: 8px; }
+  .wz-meter-text { display: none; }
+  .wz-meter-step.is-current .wz-meter-text { display: flex; }
+  .wz-meter-step.is-current { grid-column: span 1; }
+}
+
+/* back button sits on the heading row, left of the title (saves a whole row of height) */
+.tc-title-row { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'back title req' 'back sub req'; column-gap: 14px; align-items: center; margin-bottom: 8px; }
+.tc-back { grid-area: back; margin: 0; align-self: center; padding: 6px 16px 6px 6px; }
+.tc-back-ico { width: 28px; height: 28px; }
+.tc-required { align-self: center; }
+@media (max-width: 767px) {
+  .tc-title-row { grid-template-columns: 1fr; grid-template-areas: 'back' 'title' 'sub' 'req'; row-gap: 6px; }
+  .tc-back { justify-self: start; }
+}
+.tc-bottom { margin-top: 10px; }
+.tc-stepper { padding: 10px 18px 12px; }
+
+/* Billing contact and LMS administrator side by side, equal height */
+.tc-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+.tc-pair > .tc-card { display: flex; flex-direction: column; min-width: 0; }
+.tc-pair .tc-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+.tc-pair .tc-span3 { grid-column: 1 / -1; }
+@media (max-width: 1199px) {
+  .tc-pair { grid-template-columns: 1fr; }
+}
+@media (max-width: 575px) {
+  .tc-pair .tc-fields { grid-template-columns: 1fr; }
+}
+
+
+/* =====================================================================================
+   Progress: arrow-shaped steps (chevrons) that point forward.
+   ===================================================================================== */
+.tc-stepper:has(.wz-chev) { padding: 0; margin-bottom: 12px !important; background: transparent; border: 0; box-shadow: none; border-radius: 0; }
+.wz-chev { --tip: 20px; display: flex; margin: 0; padding: 0; list-style: none; filter: drop-shadow(0 3px 8px rgba(92, 45, 145, 0.12)); }
+.wz-chev-step { flex: 1 1 0; min-width: 0; margin-left: calc(var(--tip) * -1 + 5px); }
+.wz-chev-step.is-first { margin-left: 0; }
+.wz-chev-inner {
+  display: flex; align-items: center; gap: 12px; width: 100%; height: 58px; padding: 0 calc(var(--tip) + 6px) 0 calc(var(--tip) + 14px);
+  border: 0; text-align: left; font: inherit;
+  clip-path: polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%, var(--tip) 50%);
+  transition: background 180ms ease, filter 180ms ease;
+}
+.wz-chev-step.is-first .wz-chev-inner { padding-left: 18px; clip-path: polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%); border-radius: 14px 0 0 14px; }
+.wz-chev-step:last-child .wz-chev-inner { padding-right: 18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, var(--tip) 50%); border-radius: 0 14px 14px 0; }
+.wz-chev-step.is-first:last-child .wz-chev-inner { clip-path: none; border-radius: 14px; }
+.wz-chev-inner.is-link { cursor: pointer; }
+.wz-chev-num { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; font-weight: 800; }
+.wz-chev-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.wz-chev-label { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wz-chev-caption { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* upcoming */
+.wz-chev-step.is-todo .wz-chev-inner { background: #f1edf8; }
+.wz-chev-step.is-todo .wz-chev-num { background: #fff; color: #9b8fb3; box-shadow: inset 0 0 0 1.5px #ddd4ec; }
+.wz-chev-step.is-todo .wz-chev-label { color: #7b6b94; }
+.wz-chev-step.is-todo .wz-chev-caption { color: #a99dc0; }
+/* done */
+.wz-chev-step.is-done .wz-chev-inner { background: #e6f6ec; }
+.wz-chev-step.is-done .wz-chev-num { background: #16a34a; color: #fff; }
+.wz-chev-step.is-done .wz-chev-label { color: #14532d; }
+.wz-chev-step.is-done .wz-chev-caption { color: #15803d; font-weight: 600; }
+.wz-chev-inner.is-link:hover { background: #d6f0df; }
+/* current */
+.wz-chev-step.is-current .wz-chev-inner { background: linear-gradient(135deg, #4c2282 0%, #7b3fb8 100%); }
+.wz-chev-step.is-current { position: relative; z-index: 2; }
+.wz-chev-step.is-current .wz-chev-num { background: #fff; color: #5c2d91; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.22); }
+.wz-chev-step.is-current .wz-chev-label { color: #fff; }
+.wz-chev-step.is-current .wz-chev-caption { color: rgba(255, 255, 255, 0.78); }
+
+@media (max-width: 991px) {
+  .wz-chev { --tip: 14px; }
+  .wz-chev-inner { padding-left: calc(var(--tip) + 8px); padding-right: calc(var(--tip) + 2px); gap: 8px; }
+  .wz-chev-caption { display: none; }
+}
+@media (max-width: 575px) {
+  .wz-chev-text { display: none; }
+  .wz-chev-step.is-current { flex: 2.4 1 0; }
+  .wz-chev-step.is-current .wz-chev-text { display: flex; }
+  .wz-chev-inner { height: 50px; }
+}
+
+
+/* =====================================================================================
+   Brand-colour pass: finished steps are lavender (not green) so the bar matches the purple theme;
+   the back button goes back on its own row above the heading.
+   ===================================================================================== */
+.wz-chev-step.is-done .wz-chev-inner { background: #eee7fb; }
+.wz-chev-step.is-done .wz-chev-num { background: #7b3fb8; color: #fff; }
+.wz-chev-step.is-done .wz-chev-label { color: #2f1857; }
+.wz-chev-step.is-done .wz-chev-caption { color: #6b3fa8; font-weight: 600; }
+.wz-chev-inner.is-link:hover { background: #e2d6f7; }
+.wz-chev-step.is-todo .wz-chev-inner { background: #f3f0f9; }
+.tc-status-badge { background: #efe8fb; color: #5c2d91; }
+.tc-status-switch button.is-on { color: #5c2d91; }
+
+.tc-title-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'back back' 'title req' 'sub sub'; column-gap: 16px; row-gap: 0; align-items: end; margin-bottom: 10px; }
+.tc-back { grid-area: back; justify-self: start; margin: 0 0 8px; }
+.tc-title { align-self: end; }
+.tc-required { align-self: end; padding-bottom: 4px; }
+@media (max-width: 767px) {
+  .tc-title-row { grid-template-columns: 1fr; grid-template-areas: 'back' 'title' 'sub' 'req'; }
+}
+
+/* Progress bar in the exact brand palette used by the buttons, sidebar and cards (#5c2d91 -> #7b3fa0) */
+.wz-chev { filter: drop-shadow(0 0 0.6px rgba(92, 45, 145, 0.45)) drop-shadow(0 2px 6px rgba(92, 45, 145, 0.08)); }
+.wz-chev-step.is-todo .wz-chev-inner { background: #ffffff; }
+.wz-chev-step.is-todo .wz-chev-num { background: #f4f0fa; color: #9b8fb3; box-shadow: none; }
+.wz-chev-step.is-todo .wz-chev-label { color: #6f6489; }
+.wz-chev-step.is-todo .wz-chev-caption { color: #a99dc0; }
+.wz-chev-step.is-done .wz-chev-inner { background: #f6f1fd; }
+.wz-chev-step.is-done .wz-chev-num { background: #5c2d91; color: #fff; }
+.wz-chev-step.is-done .wz-chev-label { color: #1f1535; }
+.wz-chev-step.is-done .wz-chev-caption { color: #6b3fa8; }
+.wz-chev-inner.is-link:hover { background: #ebe0fa; }
+.wz-chev-step.is-current .wz-chev-inner { background: linear-gradient(135deg, #5c2d91 0%, #7b3fa0 100%); }
+.wz-chev-step.is-current .wz-chev-num { background: #fff; color: #5c2d91; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2); }
+.wz-chev-step.is-todo .wz-chev-inner.is-link:hover { background: #f6f1fd; }
+.wz-chev-step.is-todo .wz-chev-inner.is-link:hover .wz-chev-label { color: #5c2d91; }
+.wz-chev-inner.is-link:focus-visible { outline: 2px solid #7b3fa0; outline-offset: -3px; }
+
+
+/* =====================================================================================
+   Polish: Cancel button, a compact Tenant URL box, and the required star after the label text.
+   ===================================================================================== */
+.tc-bottom .ant-btn-text, .tc-bottom .ant-btn-default:not(.tc-next) {
+  background: #fff; color: #4b2480; border: 1px solid #ddd2ef; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.06);
+}
+.tc-bottom .ant-btn-text:hover, .tc-bottom .ant-btn-default:not(.tc-next):hover { background: #f6f0fd !important; color: #4b2480 !important; border-color: #b79ae0 !important; }
+
+/* Tenant URL: same height as the inputs, compact text, and only as wide as it needs to be */
+.tc-card .tc-url { height: 34px; gap: 8px; padding: 0 6px 0 11px; max-width: 360px; font-size: 12px; border-radius: 9px; }
+.tc-card .tc-url svg { flex-shrink: 0; }
+.tc-url-copy { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 24px; height: 24px; margin-left: auto; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #8a7ba3; cursor: pointer; }
+.tc-url-copy:hover:not(:disabled) { background: #ece1fb; color: #5c2d91; }
+.tc-url-copy:disabled { opacity: 0.45; cursor: default; }
+
+/* required star: after the label, not before it */
+.tc-card .ant-form-item-label > label.ant-form-item-required::before { display: none !important; content: none !important; }
+.tc-card .ant-form-item-label > label::after { content: none !important; display: none !important; }
+.tc-card .ant-form-item-label > label.ant-form-item-required::after { content: '*' !important; display: inline-block !important; margin: 0 0 0 4px; color: #dc2626; font-size: 14px; line-height: 1; visibility: visible; position: static; }
+.tc-card .tc-url { max-width: none; width: 100%; }
+
+/* =====================================================================================
+   Page heading as a card in the same style as the form cards: icon tile, title, subtitle, required note.
+   ===================================================================================== */
+.tc-title-row { display: block; position: static; background: none; margin: 0 0 10px; padding: 0; }
+.tc-back { margin: 0 0 8px; }
+.tc-hero { position: relative; display: flex; align-items: center; gap: 14px; padding: 11px 18px 11px 20px; overflow: hidden; background: #fff; border: 1px solid #e9e2f5; border-radius: 14px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 8px 22px rgba(92, 45, 145, 0.05); }
+.tc-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #5c2d91, #9a63c8); }
+.tc-hero-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; box-shadow: 0 4px 10px rgba(92, 45, 145, 0.28); }
+.tc-hero-text { flex: 1; min-width: 0; }
+.tc-hero .tc-title { margin: 0; font-size: 21px; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; color: #1f1535; background: none; -webkit-text-fill-color: #1f1535; }
+.tc-hero .tc-sub { margin: 2px 0 0; font-size: 13.5px; color: #7a6f94; }
+.tc-hero .tc-required { flex-shrink: 0; margin: 0 0 0 auto; padding: 4px 12px; border: 0; border-radius: 999px; background: #f6f1fd; font-size: 12px; color: #6f6489; white-space: nowrap; }
+@media (max-width: 575px) {
+  .tc-hero { flex-wrap: wrap; gap: 10px; }
+  .tc-hero .tc-required { margin-left: 56px; }
+}
+
+/* Organization card: four fields in one row (name, code, industry, country), then user limit and address */
+.tc-fields-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tc-fields-4 .tc-span2 { grid-column: span 2; }
+@media (max-width: 1399px) { .tc-fields-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 575px) { .tc-fields-4 { grid-template-columns: 1fr; } .tc-fields-4 .tc-span2 { grid-column: 1 / -1; } }
+
+/* =====================================================================================
+   SIMPLE & CLEAN pass: fewer effects, more white space. Flat white cards with a hairline border,
+   a plain heading (no card), soft icon tiles, quiet inputs. Layout and behaviour are unchanged.
+   ===================================================================================== */
+/* heading: plain text, no card */
+.tc-hero { background: none; border: 0; box-shadow: none; border-radius: 0; padding: 2px 0 4px; gap: 12px; overflow: visible; }
+.tc-hero::before { display: none; }
+.tc-hero-icon { width: 38px; height: 38px; border-radius: 11px; background: #f1ebfa; color: #5c2d91; box-shadow: none; }
+.tc-hero .tc-title { font-size: 22px; font-weight: 700; }
+.tc-hero .tc-sub { color: #756a8f; }
+.tc-hero .tc-required { background: none; padding: 0; color: #8a7ba3; }
+
+/* progress: flat arrows, no shadow */
+.wz-chev { filter: none; }
+.wz-chev-step.is-todo .wz-chev-inner { background: #f3f0f9; }
+.wz-chev-step.is-todo .wz-chev-num { background: #fff; }
+.wz-chev-step.is-done .wz-chev-inner { background: #ebe4f7; }
+.wz-chev-step.is-current .wz-chev-inner { background: #5c2d91; }
+.wz-chev-step.is-current .wz-chev-num { box-shadow: none; }
+
+/* cards: flat */
+.tc-card, .tc-preview, .tc-status, .cs-toolbar, .cs-group, .cs-summary { box-shadow: none; border-color: #e8e2f2; }
+.tc-card::before { display: none; }
+.tc-card-head { border-bottom: 0; padding-bottom: 0; margin-bottom: 10px; }
+.tc-card-icon { background: #f1ebfa; color: #5c2d91; box-shadow: none; width: 30px; height: 30px; border-radius: 9px; }
+.tc-card-icon svg { width: 16px; height: 16px; }
+.tc-card-title { font-size: 15px; }
+.tc-preview { background: #fff; }
+.tc-preview-avatar { box-shadow: none; }
+.tc-preview-row + .tc-preview-row { border-top: 0; }
+
+/* inputs: quiet */
+.tc-card .ant-input, .tc-card .ant-input-affix-wrapper, .tc-card .ant-input-group-addon, .tc-card .ant-select .ant-select-selector { background-color: #fff; border-color: #e0d9ec; }
+.tc-card .ant-input:hover, .tc-card .ant-input-affix-wrapper:hover, .tc-card .ant-select:not(.ant-select-disabled):hover .ant-select-selector { border-color: #bfa9e4; }
+.tc-limit-pick { background: #fff; }
+.tc-limit-pick.is-active { background: #f4eefb; box-shadow: none; }
+.tc-status-switch { background: #f3f0f9; }
+.tc-status-switch button.is-on { box-shadow: 0 1px 3px rgba(60, 30, 100, 0.12); }
+
+/* buttons: no glow */
+.tc-bottom .tc-next:not(.is-pale) { box-shadow: none; }
+.tc-bottom .ant-btn-text, .tc-bottom .ant-btn-default:not(.tc-next) { box-shadow: none; }
+
+/* review + course step */
+.rv-edit { border-color: transparent; background: #f6f1fd; }
+.cs-card:hover { transform: none; box-shadow: none; }
+.cs-card.is-on { background: #faf7ff; }
+.cs-selected-pill { background: #f1ebfa; }
+.cs-summary-head span { background: #5c2d91; box-shadow: none; }
+
+/* =====================================================================================
+   Refined look: simple structure, a little depth. Each card gets a tinted title band, a soft shadow
+   and a gradient icon tile; inputs are roomy and clear; the current step stands out.
+   ===================================================================================== */
+.tc-page { --tc-line: #e6dff2; }
+
+/* heading */
+.tc-hero-icon { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; box-shadow: 0 6px 14px rgba(92, 45, 145, 0.28); }
+.tc-hero .tc-title { font-size: 24px; font-weight: 800; letter-spacing: -0.015em; color: #1b1230; }
+.tc-hero .tc-sub { font-size: 14px; color: #6f6489; }
+.tc-hero .tc-required { padding: 4px 12px; border-radius: 999px; background: #f4eefb; color: #6a3fa6; }
+
+/* progress */
+.wz-chev { filter: drop-shadow(0 4px 10px rgba(92, 45, 145, 0.14)); }
+.wz-chev-step.is-current .wz-chev-inner { background: linear-gradient(135deg, #5c2d91 0%, #7b3fa0 100%); }
+.wz-chev-step.is-done .wz-chev-inner { background: #ece4f8; }
+.wz-chev-step.is-todo .wz-chev-inner { background: #fff; }
+
+/* cards with a tinted title band */
+.tc-card, .tc-preview, .tc-status { background: #fff; border: 1px solid var(--tc-line); border-radius: 16px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 10px 24px rgba(92, 45, 145, 0.06); overflow: hidden; }
+.tc-card { padding: 0 0 14px; }
+.tc-card-head { margin: 0 0 12px; padding: 10px 18px; background: linear-gradient(90deg, #f6f1fd 0%, #fbf9fe 100%); border-bottom: 1px solid #efe9f8; }
+.tc-card > .tc-fields, .tc-card > .tc-pair, .tc-card > p { margin-left: 18px; margin-right: 18px; }
+.tc-card > .tc-fields { margin-bottom: 0; }
+.tc-card-icon { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; box-shadow: 0 3px 8px rgba(92, 45, 145, 0.25); }
+.tc-card-icon svg { width: 16px; height: 16px; }
+.tc-card-title { font-size: 15px; font-weight: 700; color: #1b1230; }
+.tc-card-desc { color: #7a6f94; }
+.rv-head { margin: 0 0 8px; padding: 10px 18px; background: linear-gradient(90deg, #f6f1fd 0%, #fbf9fe 100%); border-bottom: 1px solid #efe9f8; }
+.rv-rows, .rv-empty, .rv-removed, .rv-card .course-group, .rv-card > div:not(.rv-head) { margin-left: 18px; margin-right: 18px; }
+
+/* preview / status panels */
+.tc-preview { padding: 16px 18px; background: linear-gradient(180deg, #f6f1fd 0%, #fff 90px); }
+.tc-status { padding: 14px 18px; }
+
+/* inputs */
+.tc-card .ant-form-item-label > label { font-size: 13px; font-weight: 600; color: #1a1228; }
+.tc-card .ant-input, .tc-card .ant-input-affix-wrapper, .tc-card .ant-select .ant-select-selector { border-radius: 10px; border-color: #e0d8ee; background-color: #fff; }
+.tc-card .ant-input:hover, .tc-card .ant-input-affix-wrapper:hover, .tc-card .ant-select:not(.ant-select-disabled):hover .ant-select-selector { border-color: #b79ae0; }
+.tc-card .ant-input:focus, .tc-card .ant-input-focused, .tc-card .ant-select-focused .ant-select-selector { border-color: #5c2d91 !important; box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.14) !important; }
+.tc-limit-pick.is-active { background: #f1e9fb; border-color: #5c2d91; color: #4b2480; box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.12); }
+
+/* buttons */
+.tc-bottom .tc-next:not(.is-pale) { background: linear-gradient(135deg, #5c2d91, #7b3fa0) !important; box-shadow: 0 6px 16px rgba(92, 45, 145, 0.3); }
+.tc-bottom .tc-next:not(.is-pale):hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(92, 45, 145, 0.38); }
+.tc-bottom .ant-btn-text, .tc-bottom .ant-btn-default:not(.tc-next) { border-color: #d9ccee; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.06); }
+
+/* =====================================================================================
+   Progress bar, simple version: three rounded pills in one white card (no arrows, no clipping).
+   ===================================================================================== */
+.tc-stepper:has(.wz-chev) { padding: 6px; background: #fff; border: 1px solid #e6dff2; border-radius: 16px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 10px 24px rgba(92, 45, 145, 0.06); }
+.wz-chev { filter: none; gap: 6px; }
+.wz-chev-step, .wz-chev-step.is-first { margin-left: 0; }
+.wz-chev-inner, .wz-chev-step.is-first .wz-chev-inner, .wz-chev-step:last-child .wz-chev-inner {
+  clip-path: none; border-radius: 12px; height: 52px; padding: 0 16px; gap: 12px;
+}
+.wz-chev-step.is-todo .wz-chev-inner { background: #faf8fd; }
+.wz-chev-step.is-todo .wz-chev-num { background: #fff; box-shadow: inset 0 0 0 1.5px #e0d8ee; color: #9b8fb3; }
+.wz-chev-step.is-done .wz-chev-inner { background: #f4eefb; }
+.wz-chev-step.is-done .wz-chev-num { background: #5c2d91; color: #fff; }
+.wz-chev-step.is-current .wz-chev-inner { background: linear-gradient(135deg, #5c2d91, #7b3fa0); box-shadow: 0 6px 14px rgba(92, 45, 145, 0.28); }
+.wz-chev-step.is-current .wz-chev-num { background: #fff; color: #5c2d91; box-shadow: none; }
+@media (max-width: 575px) { .wz-chev-inner { padding: 0 10px; height: 46px; } }
+
+/* =====================================================================================
+   Progress: numbered dots on a line. The line fills with purple up to the current step.
+   ===================================================================================== */
+.tc-stepper:has(.wz-dots) { padding: 12px 22px; background: #fff; border: 1px solid #e6dff2; border-radius: 16px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 10px 24px rgba(92, 45, 145, 0.06); }
+.wz-dots { display: flex; align-items: center; margin: 0; padding: 0; list-style: none; }
+.wz-dots-step { display: flex; align-items: center; flex: 1 1 0; min-width: 0; }
+.wz-dots-step:last-child { flex: 0 0 auto; }
+.wz-dots-head { display: flex; align-items: center; gap: 11px; padding: 0; border: 0; background: none; text-align: left; font: inherit; flex-shrink: 0; }
+.wz-dots-head.is-link { cursor: pointer; }
+.wz-dots-circle { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; font-size: 14px; font-weight: 800; background: #fff; color: #9b8fb3; box-shadow: inset 0 0 0 2px #ddd4ec; transition: all 180ms ease; }
+.wz-dots-text { display: flex; flex-direction: column; line-height: 1.25; }
+.wz-dots-label { font-size: 14px; font-weight: 700; color: #7b6b94; white-space: nowrap; }
+.wz-dots-caption { font-size: 12px; color: #a99dc0; white-space: nowrap; }
+.wz-dots-line { flex: 1 1 auto; height: 3px; min-width: 24px; margin: 0 16px; border-radius: 3px; background: #ece7f5; }
+.wz-dots-step.is-done .wz-dots-line { background: linear-gradient(90deg, #5c2d91, #7b3fa0); }
+.wz-dots-step.is-done .wz-dots-circle { background: #5c2d91; color: #fff; box-shadow: none; }
+.wz-dots-step.is-done .wz-dots-label { color: #1b1230; }
+.wz-dots-step.is-done .wz-dots-caption { color: #6b3fa8; font-weight: 600; }
+.wz-dots-step.is-current .wz-dots-circle { background: linear-gradient(135deg, #5c2d91, #7b3fa0); color: #fff; box-shadow: 0 0 0 5px rgba(92, 45, 145, 0.16); }
+.wz-dots-step.is-current .wz-dots-label { color: #3b1f6b; }
+.wz-dots-step.is-current .wz-dots-caption { color: #7a6f94; }
+.wz-dots-head.is-link:hover .wz-dots-label { color: #5c2d91; }
+.wz-dots-head.is-link:hover .wz-dots-circle { box-shadow: inset 0 0 0 2px #b79ae0; }
+.wz-dots-step.is-done .wz-dots-head.is-link:hover .wz-dots-circle { box-shadow: 0 0 0 4px rgba(92, 45, 145, 0.14); }
+.wz-dots-head.is-link:focus-visible { outline: 2px solid #7b3fa0; outline-offset: 4px; border-radius: 12px; }
+@media (max-width: 767px) {
+  .wz-dots-text { display: none; }
+  .wz-dots-step.is-current .wz-dots-text { display: flex; }
+  .wz-dots-line { margin: 0 8px; min-width: 12px; }
+}
+
+/* =====================================================================================
+   REDESIGN: one form sheet instead of many cards, underline-style steps, plain heading.
+   ===================================================================================== */
+.tc-page { max-width: 1240px; margin-inline: auto; }
+
+/* heading */
+.tc-back { padding: 0; border: 0; background: none; box-shadow: none; color: #6f6489; font-size: 13px; font-weight: 500; margin: 0 0 4px; border-radius: 0; }
+.tc-back:hover { background: none; box-shadow: none; border: 0; color: #5c2d91; }
+.tc-back-ico { width: auto; height: auto; background: none; color: inherit; }
+.tc-hero { padding: 0 0 12px; background: none; border: 0; box-shadow: none; }
+.tc-hero::before, .tc-hero-icon { display: none; }
+.tc-hero .tc-title { font-size: 24px; font-weight: 700; }
+.tc-hero .tc-required { background: none; padding: 0; color: #8a7ba3; }
+
+/* steps: underline tabs */
+.tc-stepper:has(.wz-chev) { padding: 0; margin-bottom: 14px !important; background: none; border: 0; border-bottom: 1px solid #e4dcf0; border-radius: 0; box-shadow: none; }
+.wz-chev { gap: 0; filter: none; }
+.wz-chev-step, .wz-chev-step.is-first { margin-left: 0; flex: 1 1 0; }
+.wz-chev-inner, .wz-chev-step.is-first .wz-chev-inner, .wz-chev-step:last-child .wz-chev-inner {
+  clip-path: none; border-radius: 0; height: 56px; padding: 0 4px; gap: 11px; background: none !important; box-shadow: none !important;
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.wz-chev-step.is-current .wz-chev-inner { border-bottom-color: #5c2d91; }
+.wz-chev-step.is-done .wz-chev-inner { border-bottom-color: #cdbbe9; }
+.wz-chev-num { width: 28px; height: 28px; font-size: 13px; }
+.wz-chev-step.is-todo .wz-chev-num { background: #f3effa; color: #8a7ba3; box-shadow: none; }
+.wz-chev-step.is-done .wz-chev-num { background: #ece4f8; color: #5c2d91; }
+.wz-chev-step.is-current .wz-chev-num { background: #5c2d91; color: #fff; box-shadow: none; }
+.wz-chev-step.is-todo .wz-chev-label { color: #7b6b94; }
+.wz-chev-step.is-done .wz-chev-label { color: #1b1230; }
+.wz-chev-step.is-current .wz-chev-label { color: #4b2480; }
+.wz-chev-step.is-todo .wz-chev-caption { color: #a99dc0; }
+.wz-chev-step.is-done .wz-chev-caption { color: #6b3fa8; }
+.wz-chev-step.is-current .wz-chev-caption { color: #7a6f94; }
+.wz-chev-inner.is-link:hover .wz-chev-label { color: #5c2d91; }
+
+/* one sheet for the three form sections */
+.tc-main { gap: 0; background: #fff; border: 1px solid #e6dff2; border-radius: 14px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04); overflow: hidden; }
+.tc-main > .tc-card, .tc-main > .tc-pair > .tc-card { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 16px 22px 18px; overflow: visible; }
+.tc-main > .tc-card + .tc-pair, .tc-main > .tc-pair { border-top: 1px solid #efe9f8; }
+.tc-main > .tc-pair { gap: 0; }
+.tc-main > .tc-pair > .tc-card + .tc-card { border-left: 1px solid #efe9f8; }
+.tc-main .tc-card-head { margin: 0 0 12px; padding: 0; background: none; border: 0; gap: 10px; }
+.tc-main .tc-card-icon { width: 28px; height: 28px; border-radius: 8px; background: #f1ebfa; color: #5c2d91; box-shadow: none; }
+.tc-main .tc-card-icon svg { width: 15px; height: 15px; }
+.tc-main .tc-card-title { font-size: 15px; font-weight: 700; }
+.tc-main .tc-card::before { display: none; }
+.tc-fields { gap: 12px 18px; }
+
+/* side panels */
+.tc-preview, .tc-status { background: #fff; border: 1px solid #e6dff2; border-radius: 14px; box-shadow: none; }
+.tc-preview-avatar { background: #5c2d91; box-shadow: none; }
+
+/* buttons */
+.tc-bottom .tc-next:not(.is-pale) { background: #5c2d91 !important; box-shadow: none; }
+.tc-bottom .tc-next:not(.is-pale):hover { background: #4b2480 !important; transform: none; box-shadow: none; }
+.tc-bottom .ant-btn { height: 38px; border-radius: 9px; }
+
+/* the other steps */
+.tc-step-card, .cs-toolbar, .cs-group, .cs-summary, .rv-card { box-shadow: none; border-color: #e6dff2; border-radius: 14px; }
+.cs-card:hover { transform: none; box-shadow: none; }
+.rv-card .rv-head { background: none; border-bottom: 1px solid #f0ebf8; margin-inline: 0; padding-inline: 0; }
+.rv-card { padding: 14px 18px 16px; }
+.rv-rows, .rv-empty, .rv-removed, .rv-card .course-group, .rv-card > div:not(.rv-head) { margin-left: 0; margin-right: 0; }
+.tc-page { max-width: 1560px; }
+
+/* full width page */
+.tc-page { max-width: none; }
+
+/* progress bar: three segments across the page, label underneath each */
+.tc-stepper:has(.wz-chev) { border-bottom: 0; margin-bottom: 14px !important; }
+.wz-chev { gap: 14px; }
+.wz-chev-step { position: relative; }
+.wz-chev-step::before { content: ''; display: block; height: 5px; margin-bottom: 10px; border-radius: 999px; background: #e9e3f4; transition: background 200ms ease; }
+.wz-chev-step.is-done::before { background: #5c2d91; }
+.wz-chev-step.is-current::before { background: linear-gradient(90deg, #5c2d91 0 55%, #e9e3f4 55% 100%); }
+.wz-chev-inner, .wz-chev-step.is-first .wz-chev-inner, .wz-chev-step:last-child .wz-chev-inner { height: auto; padding: 0; border-bottom: 0 !important; margin: 0; }
+.wz-chev-num { width: 26px; height: 26px; font-size: 12.5px; }
+.wz-chev-step.is-current .wz-chev-num { box-shadow: 0 0 0 4px rgba(92, 45, 145, 0.14); }
+.wz-chev-label { font-size: 14px; }
+
+/* =====================================================================================
+   Progress bar: big numbered circles joined by a line, labels centred underneath.
+   ===================================================================================== */
+.tc-stepper:has(.wz-dots) { padding: 14px 24px 12px; margin-bottom: 14px !important; background: #fff; border: 1px solid #e6dff2; border-radius: 14px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04); }
+.wz-dots { align-items: flex-start; }
+.wz-dots-step, .wz-dots-step:last-child { position: relative; flex: 1 1 0; display: block; min-width: 0; }
+.wz-dots-head { flex-direction: column; align-items: center; gap: 8px; width: 100%; text-align: center; }
+.wz-dots-text { align-items: center; }
+.wz-dots-circle { width: 42px; height: 42px; font-size: 16px; border-radius: 50%; }
+.wz-dots-step.is-current .wz-dots-circle { box-shadow: 0 0 0 6px rgba(92, 45, 145, 0.14); }
+.wz-dots-line { position: absolute; top: 20px; left: calc(50% + 34px); right: calc(-50% + 34px); width: auto; height: 3px; margin: 0; min-width: 0; border-radius: 3px; }
+.wz-dots-label { font-size: 14px; }
+.wz-dots-caption { font-size: 12px; }
+@media (max-width: 767px) {
+  .wz-dots-text { display: none; }
+  .wz-dots-step.is-current .wz-dots-text { display: flex; }
+  .wz-dots-circle { width: 36px; height: 36px; font-size: 14px; }
+  .wz-dots-line { top: 17px; left: calc(50% + 28px); right: calc(-50% + 28px); }
+}
+
+/* compact stepper: smaller circles, tighter card, more room for the form */
+.tc-stepper:has(.wz-dots) { padding: 10px 24px 8px; margin-bottom: 12px !important; }
+.wz-dots-circle { width: 34px; height: 34px; font-size: 14px; }
+.wz-dots-step.is-current .wz-dots-circle { box-shadow: 0 0 0 5px rgba(92, 45, 145, 0.14); }
+.wz-dots-head { gap: 5px; }
+.wz-dots-line { top: 16px; left: calc(50% + 28px); right: calc(-50% + 28px); }
+.wz-dots-label { font-size: 13.5px; }
+.wz-dots-caption { font-size: 11.5px; }
+.tc-hero { padding-bottom: 8px; }
+.tc-aside { position: sticky; top: 8px; }
+
+/* =====================================================================================
+   Heading + progress bar as ONE header card: title on top, the steps directly beneath.
+   ===================================================================================== */
+.tc-title-row { margin-bottom: 0; }
+.tc-hero {
+  display: flex; align-items: center; gap: 14px; margin: 0; padding: 14px 22px 12px;
+  background: linear-gradient(90deg, #f7f2fe 0%, #ffffff 70%); border: 1px solid #e6dff2; border-bottom: 0; border-radius: 14px 14px 0 0; box-shadow: none;
+}
+.tc-hero-icon { display: inline-flex; width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; box-shadow: 0 6px 14px rgba(92, 45, 145, 0.26); }
+.tc-hero .tc-title { font-size: 22px; font-weight: 800; letter-spacing: -0.012em; color: #1b1230; }
+.tc-hero .tc-sub { margin-top: 2px; font-size: 13.5px; color: #6f6489; }
+.tc-hero .tc-required { padding: 4px 12px; border-radius: 999px; background: #f1eafb; color: #6a3fa6; font-size: 12px; }
+.tc-stepper:has(.wz-dots) {
+  margin: 0 0 12px !important; padding: 6px 22px 10px; background: #fff; border: 1px solid #e6dff2; border-top: 1px dashed #e9e2f4; border-radius: 0 0 14px 14px; box-shadow: 0 1px 2px rgba(60, 30, 100, 0.04), 0 8px 20px rgba(92, 45, 145, 0.05);
+}
+.tc-back { margin-bottom: 8px; }
+
+/* shorter screens (laptops): tighter rhythm so the whole first step fits without scrolling */
+.tc-limit { flex-wrap: nowrap; }
+.tc-limit-unit { white-space: nowrap; }
+@media (max-height: 880px) {
+  .tc-back { margin-bottom: 4px; font-size: 12.5px; }
+  .tc-hero { padding: 8px 18px 6px; gap: 12px; }
+  .tc-hero-icon { width: 36px; height: 36px; border-radius: 10px; }
+  .tc-hero .tc-title { font-size: 19px; }
+  .tc-hero .tc-sub { font-size: 12.5px; margin-top: 0; }
+  .tc-stepper:has(.wz-dots) { padding: 4px 18px 6px; margin-bottom: 8px !important; }
+  .wz-dots-circle { width: 28px; height: 28px; font-size: 12.5px; }
+  .wz-dots-step.is-current .wz-dots-circle { box-shadow: 0 0 0 4px rgba(92, 45, 145, 0.14); }
+  .wz-dots-head { gap: 3px; }
+  .wz-dots-line { top: 13px; left: calc(50% + 24px); right: calc(-50% + 24px); }
+  .wz-dots-caption { display: none; }
+  .tc-main > .tc-card, .tc-main > .tc-pair > .tc-card { padding: 10px 18px 12px; }
+  .tc-main .tc-card-head { margin-bottom: 8px; }
+  .tc-main .tc-card-desc { display: none; }
+  .tc-fields { gap: 8px 16px; }
+  .tc-card .ant-form-item-label { padding-bottom: 2px; }
+  .tc-card textarea.ant-input { min-height: 40px; }
+  .tc-preview, .tc-status { padding: 10px 14px; }
+  .tc-preview-row { padding: 2px 0; }
+  .tc-bottom { margin-top: 8px; }
+  .tc-bottom .ant-btn { height: 34px; }
+}
+.tc-bottom-msg { margin: 0 auto; padding: 6px 14px; border-radius: 999px; background: #fdecea; color: #b42318; font-size: 12.5px; font-weight: 600; }
+
+/* action buttons stay visible at the bottom of the page while the course list scrolls */
+.tc-bottom { position: sticky; bottom: -16px; z-index: 6; margin: 10px -20px -16px; padding: 10px 20px; background: rgba(246, 244, 251, 0.94); backdrop-filter: blur(6px); border-top: 1px solid #e6dff2; }
+
+/* no footer bar: the buttons simply follow the content */
+.tc-bottom { position: static; margin: 12px 0 0; padding: 0; background: none; backdrop-filter: none; border-top: 0; }

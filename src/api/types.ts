@@ -33,6 +33,8 @@ export interface TenantCourse {
 
 /** GET /tenants/:id - the tenant plus its assigned courses and latest subscription. */
 export interface TenantDetail extends Tenant {
+  /** The tenant's own LMS address (read-only). */
+  lmsUrl?: string
   courses: TenantCourse[]
   subscription: Subscription | null
 }

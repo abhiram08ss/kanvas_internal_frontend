@@ -10,12 +10,15 @@ import { ErrorBlock, LoadingBlock, Notice } from '../ui/State'
 import { Modal } from '../ui/Modal'
 import { confirmDialog } from '../ui/confirmOptions'
 import { Field } from '../ui/Field'
+import { Toolbar } from '../ui/Toolbar'
+import { useFitRows } from '../ui/useFitRows'
 import { ManualCourseModal } from './ManualCourseModal'
 import { CoursePreviewModal } from '../lms-content/CoursePreviewModal'
 import { useAuth } from '../../context/AuthContext'
 import { useDataNeeds } from '../../context/DataContext'
 import { api, errorMessage, type Course, type CourseInput } from '../../api'
 
+const statusFilters = ['All', 'Draft', 'Pending', 'Rejected'] as const
 const statusTone = { draft: 'slate', pending: 'amber', rejected: 'red', approved: 'green' } as const
 
 function RejectReasonModal({ course, onClose, onRejected }: { course: Course; onClose: () => void; onRejected: () => void }) {
@@ -26,6 +29,10 @@ function RejectReasonModal({ course, onClose, onRejected }: { course: Course; on
   const submit = async () => {
     if (!reason.trim()) {
       setError('A reason is required so the creator knows what to fix.')
+      return
+    }
+    if (reason.trim().length < 3) {
+      setError('Please write a little more so the creator knows what to fix.')
       return
     }
     setSaving(true)
@@ -43,7 +50,7 @@ function RejectReasonModal({ course, onClose, onRejected }: { course: Course; on
       <div className="d-flex flex-column gap-3">
         {error && <Notice tone="error">{error}</Notice>}
         <Field label="Reason" required hint="Shown to the creator so they can fix and resubmit.">
-          <Input.TextArea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter rejection reason" />
+          <Input.TextArea rows={3} maxLength={500} showCount value={reason} onChange={(e) => { setReason(e.target.value); setError('') }} placeholder="Enter rejection reason" />
         </Field>
         <div className="d-flex justify-content-end gap-3 pt-2 border-top">
           <Button onClick={onClose}>Cancel</Button>
@@ -75,6 +82,9 @@ export function CourseApprovalsTab() {
   const [editing, setEditing] = useState<Course | null>(null)
   const [rejecting, setRejecting] = useState<Course | null>(null)
   const [previewing, setPreviewing] = useState<Course | null>(null)
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<(typeof statusFilters)[number]>('All')
+  const pageSize = useFitRows(540)
 
   const load = () => {
     setError('')
@@ -91,10 +101,12 @@ export function CourseApprovalsTab() {
     setActionError('')
     try {
       await api.approveCourse(course.id)
-      notification.success({ title: 'Course approved', description: course.name })
+      notification.success({ title: 'Course Approved', description: course.name })
       load()
     } catch (e) {
+      notification.error({ title: 'Could Not Approve', description: `${course.name}: ${errorMessage(e)}` })
       setActionError(`${course.name}: ${errorMessage(e)}`)
+      load() // it may already have been approved or changed by someone else
     } finally {
       setBusyId(null)
     }
@@ -102,7 +114,7 @@ export function CourseApprovalsTab() {
 
   const confirmApprove = (course: Course) =>
     confirmDialog({
-      title: 'Approve course?',
+      title: 'Approve Course?',
       content: `Are you sure you want to approve ${course.name}?`,
       okText: 'Approve Course',
       onOk: () => approve(course),
@@ -110,7 +122,7 @@ export function CourseApprovalsTab() {
 
   const remove = (course: Course) =>
     confirmDialog({
-      title: 'Delete course?',
+      title: 'Delete Course?',
       content: `Are you sure you want to delete ${course.name}?`,
       okText: 'Delete Course',
       okButtonProps: { danger: true },
@@ -118,10 +130,12 @@ export function CourseApprovalsTab() {
         setActionError('')
         try {
           await api.deleteCourse(course.id)
-          notification.success({ title: 'Course deleted', description: course.name })
+          notification.success({ title: 'Course Deleted', description: course.name })
           load()
         } catch (e) {
+          notification.error({ title: 'Could Not Delete', description: `${course.name}: ${errorMessage(e)}` })
           setActionError(`${course.name}: ${errorMessage(e)}`)
+          load()
         }
       },
     })
@@ -129,13 +143,19 @@ export function CourseApprovalsTab() {
   const saveEdit = async (data: Partial<CourseInput>) => {
     if (!editing) return
     await api.updateCourse(editing.id, data)
-    notification.success({ title: 'Course updated', description: editing.name })
+    notification.success({ title: 'Course Updated', description: editing.name })
     load()
   }
 
   if (error) return <ErrorBlock message={error} onRetry={load} />
   if (!courses) return <LoadingBlock />
 
+  const needle = query.trim().toLowerCase()
+  const rows = courses.filter(
+    (c) =>
+      (filter === 'All' || c.approvalStatus === filter.toLowerCase()) &&
+      (!needle || c.name.toLowerCase().includes(needle) || c.code.toLowerCase().includes(needle) || (c.createdByName ?? '').toLowerCase().includes(needle)),
+  )
   const draftCount = courses.filter((c) => c.approvalStatus === 'draft').length
   const pendingCount = courses.filter((c) => c.approvalStatus === 'pending').length
   const rejectedCount = courses.filter((c) => c.approvalStatus === 'rejected').length
@@ -163,20 +183,28 @@ export function CourseApprovalsTab() {
       )}
 
       <ListCard>
+        <Toolbar query={query} onQueryChange={setQuery} searchPlaceholder="Search by course, code or creator" filters={statusFilters} activeFilter={filter} onFilterChange={setFilter} />
         <DataTable<Course>
+          key={`${filter}|${needle}`}
           serial={false}
           rowKey="id"
-          dataSource={courses}
+          pageSize={pageSize}
+          dataSource={rows}
           locale={{
-            emptyText: isSuper ? 'Nothing is waiting for approval right now.' : 'You have no draft, pending, or rejected course submissions.',
+            emptyText:
+              courses.length > 0
+                ? 'No submissions match your search or filter.'
+                : isSuper
+                  ? 'Nothing is waiting for approval right now.'
+                  : 'You have no draft, pending, or rejected course submissions.',
           }}
           columns={[
-            { title: 'Course', dataIndex: 'name', render: (n: string) => <span>{n}</span> },
-            { title: 'Category', width: 190, dataIndex: 'category' },
-            { title: 'Price', width: 110, dataIndex: 'price', render: (p: number) => (p > 0 ? `₹${p.toLocaleString('en-IN')}` : 'Free') },
+            { title: 'Course Name', dataIndex: 'name', render: (n: string) => <span>{n}</span> },
+            { title: 'Course Category', width: 190, dataIndex: 'category' },
+            { title: 'Course Price', width: 130, dataIndex: 'price', render: (p: number) => (p > 0 ? `₹${p.toLocaleString('en-IN')}` : 'Free') },
             ...(isSuper ? [{ title: 'Submitted By', width: 170, dataIndex: 'createdByName', render: (n: string | null) => n ?? '—' }] : []),
             {
-              title: 'Status', width: 220,
+              title: 'Approval Status', width: 220,
               dataIndex: 'approvalStatus',
               render: (st: Course['approvalStatus'], c: Course) => (
                 <div>
@@ -197,12 +225,14 @@ export function CourseApprovalsTab() {
                   <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Preview course" tone="purple" />
                     <IconButton icon={<CheckCircle2 size={14} />} onClick={() => confirmApprove(c)} title="Approve" tone="green" disabled={busyId === c.id} />
-                    <IconButton icon={<XCircle size={14} />} onClick={() => setRejecting(c)} title="Reject" tone="red" disabled={busyId === c.id} />
+                    {c.approvalStatus !== 'rejected' && (
+                      <IconButton icon={<XCircle size={14} />} onClick={() => setRejecting(c)} title="Reject" tone="red" disabled={busyId === c.id} />
+                    )}
                   </div>
                 ) : (
                   <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Preview course" tone="purple" />
-                    <IconButton icon={<Pencil size={14} />} onClick={() => setEditing(c)} title="Edit and resubmit" tone="blue" />
+                    <IconButton icon={<Pencil size={14} />} onClick={() => setEditing(c)} title={c.approvalStatus === 'draft' ? 'Edit' : 'Edit and resubmit'} tone="blue" />
                     <IconButton icon={<Trash2 size={14} />} onClick={() => remove(c)} title="Delete" tone="red" />
                   </div>
                 ),
@@ -218,7 +248,7 @@ export function CourseApprovalsTab() {
           course={rejecting}
           onClose={() => setRejecting(null)}
           onRejected={() => {
-            notification.success({ title: 'Course rejected', description: rejecting.name })
+            notification.success({ title: 'Course Rejected', description: rejecting.name })
             setRejecting(null)
             load()
           }}
