@@ -64,13 +64,13 @@ export function Sidebar() {
       style={{ height: '100vh', borderRight: '1px solid #ede8f5', background: 'linear-gradient(180deg, #ffffff 0%, #faf7fd 100%)' }}
       styles={{ body: { display: 'flex', flexDirection: 'column', height: '100%' } }}
     >
-      <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ minHeight: 56, borderBottom: '1px solid #ede8f5' }}>
+      <Link to="/" aria-label="Go to dashboard" className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ minHeight: 56, borderBottom: '1px solid #ede8f5', textDecoration: 'none' }}>
         {collapsed ? (
           <span className="font-display fs-4 fw-bold text-primary">K</span>
         ) : (
           <img src="/kanvas-logo.png" alt="Kanvas" style={{ height: 28, objectFit: 'contain' }} />
         )}
-      </div>
+      </Link>
 
       <Menu
         mode="inline"

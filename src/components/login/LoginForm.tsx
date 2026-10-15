@@ -100,7 +100,7 @@ export function LoginForm() {
           <Button type="primary" htmlType="submit" size="large" block loading={submitting} className="login-submit">
             {submitting ? 'Signing in…' : (
               <>
-                Sign In <ArrowRight size={17} />
+                Sign In <ArrowRight size={17} className="login-arrow" />
               </>
             )}
           </Button>

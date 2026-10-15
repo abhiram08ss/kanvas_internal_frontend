@@ -6,7 +6,7 @@ import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
 import { scrollToFirstError } from '../ui/scrollToError'
 import { CertificateTemplatePreviewModal } from './CertificateTemplatePreviewModal'
-import { isLogoImage, logoImageUrl, useDefaultLogo } from './logoImage'
+import { isLogoImage, KANVAS_LOGO, logoImageUrl, useDefaultLogo } from './logoImage'
 import { api, errorMessage, type CertificateTemplate, type CertificateTemplateInput, type SignatureSlot } from '../../api'
 
 const DEFAULT_COLORS = ['#5c2d91', '#f5b800', '#ffffff']
@@ -58,16 +58,16 @@ export function CertificateTemplateFormModal({
   const [previewing, setPreviewing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const defaultFileRef = useRef<HTMLInputElement>(null)
-  const { defaultLogo, upload: uploadDefault, clear: clearDefault } = useDefaultLogo()
+  const { defaultLogo, upload: uploadDefault } = useDefaultLogo()
   const [defaultBusy, setDefaultBusy] = useState(false)
 
-  const changeDefaultLogo = async (file: File | undefined, remove = false) => {
-    if (!remove && !file) return
+  // The company default logo can only be replaced, never removed (certificates always have a logo to fall back on).
+  const changeDefaultLogo = async (file: File | undefined) => {
+    if (!file) return
     setDefaultBusy(true)
     setErrors((p) => ({ ...p, logo: undefined }))
     try {
-      if (remove) await clearDefault()
-      else if (file) await uploadDefault(file)
+      await uploadDefault(file)
     } catch (err) {
       setErrors((p) => ({ ...p, logo: errorMessage(err) }))
     } finally {
@@ -217,39 +217,31 @@ export function CertificateTemplateFormModal({
             <Radio value="default">Company Default Logo</Radio>
             <Radio value="custom">Custom Logo</Radio>
           </Radio.Group>
-          {!customLogo && (
-            <div className="mt-2 d-flex align-items-center gap-3 rounded-2 border p-2" style={{ background: '#faf8fd' }}>
-              <input ref={defaultFileRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void changeDefaultLogo(e.target.files?.[0])} />
-              {defaultLogo ? (
-                <img src={logoImageUrl(defaultLogo)} alt="Default logo" style={{ height: 32, maxWidth: 160, objectFit: 'contain' }} />
-              ) : (
-                <span style={{ fontSize: 13, color: '#7b6b94' }}>No default logo set yet</span>
-              )}
-              <div className="ms-auto d-flex gap-2">
-                <Button icon={<Upload size={14} />} loading={defaultBusy} onClick={() => defaultFileRef.current?.click()}>
-                  {defaultLogo ? 'Change default logo' : 'Upload default logo'}
+          {/* Both logo choices share one layout: the button first, then the preview (or a status line). */}
+          <div className="mt-2 d-flex align-items-center gap-3 rounded-2 border p-2" style={{ background: '#faf8fd', minHeight: 56 }}>
+            {customLogo ? (
+              <>
+                <input ref={fileRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void chooseLogo(e.target.files?.[0])} />
+                <Button icon={<Upload size={14} />} loading={uploading} onClick={() => fileRef.current?.click()}>
+                  {logo ? 'Replace logo' : 'Choose logo'}
                 </Button>
-                {defaultLogo && (
-                  <Button danger disabled={defaultBusy} onClick={() => void changeDefaultLogo(undefined, true)}>
-                    Remove
-                  </Button>
+                {logo && isLogoImage(logo) ? (
+                  <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 32, maxWidth: 160, objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontSize: 13, color: '#7b6b94' }}>{logo || 'No file chosen'}</span>
                 )}
-              </div>
-            </div>
-          )}
-          {customLogo && (
-            <div className="mt-2 d-flex align-items-center gap-3 rounded-2 border p-2" style={{ background: '#faf8fd' }}>
-              <input ref={fileRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void chooseLogo(e.target.files?.[0])} />
-              <Button icon={<Upload size={14} />} loading={uploading} onClick={() => fileRef.current?.click()}>
-                {logo ? 'Replace file' : 'Choose file'}
-              </Button>
-              {logo && isLogoImage(logo) ? (
-                <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 32, maxWidth: 160, objectFit: 'contain' }} />
-              ) : (
-                <span style={{ fontSize: 13, color: '#7b6b94' }}>{logo || 'No file chosen'}</span>
-              )}
-            </div>
-          )}
+              </>
+            ) : (
+              <>
+                <input ref={defaultFileRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden onChange={(e) => void changeDefaultLogo(e.target.files?.[0])} />
+                <Button icon={<Upload size={14} />} loading={defaultBusy} onClick={() => defaultFileRef.current?.click()}>
+                  Replace logo
+                </Button>
+                {/* Until a different default is uploaded, the Kanvas logo is the company default. */}
+                <img src={logoImageUrl(defaultLogo ?? KANVAS_LOGO)} alt="Default logo" style={{ height: 32, maxWidth: 160, objectFit: 'contain' }} />
+              </>
+            )}
+          </div>
           {errors.logo && <div className="mt-1" data-field-error style={{ fontSize: 12, color: '#dc2626' }}>{errors.logo}</div>}
         </Field>
 

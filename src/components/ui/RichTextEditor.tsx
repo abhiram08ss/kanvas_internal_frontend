@@ -1,7 +1,6 @@
 import { useState, useRef, type ReactNode } from 'react'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import { Node, Mark } from '@tiptap/core'
-import { NodeSelection } from '@tiptap/pm/state'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
 import { TableKit } from '@tiptap/extension-table'
@@ -71,10 +70,18 @@ const mediaStyle = (width: number, align: string, inline: boolean) =>
       : // left / right pictures float, so a left one and a right one share a row and text wraps around them
         `display:block;float:${align};width:${width}%;max-width:100%;height:auto;border-radius:8px;margin:6px ${align === 'left' ? '12px 6px 0' : '0 6px 12px'}`
 
-/** A block-level <img> inside the content (inserted with "Insert > Image"); it can be resized and aligned. */
+/** Images are inline: they sit in a line of text, so the cursor can be placed beside one to type, or another picture can be
+ *  pasted next to it. Centre = in the line (side by side with neighbours); left / right = floated, text wraps around. */
+const imageStyle = (width: number, align: string) =>
+  align === 'center'
+    ? `display:inline-block;vertical-align:middle;width:calc(${width}% - 12px);max-width:100%;height:auto;border-radius:8px;margin:4px 6px`
+    : `float:${align};width:${width}%;max-width:100%;height:auto;border-radius:8px;margin:6px ${align === 'left' ? '12px 6px 0' : '0 6px 12px'}`
+
+/** An <img> inside the text (inserted with "Insert > Image"); it can be resized and aligned. */
 const ImageNode = Node.create({
   name: 'image',
-  group: 'block',
+  group: 'inline',
+  inline: true,
   atom: true,
   draggable: true,
   addAttributes() {
@@ -84,7 +91,7 @@ const ImageNode = Node.create({
     return [{ tag: 'img[src]' }]
   },
   renderHTML({ node }) {
-    return ['img', { src: node.attrs.src, alt: node.attrs.alt, 'data-align': node.attrs.align, 'data-inline': String(node.attrs.inline), style: mediaStyle(node.attrs.width, node.attrs.align, node.attrs.inline) }]
+    return ['img', { src: node.attrs.src, alt: node.attrs.alt, 'data-align': node.attrs.align, 'data-inline': 'true', style: imageStyle(node.attrs.width, node.attrs.align) }]
   },
 })
 
@@ -336,9 +343,11 @@ function MediaTools({ editor, kind }: { editor: Editor; kind: 'image' | 'video' 
           <Icon size={13} />
         </button>
       ))}
-      <button type="button" className={inline ? 'is-on' : ''} title="Put pictures side by side in one line" onMouseDown={(e) => e.preventDefault()} onClick={() => set({ inline: !inline })}>
-        Inline
-      </button>
+      {kind === 'video' && (
+        <button type="button" className={inline ? 'is-on' : ''} title="Put videos side by side in one line" onMouseDown={(e) => e.preventDefault()} onClick={() => set({ inline: !inline })}>
+          Inline
+        </button>
+      )}
       <span className="rte-sep" />
       <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => set({ width: 100, align: 'center', inline: false })}>
         Reset
@@ -425,30 +434,7 @@ export function RichTextEditor({
       attributes: { class: 'rte-content' },
       // Files dropped onto the editor (from the desktop / file manager) are uploaded and placed where they were dropped.
       handleDrop: (view, event, _slice, moved) => {
-        // Dragging a picture that is already in the text onto the left / right half of another picture puts the two
-        // side by side (both become "inline" at the same width).
-        if (moved) {
-          const sel = view.state.selection
-          const target = (event.target as HTMLElement | null)?.closest?.('img') as HTMLElement | null
-          if (!(sel instanceof NodeSelection) || sel.node.type.name !== 'image' || !target || !view.dom.contains(target)) return false
-          let targetPos = -1
-          view.state.doc.descendants((n, pos) => {
-            if (targetPos < 0 && n.type.name === 'image' && view.nodeDOM(pos) === target) targetPos = pos
-            return targetPos < 0
-          })
-          const targetNode = targetPos >= 0 ? view.state.doc.nodeAt(targetPos) : null
-          if (!targetNode || targetPos === sel.from) return false
-          const box = target.getBoundingClientRect()
-          const before = event.clientX < box.left + box.width / 2
-          const width = targetNode.attrs.inline ? targetNode.attrs.width : 50
-          const tr = view.state.tr.setNodeMarkup(targetPos, undefined, { ...targetNode.attrs, inline: true, width })
-          tr.delete(sel.from, sel.to)
-          const at = tr.mapping.map(before ? targetPos : targetPos + targetNode.nodeSize)
-          tr.insert(at, sel.node.type.create({ ...sel.node.attrs, inline: true, width }))
-          view.dispatch(tr.scrollIntoView())
-          event.preventDefault()
-          return true
-        }
+        if (moved) return false // pictures already in the text are moved by the editor itself
         const files = Array.from(event.dataTransfer?.files ?? [])
         if (files.length === 0 || !filesHandler.current) return false
         event.preventDefault()
@@ -526,24 +512,30 @@ export function RichTextEditor({
     const failed = results.length - uploaded.length
     const images = uploaded.filter((u) => u.kind === 'image').length
     if (uploaded.length > 0) {
-      // Insert after the current selection or at the drop point (not over a selected picture, which a plain insert would
-      // replace), and end with an empty paragraph so the cursor - and the next batch - lands below.
       const at = pos ?? editor.state.selection.to
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(at, [
-          // images, videos and documents all become blocks (a document is a clickable file card)
-          ...uploaded.map(({ src, name, kind }) => {
-            if (kind === 'document') return { type: 'document', attrs: { href: src, name } }
-            // Several pictures added together land side by side (2 -> halves, 3 -> thirds, 4+ -> quarters); one picture
-            // stays full width. Each can still be resized or moved afterwards.
-            if (kind === 'image' && images > 1) return { type: 'image', attrs: { src, inline: true, width: images === 2 ? 50 : images === 3 ? 33 : 25 } }
-            return { type: kind, attrs: { src } }
-          }),
-          { type: 'paragraph' },
-        ])
-        .run()
+      // Pictures are inline: with the cursor in a line of text (or just after a picture) they go right beside it. Several
+      // pictures added together share the line (2 -> halves, 3 -> thirds, 4+ -> quarters); one picture takes half the
+      // width so there is room beside it. Videos and documents are blocks and go below the line.
+      const imageNodes = uploaded
+        .filter((u) => u.kind === 'image')
+        .map(({ src }) => ({ type: 'image', attrs: { src, width: images > 1 ? (images === 2 ? 48 : images === 3 ? 32 : 24) : 50 } }))
+      const blockNodes = uploaded
+        .filter((u) => u.kind !== 'image')
+        .map(({ src, name, kind }) => (kind === 'document' ? { type: 'document', attrs: { href: src, name } } : { type: kind, attrs: { src } }))
+      const inLine = editor.state.doc.resolve(Math.min(at, editor.state.doc.content.size)).parent.isTextblock
+      const chain = editor.chain().focus()
+      if (inLine) {
+        if (imageNodes.length) chain.insertContentAt(at, imageNodes)
+        chain.run()
+        if (blockNodes.length) {
+          const end = editor.state.selection.$to.after()
+          editor.chain().focus().insertContentAt(end, [...blockNodes, { type: 'paragraph' }]).run()
+        }
+      } else {
+        chain
+          .insertContentAt(at, [...(imageNodes.length ? [{ type: 'paragraph', content: imageNodes }] : []), ...blockNodes, { type: 'paragraph' }])
+          .run()
+      }
     }
     if (failed > 0) {
       const firstError = results.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined

@@ -90,7 +90,7 @@ export function ProvisioningPanel() {
 
   return (
     <>
-      <div className="row row-cols-1 row-cols-sm-3 g-3">
+      <div className="row row-cols-2 row-cols-lg-3 g-3">
         <div className="col">
           <StatCard
             icon={<CheckCircle2 size={20} />}
@@ -139,8 +139,8 @@ export function ProvisioningPanel() {
         )}
       </div>
 
-      <ListCard className="mt-3">
-        <Toolbar query={query} onQueryChange={setQuery} searchPlaceholder="Search tenants..." filters={statusFilters} activeFilter={filter} onFilterChange={setFilter} />
+      <ListCard className="mt-4">
+        <Toolbar query={query} onQueryChange={setQuery} searchPlaceholder="Search by tenant name" filters={statusFilters} activeFilter={filter} onFilterChange={setFilter} />
         <DataTable<ProvisioningRecord>
           serial={false}
           rowKey="id"
@@ -148,7 +148,7 @@ export function ProvisioningPanel() {
           dataSource={rows}
           locale={{ emptyText: 'No provisioning records match your search.' }}
           columns={[
-            { title: 'Tenant', dataIndex: 'tenant', render: (t: string) => <span>{t}</span> },
+            { title: 'Tenant Name', dataIndex: 'tenant', width: 200, ellipsis: true, render: (t: string) => <span>{t}</span> },
             {
               title: 'LMS ID', width: 130,
               dataIndex: 'lmsId',
@@ -197,7 +197,7 @@ export function ProvisioningPanel() {
         />
       </ListCard>
 
-      <Card className="mt-3 px-4 py-3">
+      <Card className="mt-4 px-4 py-3">
         <div className="d-flex align-items-center gap-4">
           <span className="fw-bold text-dark flex-shrink-0" style={{ fontSize: 14 }}>Provisioning flow</span>
           <div className="d-flex align-items-center flex-grow-1" style={{ minWidth: 0 }}>

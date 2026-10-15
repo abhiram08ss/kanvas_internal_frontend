@@ -385,9 +385,10 @@ label.d-block.fw-semibold,
 .app-menu .ant-menu-item-selected .ant-menu-title-content::before {
   content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
   background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent); transform: skewX(-20deg);
-  animation: nav-shine 3.8s ease-in-out infinite;
+  /* Plays once, when the page opens (the item is re-created on each navigation), then rests. */
+  animation: nav-shine 1.1s ease-out 0.15s 1 both;
 }
-@keyframes nav-shine { 0%, 55% { left: -60%; } 100% { left: 160%; } }
+@keyframes nav-shine { from { left: -60%; } to { left: 160%; } }
 .app-menu .ant-menu-item-selected .nav-icon { background: rgba(255, 255, 255, 0.22); color: #fff; }
 @media (prefers-reduced-motion: reduce) { .app-menu .ant-menu-item-selected .ant-menu-title-content::before { animation: none; } }
 
@@ -450,3 +451,35 @@ label.d-block.fw-semibold,
 .ant-select-open .ant-select-suffix, .ant-select-open .ant-select-suffix svg { color: #5c2d91 !important; }
 .ant-select-open .ant-select-suffix svg { transform: rotate(180deg); }
 .ant-select .ant-select-suffix { inset-inline-end: 12px; }
+
+/* Audit Logs "Details": long text wraps to two lines (full text in the tooltip) so similar entries stay distinguishable. */
+.audit-details { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #727587; line-height: 1.45; word-break: break-word; }
+
+/* Collapsed sidebar: the hidden label must not take up space, so each icon sits exactly in the middle. */
+.ant-layout-sider-collapsed .app-menu .ant-menu-item { gap: 0 !important; justify-content: center !important; padding: 0 !important; }
+.ant-layout-sider-collapsed .app-menu .ant-menu-item .ant-menu-title-content { display: none !important; }
+.ant-layout-sider-collapsed .app-menu .ant-menu-item .ant-menu-item-icon { margin: 0 !important; }
+
+/* ---- Rejected badge with a reason popover (Approvals) ---- */
+.rj-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #c0272d; background: #fdeff0; border: 1px solid #f3b9bc; cursor: help; outline: none; }
+.rj-badge:focus-visible { box-shadow: 0 0 0 3px rgba(192, 39, 45, 0.18); }
+.rj-dot { width: 7px; height: 7px; border-radius: 50%; background: #d33b48; }
+.rj-popover .ant-popover-inner { padding: 12px 14px; border-radius: 12px; box-shadow: 0 12px 30px -10px rgba(26, 18, 40, 0.26); }
+.rj-card { width: 230px; max-width: 80vw; }
+.rj-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #b42323; }
+.rj-reason { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: #fff0ef; font-size: 13px; font-weight: 600; color: #1a1228; word-break: break-word; }
+.rj-meta { padding-top: 8px; border-top: 1px solid #ece7f3; font-size: 12px; line-height: 1.6; color: #6f6288; }
+.rj-meta strong { color: #1a1228; }
+.rj-when { color: #8f82a8; font-size: 11.5px; }
+
+/* ======== One icon system: Lucide line icons, one stroke weight (set in main.tsx), one size per place ========
+   Buttons / inputs / tabs / menus 16px; table row actions 17px; stat-card and modal-header icons 20px; sidebar 18px. */
+.ant-btn .ant-btn-icon svg, .ant-btn > svg { width: 16px; height: 16px; }
+.ant-input-prefix svg, .ant-input-suffix svg:not(.ant-select-arrow svg), .ant-input-affix-wrapper > .ant-input-prefix svg { width: 16px; height: 16px; }
+.ant-tabs-tab svg, .ant-segmented-item svg, .pill-tabs svg { width: 16px; height: 16px; }
+.ant-dropdown-menu-item svg, .ant-select-item svg { width: 16px; height: 16px; }
+.ant-alert-icon svg, .ant-notification-notice-icon svg { width: 18px; height: 18px; }
+.ant-table-wrapper td svg:not(.tenant-action svg) { width: 16px; height: 16px; }
+.tenant-action svg { width: 17px; height: 17px; }
+.app-menu .nav-icon svg { width: 18px; height: 18px; }
+.ant-modal-header svg, .stat-card svg { width: 20px; height: 20px; }

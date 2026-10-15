@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { App, Button, Input } from 'antd'
-import { CheckCircle2, ClipboardCheck, Eye, Layers, Pencil, Trash2, XCircle } from 'lucide-react'
+import { App, Button, Input, Popover } from 'antd'
+import { CheckCircle2, ClipboardCheck, Eye, Info, Layers, Pencil, Trash2, XCircle } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
 import { DataTable } from '../ui/DataTable'
@@ -20,6 +20,32 @@ import { api, errorMessage, type Course, type CourseInput } from '../../api'
 
 const statusFilters = ['All', 'Draft', 'Pending', 'Rejected'] as const
 const statusTone = { draft: 'slate', pending: 'amber', rejected: 'red', approved: 'green' } as const
+
+const formatWhen = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null
+
+/** "Rejected (i)": hover or click the badge to read why - the reason, who reviewed it, when, and who it went back to. */
+function RejectedBadge({ course }: { course: Course }) {
+  const when = formatWhen(course.approvedAt)
+  const content = (
+    <div className="rj-card">
+      <div className="rj-head"><XCircle size={13} /> Rejection reason</div>
+      <div className="rj-reason">{course.rejectionReason}</div>
+      <div className="rj-meta">
+        <div>By <strong>{course.approvedByName ?? 'a Super Admin'}</strong></div>
+        {when && <div className="rj-when">{when}</div>}
+        {course.createdByName && <div>Sent back to <strong>{course.createdByName}</strong></div>}
+      </div>
+    </div>
+  )
+  return (
+    <Popover content={content} trigger={['hover', 'click']} placement="bottomLeft" arrow overlayClassName="rj-popover">
+      <span className="rj-badge" tabIndex={0}>
+        <span className="rj-dot" /> Rejected <Info size={13} />
+      </span>
+    </Popover>
+  )
+}
 
 function RejectReasonModal({ course, onClose, onRejected }: { course: Course; onClose: () => void; onRejected: () => void }) {
   const [reason, setReason] = useState('')
@@ -207,18 +233,10 @@ export function CourseApprovalsTab() {
             { title: 'Course Price', width: 130, dataIndex: 'price', render: (p: number) => (p > 0 ? `₹${p.toLocaleString('en-IN')}` : 'Free') },
             ...(isSuper ? [{ title: 'Submitted By', width: 170, dataIndex: 'createdByName', render: (n: string | null) => n ?? '—' }] : []),
             {
-              title: 'Approval Status', width: 220,
+              title: 'Approval Status', width: 190,
               dataIndex: 'approvalStatus',
-              render: (st: Course['approvalStatus'], c: Course) => (
-                <div>
-                  <Badge tone={statusTone[st]}>{st}</Badge>
-                  {c.rejectionReason && (
-                    <div className="mt-1" style={{ fontSize: 11, color: '#9b87b5', maxWidth: 220 }}>
-                      {c.rejectionReason}
-                    </div>
-                  )}
-                </div>
-              ),
+              render: (st: Course['approvalStatus'], c: Course) =>
+                st === 'rejected' && c.rejectionReason ? <RejectedBadge course={c} /> : <Badge tone={statusTone[st]}>{st}</Badge>,
             },
             {
               title: 'Actions', width: 140,
@@ -235,8 +253,13 @@ export function CourseApprovalsTab() {
                 ) : (
                   <div className="d-flex align-items-center gap-2">
                     <IconButton icon={<Eye size={14} />} onClick={() => setPreviewing(c)} title="Preview course" tone="purple" />
-                    <IconButton icon={<Pencil size={14} />} onClick={() => setEditing(c)} title={c.approvalStatus === 'draft' ? 'Edit' : 'Edit and resubmit'} tone="blue" />
-                    <IconButton icon={<Trash2 size={14} />} onClick={() => remove(c)} title="Delete" tone="red" />
+                    {/* A rejected course is read-only for its creator: only Preview, no Edit / Delete. */}
+                    {c.approvalStatus !== 'rejected' && (
+                      <>
+                        <IconButton icon={<Pencil size={14} />} onClick={() => setEditing(c)} title={c.approvalStatus === 'draft' ? 'Edit' : 'Edit and resubmit'} tone="blue" />
+                        <IconButton icon={<Trash2 size={14} />} onClick={() => remove(c)} title="Delete" tone="red" />
+                      </>
+                    )}
                   </div>
                 ),
             },
