@@ -19,13 +19,13 @@ export default function Subscription() {
     <AppLayout title="Subscription" subtitle="Manage commercial state for all tenant subscriptions">
       <div className="row row-cols-1 row-cols-sm-3 g-3">
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={subscriptions.filter((s) => s.status === 'Active').length} tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={subscriptions.filter((s) => s.status === 'Active').length} hint="currently running" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<PauseCircle size={20} />} label="Suspended" value={subscriptions.filter((s) => s.status === 'Suspended').length} tone="amber" />
+          <StatCard icon={<PauseCircle size={20} />} label="Suspended" value={subscriptions.filter((s) => s.status === 'Suspended').length} hint="on hold" tone="amber" />
         </div>
         <div className="col">
-          <StatCard icon={<Clock size={20} />} label="Expired" value={subscriptions.filter((s) => s.status === 'Expired').length} tone="red" />
+          <StatCard icon={<Clock size={20} />} label="Expired" value={subscriptions.filter((s) => s.status === 'Expired').length} hint="renewal needed" tone="red" />
         </div>
       </div>
 

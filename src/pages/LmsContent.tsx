@@ -15,7 +15,7 @@ const tabNeeds: Record<string, DataKey[]> = {
   // alongside its certificate template, so the Courses tab needs all three (see CoursePreviewModal.tsx).
   Courses: ['courses', 'certificateTemplates', 'courseModules', 'quizQuestions'],
   Modules: ['courses', 'editableCourses', 'courseModules'],
-  'Quiz Questions': ['courses', 'editableCourses', 'quizQuestions'],
+  'Quiz Questions': ['courses', 'editableCourses', 'quizQuestions', 'courseModules'],
   'Certificate Templates': ['certificateTemplates'],
 }
 

@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
 import { errorMessage, roleLabel, type PlatformRole } from '../../api'
+import { PASSWORD_HINT, stripSpaces, validatePassword } from '../../utils/validation'
 
 const roles: PlatformRole[] = ['Super Admin', 'Support Admin']
 const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
@@ -34,9 +35,8 @@ export function PlatformUserFormModal({
     else if (!NAME_RE.test(name.trim())) found.name = "Name can only contain letters, spaces, . - and '"
     if (!email.trim()) found.email = 'Email is required.'
     else if (!EMAIL_RE.test(email.trim())) found.email = 'Enter a valid email address.'
-    if (!password) found.password = 'Password is required.'
-    else if (password.length < 8) found.password = 'Password must be at least 8 characters.'
-    else if (password.length > 64) found.password = 'Password must be 64 characters or fewer.'
+    const passwordError = validatePassword(password)
+    if (passwordError) found.password = passwordError
     if (!confirm) found.confirm = 'Confirm the password.'
     else if (confirm !== password) found.confirm = 'Passwords do not match.'
     setErrors(found)
@@ -65,11 +65,11 @@ export function PlatformUserFormModal({
         <Field label="Role">
           <Select value={role} onChange={setRole} options={roles.map((r) => ({ value: r, label: roleLabel(r) }))} style={{ width: '100%' }} />
         </Field>
-        <Field label="Password" required error={errors.password} hint="At least 8 characters.">
-          <Input.Password value={password} status={errors.password ? 'error' : undefined} onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: undefined })) }} placeholder="Enter password" autoComplete="new-password" />
+        <Field label="Password" required error={errors.password} hint={PASSWORD_HINT}>
+          <Input.Password value={password} status={errors.password ? 'error' : undefined} onChange={(e) => { setPassword(stripSpaces(e.target.value)); setErrors((p) => ({ ...p, password: undefined })) }} placeholder="Enter password" autoComplete="new-password" />
         </Field>
         <Field label="Confirm Password" required error={errors.confirm}>
-          <Input.Password value={confirm} status={errors.confirm ? 'error' : undefined} onChange={(e) => { setConfirm(e.target.value); setErrors((p) => ({ ...p, confirm: undefined })) }} placeholder="Re-enter password" autoComplete="new-password" />
+          <Input.Password value={confirm} status={errors.confirm ? 'error' : undefined} onChange={(e) => { setConfirm(stripSpaces(e.target.value)); setErrors((p) => ({ ...p, confirm: undefined })) }} placeholder="Re-enter password" autoComplete="new-password" />
         </Field>
         <div className="d-flex justify-content-end gap-3 pt-2">
           <Button onClick={onClose}>Cancel</Button>

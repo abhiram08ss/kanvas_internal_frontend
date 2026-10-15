@@ -57,13 +57,13 @@ export default function Courses() {
     <AppLayout title="Course Catalog" subtitle="Manage the course catalog and pricing">
       <div className="row row-cols-1 row-cols-sm-3 g-3">
         <div className="col">
-          <StatCard icon={<BookOpen size={20} />} label="Total Courses" value={courses.length} tone="purple" />
+          <StatCard icon={<BookOpen size={20} />} label="Total Courses" value={courses.length} hint="all courses" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<Gift size={20} />} label="Free Courses" value={freeCount} tone="green" />
+          <StatCard icon={<Gift size={20} />} label="Free Courses" value={freeCount} hint="no price" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<Tag size={20} />} label="Paid Courses" value={paidCount} tone="blue" />
+          <StatCard icon={<Tag size={20} />} label="Paid Courses" value={paidCount} hint="with a price" tone="blue" />
         </div>
       </div>
 

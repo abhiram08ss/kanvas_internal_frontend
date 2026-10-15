@@ -1,48 +1,79 @@
-import { Alert, Button, Checkbox, Form, Input, Popover } from 'antd'
-import { User, Lock, ShieldQuestion } from 'lucide-react'
+import { useState } from 'react'
+import { Alert, Button, Form, Input, Popover, Switch } from 'antd'
+import { User, Lock, ShieldQuestion, ArrowRight, TriangleAlert } from 'lucide-react'
 import { useLoginForm } from './hooks/useLoginForm'
+import { SplashScreen } from '../ui/SplashScreen'
 import './LoginForm.css'
 
 export function LoginForm() {
-  const { username, setUsername, password, setPassword, remember, setRemember, error, submitting, handleSubmit } = useLoginForm()
+  const { username, setUsername, blurUsername, password, setPassword, remember, setRemember, error, fieldErrors, submitting, launching, handleSubmit } = useLoginForm()
+  const [capsLock, setCapsLock] = useState(false)
 
   return (
+    <>
+    {launching && <SplashScreen />}
     <div className="login-form-panel">
+      <div className="login-bg" aria-hidden="true">
+        <span className="login-bg-orb o1" />
+        <span className="login-bg-orb o2" />
+        <span className="login-bg-orb o3" />
+        <span className="login-bg-grid" />
+        <span className="login-bg-ring r1" />
+        <span className="login-bg-ring r2" />
+      </div>
       <div className="login-form-wrap">
         <div className="login-form-mobile-logo">
           <img src="/kanvas-logo.png" alt="Kanvas" />
         </div>
 
         <h1 className="login-form-title">Welcome back</h1>
-        <p className="login-form-subtitle">Sign in to the Super Admin panel</p>
+        <p className="login-form-subtitle">Sign in to manage tenants, plans and courses.</p>
 
-        <Form layout="vertical" onFinish={() => void handleSubmit()} requiredMark={false}>
-          <Form.Item label="Username / Email">
+        <Form layout="vertical" onFinish={() => void handleSubmit()} requiredMark={false} noValidate>
+          <Form.Item label="Username / Email" validateStatus={fieldErrors.username ? 'error' : undefined} help={fieldErrors.username}>
             <Input
               size="large"
+              id="username"
+              name="username"
               autoComplete="username"
               prefix={<User size={16} color="#9b87b5" />}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              onBlur={blurUsername}
+              maxLength={100}
+              status={fieldErrors.username ? 'error' : undefined}
               placeholder="Enter username"
             />
           </Form.Item>
 
-          <Form.Item label="Password">
+          <Form.Item label="Password" validateStatus={fieldErrors.password ? 'error' : undefined} help={fieldErrors.password}>
             <Input.Password
               size="large"
+              id="password"
+              name="password"
               autoComplete="current-password"
               prefix={<Lock size={16} color="#9b87b5" />}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyUp={(e) => setCapsLock(e.getModifierState('CapsLock'))}
+              onKeyDown={(e) => setCapsLock(e.getModifierState('CapsLock'))}
+              onBlur={() => setCapsLock(false)}
+              maxLength={64}
+              status={fieldErrors.password ? 'error' : undefined}
               placeholder="Enter password"
             />
           </Form.Item>
+          {capsLock && (
+            <p className="login-caps">
+              <TriangleAlert size={13} /> Caps Lock is on
+            </p>
+          )}
 
-          <div className="d-flex align-items-center justify-content-between mb-3">
-            <Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)}>
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <label className="login-remember">
+              <Switch size="small" checked={remember} onChange={setRemember} aria-label="Remember me" />
               Remember me
-            </Checkbox>
+            </label>
             <Popover
               trigger="click"
               placement="bottomRight"
@@ -66,11 +97,16 @@ export function LoginForm() {
 
           {error && <Alert type="error" showIcon title={error} className="mb-3" />}
 
-          <Button type="primary" htmlType="submit" size="large" block loading={submitting}>
-            {submitting ? 'Signing in…' : 'Sign In'}
+          <Button type="primary" htmlType="submit" size="large" block loading={submitting} className="login-submit">
+            {submitting ? 'Signing in…' : (
+              <>
+                Sign In <ArrowRight size={17} />
+              </>
+            )}
           </Button>
         </Form>
       </div>
     </div>
+    </>
   )
 }

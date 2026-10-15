@@ -1,7 +1,8 @@
 import { AppLayout } from '../layout/AppLayout'
 import { StatsGrid } from './components/StatsGrid'
 import { TenantStatusChart } from './components/TenantStatusChart'
-import { ErrorBlock, LoadingBlock } from '../ui/State'
+import { ErrorBlock } from '../ui/State'
+import { DashboardSkeleton } from '../ui/DashboardSkeleton'
 import { useDashboardData } from './hooks/useDashboardData'
 import type { DashboardData } from '../../api'
 
@@ -11,7 +12,7 @@ export function DashboardPage() {
   return (
     <AppLayout title="Dashboard" subtitle="Platform overview — tenants and growth">
       {loading && !data ? (
-        <LoadingBlock />
+        <DashboardSkeleton />
       ) : error || !data ? (
         <ErrorBlock message={error ?? 'No data'} onRetry={reload} />
       ) : (

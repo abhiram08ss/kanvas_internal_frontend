@@ -12,8 +12,11 @@ const toneRgb: Record<Tone, string> = {
   slate: '100, 116, 139',
 }
 
-/** A headline number with an icon (Ant Design Card). */
-export function StatCard({ icon, label, value, hint, tone = 'purple' }: { icon: ReactNode; label: string; value: ReactNode; hint?: string; tone?: Tone }) {
+/**
+ * A headline number with an icon (Ant Design Card). Always three lines (label, value, hint) so every stat card in
+ * the app has the same height; `hint` is required for that reason.
+ */
+export function StatCard({ icon, label, value, hint, tone = 'purple' }: { icon: ReactNode; label: string; value: ReactNode; hint: string; tone?: Tone }) {
   const rgb = toneRgb[tone]
 
   return (
@@ -32,11 +35,9 @@ export function StatCard({ icon, label, value, hint, tone = 'purple' }: { icon: 
           <p className="font-value fw-bold mb-0" style={{ color: '#1a1228', fontSize: 24, lineHeight: 1 }}>
             {value}
           </p>
-          {hint && (
-            <p className="mb-0" style={{ color: '#9b87b5', fontSize: 11, marginTop: 3 }}>
-              {hint}
-            </p>
-          )}
+          <p className="mb-0 text-truncate" style={{ color: '#9b87b5', fontSize: 11, marginTop: 3 }}>
+            {hint}
+          </p>
         </div>
       </div>
     </Card>

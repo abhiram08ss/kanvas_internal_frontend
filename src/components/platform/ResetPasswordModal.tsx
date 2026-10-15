@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal'
 import { Field } from '../ui/Field'
 import { Notice } from '../ui/State'
 import { errorMessage, type PlatformUser } from '../../api'
+import { PASSWORD_HINT, stripSpaces, validatePassword } from '../../utils/validation'
 
 /** Reset a platform user's password: the admin types the new one (twice). */
 export function ResetPasswordModal({
@@ -25,9 +26,8 @@ export function ResetPasswordModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const found: { password?: string; confirm?: string } = {}
-    if (!password) found.password = 'Password is required.'
-    else if (password.length < 8) found.password = 'Password must be at least 8 characters.'
-    else if (password.length > 64) found.password = 'Password must be 64 characters or fewer.'
+    const passwordError = validatePassword(password)
+    if (passwordError) found.password = passwordError
     if (!confirm) found.confirm = 'Confirm the password.'
     else if (confirm !== password) found.confirm = 'Passwords do not match.'
     setErrors(found)
@@ -47,11 +47,11 @@ export function ResetPasswordModal({
     <Modal title="Reset Password" subtitle={`${user.name} · ${user.email}`} onClose={onClose} tone="brand" icon={<KeyRound size={20} />}>
       <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3">
         {error && <Notice tone="error">{error}</Notice>}
-        <Field label="New Password" required error={errors.password} hint="At least 8 characters.">
+        <Field label="New Password" required error={errors.password} hint={PASSWORD_HINT}>
           <Input.Password
             value={password}
             status={errors.password ? 'error' : undefined}
-            onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: undefined })) }}
+            onChange={(e) => { setPassword(stripSpaces(e.target.value)); setErrors((p) => ({ ...p, password: undefined })) }}
             placeholder="Enter new password"
             autoComplete="new-password"
           />
@@ -60,7 +60,7 @@ export function ResetPasswordModal({
           <Input.Password
             value={confirm}
             status={errors.confirm ? 'error' : undefined}
-            onChange={(e) => { setConfirm(e.target.value); setErrors((p) => ({ ...p, confirm: undefined })) }}
+            onChange={(e) => { setConfirm(stripSpaces(e.target.value)); setErrors((p) => ({ ...p, confirm: undefined })) }}
             placeholder="Re-enter new password"
             autoComplete="new-password"
           />

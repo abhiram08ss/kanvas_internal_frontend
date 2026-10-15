@@ -48,7 +48,7 @@ export * from './types'
 
 export const api = {
   // ---- auth
-  login: (username: string, password: string) => request<TokenResponse>('/auth/login', { method: 'POST', body: { username, password }, auth: false }),
+  login: (username: string, password: string, remember = false) => request<TokenResponse>('/auth/login', { method: 'POST', body: { username, password, remember }, auth: false }),
   me: () => request<PlatformUser>('/auth/me'),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),

@@ -14,10 +14,15 @@ import { useAuth } from '../../context/AuthContext'
 import { errorMessage, type QuizQuestion } from '../../api'
 
 export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selectedCourseId: number | null; onSelectCourse: (id: number) => void }) {
-  const { editableCourses, quizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion } = useData()
+  const { editableCourses, courseModules, quizQuestions, addQuizQuestion, updateQuizQuestion, deleteQuizQuestion } = useData()
   const { user } = useAuth()
-  // Quiz questions are written by a Super Admin; a content user can read them (and see them in a course preview).
+  // A Super Admin writes questions on any course; a Content User on courses they created - and that sends the
+  // course back to a Super Admin for approval, the same as editing its modules.
   const isSuper = user?.role === 'Super Admin'
+  const canEditCourse = (courseId: number) => isSuper || editableCourses.find((c) => c.id === courseId)?.createdByName === user?.name
+  const canCreate = isSuper || (selectedCourseId !== null && canEditCourse(selectedCourseId))
+  // Questions can only be written once the course has at least one module.
+  const needsModule = selectedCourseId !== null && !courseModules.some((m) => m.courseId === selectedCourseId)
   const [query, setQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [page, setPage] = useState(1)
@@ -42,6 +47,10 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const openCreate = () => {
+    if (needsModule) {
+      notification.warning({ title: 'Add a Module First', description: 'Add at least one module to this course before creating quiz questions.' })
+      return
+    }
     setEditing(undefined)
     setModalOpen(true)
   }
@@ -80,14 +89,17 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
         <CourseSummary course={editableCourses.find((c) => c.id === selectedCourseId)} count={scoped.length} noun="Question" />
 
         {error && <p className="small text-danger">{error}</p>}
+        {needsModule && canCreate && (
+          <p className="small mb-2" style={{ color: '#b45309' }}>This course has no modules yet. Add a module first, then you can create quiz questions.</p>
+        )}
 
         <ListCard className="fill-height">
           <Toolbar
             query={query}
             onQueryChange={setQuery}
             searchPlaceholder="Search questions..."
-            newLabel={isSuper ? "Create Question" : undefined}
-            onNew={isSuper ? openCreate : undefined}
+            newLabel={canCreate ? "Create Question" : undefined}
+            onNew={canCreate ? openCreate : undefined}
             newIcon={<Plus size={14} />}
           />
 
@@ -100,7 +112,7 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
                     <Badge tone="purple">{q.category}</Badge>
                     <Badge tone="slate">{q.course}</Badge>
                   </div>
-                  {isSuper && (
+                  {canEditCourse(q.courseId) && (
                     <div className="d-flex flex-shrink-0 align-items-center gap-2">
                       <IconButton icon={<Pencil size={14} />} onClick={() => openEdit(q)} title="Edit question" tone="blue" />
                       <IconButton icon={<Trash2 size={14} />} onClick={() => void handleDelete(q)} title="Delete question" tone="red" />
@@ -142,9 +154,10 @@ export function QuizQuestionsTab({ selectedCourseId, onSelectCourse }: { selecte
               total={rows.length}
               onChange={setPage}
               showSizeChanger={false}
+              showTitle={false}
               hideOnSinglePage={false}
               size="small"
-              showTotal={(total) => `${total} ${total === 1 ? 'item' : 'items'}`}
+              showTotal={(total, [from, to]) => (total === 0 ? '0 items' : `Showing ${from}–${to} of ${total} ${total === 1 ? 'item' : 'items'}`)}
             />
           </div>
         </ListCard>

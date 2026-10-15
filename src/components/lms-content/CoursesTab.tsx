@@ -372,13 +372,13 @@ export function CoursesTab() {
     <div className="d-flex flex-column h-100">
       <div className="row row-cols-2 row-cols-lg-3 g-3 mb-4 flex-shrink-0">
         <div className="col">
-          <StatCard icon={<BookOpen size={20} />} label="Total Courses" value={courses.length} tone="purple" />
+          <StatCard icon={<BookOpen size={20} />} label="Total Courses" value={courses.length} hint="all courses" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={courses.filter((c) => c.status === 'Active').length} tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={courses.filter((c) => c.status === 'Active').length} hint="visible to learners" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<Ban size={20} />} label="Inactive" value={courses.filter((c) => c.status === 'Inactive').length} tone="slate" />
+          <StatCard icon={<Ban size={20} />} label="Inactive" value={courses.filter((c) => c.status === 'Inactive').length} hint="hidden from learners" tone="slate" />
         </div>
       </div>
 

@@ -236,12 +236,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     removeById('courseModules', moduleId)
   }
 
-  const addQuizQuestion = async (question: QuizQuestionInput) => upsert('quizQuestions', await api.createQuizQuestion(question))
-  const updateQuizQuestion = async (questionId: number, updates: Partial<QuizQuestionInput>) =>
-    upsert('quizQuestions', await api.updateQuizQuestion(questionId, updates))
+  // A Content User's quiz change re-submits the course for approval on the server, so pull the course back too.
+  const addQuizQuestion = async (question: QuizQuestionInput) => {
+    upsert('quizQuestions', await api.createQuizQuestion(question))
+    syncCourse(await api.course(question.courseId))
+  }
+  const updateQuizQuestion = async (questionId: number, updates: Partial<QuizQuestionInput>) => {
+    const updated = await api.updateQuizQuestion(questionId, updates)
+    upsert('quizQuestions', updated)
+    syncCourse(await api.course(updated.courseId))
+  }
   const deleteQuizQuestion = async (questionId: number) => {
+    const courseId = data.quizQuestions?.find((q) => q.id === questionId)?.courseId
     await api.deleteQuizQuestion(questionId)
     removeById('quizQuestions', questionId)
+    if (courseId !== undefined) syncCourse(await api.course(courseId))
   }
 
   const addCertificateTemplate = async (template: CertificateTemplateInput) => upsert('certificateTemplates', await api.createCertificateTemplate(template))

@@ -8,7 +8,7 @@ interface AuthContextValue {
   user: PlatformUser | null
   username: string
   /** Resolves to null on success, or a message to show the user. */
-  login: (username: string, password: string) => Promise<string | null>
+  login: (username: string, password: string, remember?: boolean) => Promise<string | null>
   logout: () => void
 }
 
@@ -35,10 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
   }, [])
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string, remember = false) => {
     try {
-      const res = await api.login(username.trim(), password)
-      tokenStore.set(res.accessToken)
+      const res = await api.login(username.trim(), password, remember)
+      tokenStore.set(res.accessToken, remember)
       setUser(res.user)
       return null
     } catch (e) {

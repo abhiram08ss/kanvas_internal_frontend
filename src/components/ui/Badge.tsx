@@ -27,7 +27,9 @@ const statusTone: Record<string, Tone> = {
 }
 
 /** A status/type pill (Ant Design Tag). Pass `tone`, or let common status words pick their own colour. */
-export function Badge({ children, tone }: { children: ReactNode; tone?: Tone }) {
+export function Badge({ children: raw, tone }: { children: ReactNode; tone?: Tone }) {
+  // First letter always capital ("pending" -> "Pending"); the rest is left as written.
+  const children = typeof raw === 'string' ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw
   const resolvedTone = tone ?? statusTone[String(children)] ?? 'slate'
   // Status words (Active, Suspended, ...) render as the dot pill used across the tables.
   if (!tone && statusTone[String(children)]) {

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
 import { antdTheme } from './theme/antdTheme'
+import { KLoader, KRing } from './components/ui/KLoader'
 import './styles/theme.scss'
 import './theme/antd-overrides.css'
 import App from './App.tsx'
@@ -10,7 +11,7 @@ import { SidebarCollapseProvider } from './components/sidebar/hooks/useSidebarCo
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ConfigProvider theme={antdTheme}>
+    <ConfigProvider theme={antdTheme} button={{ loadingIcon: <KRing size={16} /> }} spin={{ indicator: <KLoader size="md" /> }}>
       <AntApp notification={{ placement: 'topRight', duration: 4, showProgress: true, pauseOnHover: true, top: 72 }}>
         <BrowserRouter>
           <SidebarCollapseProvider>

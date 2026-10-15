@@ -22,6 +22,11 @@ const navItems = [
   { to: '/audit-logs', label: 'Audit Logs', icon: FileClock, superOnly: true },
 ]
 
+const groups = [
+  { label: 'Workspace', superOnly: false },
+  { label: 'Administration', superOnly: true },
+]
+
 export function Sidebar() {
   const { collapsed: desktopCollapsed, toggle, mobile, drawerOpen, setDrawerOpen } = useSidebarCollapse()
   // On a phone the sidebar is a full-width-labels drawer, never the icon-only strip.
@@ -53,10 +58,10 @@ export function Sidebar() {
       className={mobile ? `sidebar-drawer${drawerOpen ? ' is-open' : ''}` : undefined}
       theme="light"
       width={224}
-      collapsedWidth={72}
+      collapsedWidth={84}
       collapsed={collapsed}
       trigger={null}
-      style={{ height: '100vh', borderRight: '1px solid #ede8f5' }}
+      style={{ height: '100vh', borderRight: '1px solid #ede8f5', background: 'linear-gradient(180deg, #ffffff 0%, #faf7fd 100%)' }}
       styles={{ body: { display: 'flex', flexDirection: 'column', height: '100%' } }}
     >
       <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ minHeight: 56, borderBottom: '1px solid #ede8f5' }}>
@@ -72,7 +77,20 @@ export function Sidebar() {
         className="flex-grow-1 scrollbar-thin app-menu"
         style={{ overflowY: 'auto', padding: '12px 8px', borderInlineEnd: 0 }}
         selectedKeys={selected ? [selected] : []}
-        items={items.map(({ to, label, icon: Icon }) => ({ key: to, icon: <Icon size={16} />, label: <Link to={to}>{label}</Link> }))}
+        items={groups
+          .map(({ label: groupLabel, superOnly }) => ({
+            type: 'group' as const,
+            key: groupLabel,
+            label: groupLabel,
+            children: items
+              .filter((item) => !!item.superOnly === superOnly)
+              .map(({ to, label, icon: Icon }) => ({
+                key: to,
+                icon: <span className="nav-icon"><Icon size={16} /></span>,
+                label: <Link to={to}>{label}</Link>,
+              })),
+          }))
+          .filter((group) => group.children.length > 0)}
       />
 
         {!mobile && (
@@ -87,12 +105,16 @@ export function Sidebar() {
         </button>
         )}
 
-      <div className="sidebar-brand-light flex-shrink-0">
+      <div className={`sidebar-brand-light flex-shrink-0${collapsed ? ' is-collapsed' : ''}`}>
         {collapsed ? (
-          <span>© 2026</span>
+          <>
+            <strong>kanassociates</strong>
+            <span className="sidebar-brand-year">© 2026</span>
+          </>
         ) : (
           <>
-            Powered by <strong>Kan Associations</strong> <span className="sidebar-brand-year">© 2026</span>
+            Powered by <strong>kanassociates</strong>
+            <span className="sidebar-brand-year">© 2026</span>
           </>
         )}
       </div>
