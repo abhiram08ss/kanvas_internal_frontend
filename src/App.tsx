@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
@@ -19,16 +20,12 @@ import PlatformUsers from './pages/PlatformUsers'
 import AuditLogs from './pages/AuditLogs'
 import SystemHealth from './pages/SystemHealth'
 import Settings from './pages/Settings'
-import { LoadingBlock } from './components/ui/State'
+import { SplashScreen } from './components/ui/SplashScreen'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth()
   if (loading)
-    return (
-      <div className="d-flex align-items-center justify-content-center" style={{ height: '100vh', backgroundColor: '#f7f6fc' }}>
-        <LoadingBlock label="Restoring your session…" />
-      </div>
-    )
+    return <SplashScreen />
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return <>{children}</>
 }
@@ -190,11 +187,23 @@ function AppRoutes() {
   )
 }
 
+/** Shows the launch splash for a short minimum time on every page load, then the app. */
+function LaunchGate({ children }: { children: React.ReactNode }) {
+  const [minDone, setMinDone] = useState(false)
+  useEffect(() => {
+    const t = window.setTimeout(() => setMinDone(true), 1200)
+    return () => window.clearTimeout(t)
+  }, [])
+  return minDone ? <>{children}</> : <SplashScreen />
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <DataProvider>
-        <AppRoutes />
+        <LaunchGate>
+          <AppRoutes />
+        </LaunchGate>
         <GlobalTooltip />
       </DataProvider>
     </AuthProvider>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Tooltip } from 'antd'
 
-type Tone = 'blue' | 'amber' | 'green' | 'red' | 'slate' | 'purple'
+type Tone = 'blue' | 'amber' | 'green' | 'red' | 'slate' | 'purple' | 'neutral' | 'brand'
 
 /** A small tinted icon action for table rows (Ant Design Button + Tooltip). */
 export function IconButton({

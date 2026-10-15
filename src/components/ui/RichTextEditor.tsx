@@ -748,12 +748,9 @@ export function RichTextEditor({
           </>
         )}
 
-        <div className="rte-mode" role="tablist" aria-label="Editor mode">
-          <button type="button" role="tab" aria-selected={!previewing} className={!previewing ? 'is-on' : ''} onClick={() => setPreviewing(false)}>
-            <Pencil size={13} /> Write
-          </button>
-          <button type="button" role="tab" aria-selected={previewing} className={previewing ? 'is-on' : ''} onClick={() => setPreviewing(true)}>
-            <Eye size={13} /> Preview
+        <div className="rte-mode">
+          <button type="button" aria-pressed={previewing} className={previewing ? 'is-on' : ''} onClick={() => setPreviewing((p) => !p)}>
+            {previewing ? <Pencil size={13} /> : <Eye size={13} />} {previewing ? 'Edit' : 'Preview'}
           </button>
         </div>
       </div>

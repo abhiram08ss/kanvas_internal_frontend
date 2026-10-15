@@ -6,6 +6,7 @@ import { Field } from '../../ui/Field'
 import { Notice } from '../../ui/State'
 import { scrollToFirstError } from '../../ui/scrollToError'
 import { api, errorMessage } from '../../../api'
+import { PASSWORD_HINT, stripSpaces, validatePassword } from '../../../utils/validation'
 
 export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -21,8 +22,8 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     const errs: typeof fieldErrors = {}
     if (!currentPassword) errs.current = 'Enter your current password.'
-    if (newPassword.length < 8) errs.next = 'New password must be at least 8 characters.'
-    else if (newPassword.length > 64) errs.next = 'New password must be 64 characters or fewer.'
+    const nextError = validatePassword(newPassword)
+    if (nextError) errs.next = nextError.replace(/^Password/, 'New password')
     else if (newPassword === currentPassword) errs.next = 'New password must be different from the current one.'
     if (!confirmPassword) errs.confirm = 'Re-enter the new password.'
     else if (newPassword !== confirmPassword) errs.confirm = 'New password and confirmation do not match.'
@@ -62,13 +63,13 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3">
           {error && <Notice tone="error">{error}</Notice>}
           <Field label="Current Password" required error={fieldErrors.current}>
-            <Input.Password value={currentPassword} onChange={(e) => { setCurrentPassword(e.target.value); setFieldErrors((p) => ({ ...p, current: undefined })) }} status={fieldErrors.current ? 'error' : undefined} autoComplete="current-password" />
+            <Input.Password value={currentPassword} onChange={(e) => { setCurrentPassword(stripSpaces(e.target.value)); setFieldErrors((p) => ({ ...p, current: undefined })) }} status={fieldErrors.current ? 'error' : undefined} autoComplete="current-password" />
           </Field>
-          <Field label="New Password" required error={fieldErrors.next} hint="At least 8 characters">
-            <Input.Password value={newPassword} onChange={(e) => { setNewPassword(e.target.value); setFieldErrors((p) => ({ ...p, next: undefined })) }} status={fieldErrors.next ? 'error' : undefined} autoComplete="new-password" />
+          <Field label="New Password" required error={fieldErrors.next} hint={PASSWORD_HINT}>
+            <Input.Password value={newPassword} onChange={(e) => { setNewPassword(stripSpaces(e.target.value)); setFieldErrors((p) => ({ ...p, next: undefined })) }} status={fieldErrors.next ? 'error' : undefined} autoComplete="new-password" />
           </Field>
           <Field label="Confirm New Password" required error={fieldErrors.confirm}>
-            <Input.Password value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setFieldErrors((p) => ({ ...p, confirm: undefined })) }} status={fieldErrors.confirm ? 'error' : undefined} autoComplete="new-password" />
+            <Input.Password value={confirmPassword} onChange={(e) => { setConfirmPassword(stripSpaces(e.target.value)); setFieldErrors((p) => ({ ...p, confirm: undefined })) }} status={fieldErrors.confirm ? 'error' : undefined} autoComplete="new-password" />
           </Field>
           <div className="d-flex justify-content-end gap-3 pt-2">
             <Button onClick={onClose}>Cancel</Button>

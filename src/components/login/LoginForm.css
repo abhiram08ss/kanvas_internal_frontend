@@ -40,3 +40,155 @@
   margin: 0 0 32px;
   color: #7b6b94;
 }
+
+/* ---- Theme match: lavender dotted backdrop, white rounded card, accent bar, 40px fields, brand-gradient button ---- */
+.login-form-panel {
+  position: relative; flex-direction: column; gap: 18px;
+  background:
+    radial-gradient(rgba(92, 45, 145, 0.07) 1px, transparent 1px) 0 0 / 14px 14px,
+    radial-gradient(520px 360px at 100% 0%, rgba(167, 112, 220, 0.16), transparent 70%),
+    linear-gradient(180deg, #faf7fd, #f5f4f8);
+}
+.login-form-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #c79bf0, #8a4bb0, #5c2d91); }
+.login-form-wrap {
+  max-width: 400px; padding: 36px 32px 32px; background: #fff; border: 1px solid #ede8f5; border-radius: 20px;
+  box-shadow: 0 18px 48px -18px rgba(92, 45, 145, 0.28);
+}
+.login-form-title { position: relative; padding-left: 12px; }
+.login-form-title::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, #5c2d91, #8a4bb0); }
+.login-form-subtitle { margin-bottom: 26px; padding-left: 12px; }
+.login-form-wrap .ant-form-item-label > label { font-size: 13px; font-weight: 600; color: #1a1228; }
+.login-form-wrap .ant-btn-lg { height: 44px; border-radius: 12px; font-weight: 600; }
+.login-form-foot { margin: 0; font-size: 12px; color: #8f82a8; }
+.login-form-foot strong { color: #62309c; }
+
+/* ---- Polish: roomier card, bigger heading, branded checkbox, readable placeholders ---- */
+.login-form-wrap { max-width: 440px; padding: 44px 40px 36px; border-radius: 24px; }
+.login-form-title { font-size: 28px; }
+.login-form-subtitle { font-size: 14.5px; margin-bottom: 30px; }
+.login-form-wrap .ant-form-item { margin-bottom: 20px; }
+.login-form-wrap .ant-input-affix-wrapper input::placeholder, .login-form-wrap .ant-input::placeholder { color: #b5aac4 !important; opacity: 1 !important; }
+.login-form-wrap .ant-checkbox-inner { border-color: #c9b9e0; border-radius: 5px; }
+.login-form-wrap .ant-checkbox-checked .ant-checkbox-inner { background: #5c2d91; border-color: #5c2d91; }
+.login-form-wrap .ant-checkbox-wrapper:hover .ant-checkbox-inner { border-color: #5c2d91; }
+.login-form-wrap .ant-btn-lg { height: 48px; font-size: 15px; }
+@media (max-width: 575px) { .login-form-wrap { padding: 32px 22px 28px; border-radius: 20px; } }
+
+/* ======== Signature sign-in card: gradient-edged glass card, glowing K mark, switch + caps-lock hint, shine button ======== */
+.login-form-wrap {
+  position: relative; max-width: 440px; padding: 40px 40px 30px; border: 0; border-radius: 26px; text-align: left;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, #c79bf0 0%, #8a4bb0 45%, #e9defa 100%) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 30px 70px -28px rgba(92, 45, 145, 0.45), 0 0 0 8px rgba(92, 45, 145, 0.04);
+}
+.login-mark { position: relative; width: 64px; height: 64px; margin: -72px auto 18px; display: flex; align-items: center; justify-content: center; }
+.login-mark-ring { position: absolute; inset: -6px; border-radius: 24px; background: conic-gradient(from 0deg, #c79bf0, #5c2d91, #e9defa, #c79bf0); filter: blur(10px); opacity: 0.55; animation: login-mark-spin 6s linear infinite; }
+.login-mark-tile {
+  position: relative; width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; font-size: 30px; font-weight: 800; border: 3px solid #fff;
+  box-shadow: 0 12px 28px -8px rgba(92, 45, 145, 0.6);
+}
+@keyframes login-mark-spin { to { transform: rotate(360deg); } }
+.login-form-title { text-align: center; padding-left: 0; font-size: 28px; }
+.login-form-title::before { display: none; }
+.login-form-subtitle { text-align: center; padding-left: 0; margin-bottom: 28px; }
+
+.login-remember { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; color: #3d3450; cursor: pointer; user-select: none; }
+.login-form-wrap .ant-switch.ant-switch-checked { background: #5c2d91; }
+.login-caps { display: flex; align-items: center; gap: 6px; margin: -10px 0 14px; font-size: 12.5px; font-weight: 600; color: #b45309; }
+
+.login-submit.ant-btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.01em; }
+.login-submit.ant-btn::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; transform: skewX(-20deg); pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent); transition: left 600ms ease;
+}
+.login-submit.ant-btn:hover::after { left: 160%; }
+.login-submit.ant-btn svg { transition: transform 200ms ease; }
+.login-submit.ant-btn:hover svg { transform: translateX(3px); }
+
+.login-secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 22px 0 0; padding-top: 18px; border-top: 1px dashed #e6dcf3; font-size: 12px; color: #8f82a8; }
+.login-secure svg { color: #16a34a; }
+@media (max-width: 575px) { .login-form-wrap { padding: 34px 22px 26px; } .login-mark { margin-top: -62px; } }
+
+/* ======== Final layout: open, airy panel (no boxed card), big 52px fields, glowing gradient button ======== */
+.login-form-panel {
+  justify-content: space-between; align-items: stretch; padding: 40px 24px 24px; gap: 0;
+  background:
+    radial-gradient(480px 360px at 100% 0%, rgba(167, 112, 220, 0.20), transparent 70%),
+    radial-gradient(420px 320px at 0% 100%, rgba(138, 75, 176, 0.10), transparent 70%),
+    radial-gradient(rgba(92, 45, 145, 0.08) 1px, transparent 1px) 0 0 / 16px 16px,
+    #fff;
+}
+.login-form-wrap {
+  margin: auto; max-width: 400px; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none;
+}
+.login-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #5c2d91; background: #f1e9fb; border: 1px solid #e3d8f1;
+}
+.login-form-title { text-align: left; margin: 18px 0 8px; padding: 0; font-size: 38px; line-height: 1.1; letter-spacing: -0.02em; }
+.login-form-subtitle { text-align: left; margin-bottom: 34px; font-size: 15px; line-height: 1.5; color: #6f6288; }
+.login-form-wrap .ant-form-item { margin-bottom: 22px; }
+.login-form-wrap .ant-form-item-label > label { font-size: 13px; font-weight: 600; color: #3d2260; }
+.login-form-wrap .ant-input-affix-wrapper, .login-form-wrap .ant-input-affix-wrapper.ant-input-affix-wrapper-lg {
+  min-height: 52px !important; height: 52px; border-radius: 14px !important; padding-inline: 16px; background: #faf8fd !important; border-color: #e6dcf3 !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+.login-form-wrap .ant-input-affix-wrapper input.ant-input { height: 50px; font-size: 15px; background: transparent !important; }
+.login-form-wrap .ant-input-affix-wrapper:hover { border-color: #b79fda !important; }
+.login-form-wrap .ant-input-affix-wrapper-focused, .login-form-wrap .ant-input-affix-wrapper:focus-within {
+  background: #fff !important; border-color: #5c2d91 !important; box-shadow: 0 0 0 4px rgba(92, 45, 145, 0.12) !important;
+}
+.login-form-wrap .ant-input-prefix { margin-inline-end: 12px; }
+.login-submit.ant-btn { height: 54px !important; border-radius: 14px !important; font-size: 16px; box-shadow: 0 14px 28px -10px rgba(92, 45, 145, 0.65) !important; }
+.login-secure { justify-content: flex-start; margin-top: 26px; padding-top: 0; border-top: 0; font-size: 13px; color: #7b6b94; }
+.login-form-foot { text-align: center; padding-top: 18px; }
+
+/* ======== Right-side background: soft gradient mesh, drifting blurred orbs, fading grid and thin rings ======== */
+.login-form-panel {
+  overflow: hidden; isolation: isolate;
+  background: linear-gradient(160deg, #ffffff 0%, #faf6ff 45%, #f1e9fb 100%);
+}
+.login-form-panel > .login-form-wrap, .login-form-panel > .login-form-foot { position: relative; z-index: 1; }
+.login-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.login-bg-orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; animation: login-orb 16s ease-in-out infinite alternate; }
+.login-bg-orb.o1 { width: 340px; height: 340px; top: -110px; right: -90px; background: #c79bf0; }
+.login-bg-orb.o2 { width: 300px; height: 300px; bottom: -120px; left: -80px; background: #a77adf; opacity: 0.4; animation-delay: -6s; }
+.login-bg-orb.o3 { width: 200px; height: 200px; top: 42%; right: 8%; background: #e5d3fa; opacity: 0.7; animation-delay: -10s; }
+.login-bg-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(92, 45, 145, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(92, 45, 145, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse at 70% 30%, #000 0%, transparent 65%); mask-image: radial-gradient(ellipse at 70% 30%, #000 0%, transparent 65%);
+}
+.login-bg-ring { position: absolute; border-radius: 50%; border: 1px solid rgba(92, 45, 145, 0.16); }
+.login-bg-ring.r1 { width: 420px; height: 420px; top: -150px; right: -150px; }
+.login-bg-ring.r2 { width: 260px; height: 260px; bottom: -90px; left: -60px; border-style: dashed; }
+@keyframes login-orb { from { transform: translate(0, 0) scale(1); } to { transform: translate(-28px, 24px) scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .login-bg-orb { animation: none; } }
+
+/* K brand mark above the heading (replaces the old "Super Admin access" pill). */
+.login-mark { width: 56px; height: 56px; margin: 0 0 22px; justify-content: flex-start; }
+.login-mark-tile { width: 56px; height: 56px; border-radius: 18px; font-size: 27px; }
+.login-mark-ring { inset: -5px; border-radius: 22px; }
+.login-form-title { margin-top: 0; }
+
+/* Footer: one frosted pill, centred - "Powered by kanassociates | © 2026" with a small brand dot. */
+.login-form-foot { display: flex; justify-content: center; padding-top: 18px; }
+.login-foot-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; font-size: 12.5px; color: #6f6288;
+  background: rgba(255, 255, 255, 0.75); border: 1px solid #e6dcf3; box-shadow: 0 6px 18px -10px rgba(92, 45, 145, 0.4); backdrop-filter: blur(6px);
+}
+.login-foot-pill strong { font-weight: 700; background: linear-gradient(90deg, #5c2d91, #8a4bb0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.login-foot-dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, #5c2d91, #c79bf0); box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.12); }
+.login-foot-sep { width: 1px; height: 12px; background: #d9cdea; }
+
+/* Placeholders on the sign-in form stay put and fully readable while a field is focused (no slide / clip). */
+.login-form-wrap .ant-input::placeholder,
+.login-form-wrap .ant-input-affix-wrapper input::placeholder,
+.login-form-wrap input:focus::placeholder,
+.login-form-wrap .ant-input:focus::placeholder,
+.login-form-wrap .ant-input-affix-wrapper-focused input::placeholder {
+  color: #b5aac4 !important; opacity: 1 !important; transform: none !important; transition: none !important;
+}
+.login-form-wrap .ant-input-affix-wrapper-focused input:focus::placeholder { color: #cbbfdc !important; }

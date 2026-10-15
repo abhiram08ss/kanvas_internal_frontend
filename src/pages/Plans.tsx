@@ -38,13 +38,13 @@ export default function Plans() {
     <AppLayout title="Plans" subtitle="Define subscription plans and feature entitlements">
       <div className="row row-cols-1 row-cols-sm-3 g-3">
         <div className="col">
-          <StatCard icon={<ClipboardList size={20} />} label="Total Plans" value={plans.length} tone="purple" />
+          <StatCard icon={<ClipboardList size={20} />} label="Total Plans" value={plans.length} hint="all plans" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active Plans" value={activeCount} tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active Plans" value={activeCount} hint="available to tenants" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<Users2 size={20} />} label="Max Users" value={maxUsersLabel} tone="blue" />
+          <StatCard icon={<Users2 size={20} />} label="Max Users" value={maxUsersLabel} hint="largest plan limit" tone="blue" />
         </div>
       </div>
 

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Building2, CheckCircle2, PauseCircle, PlayCircle, Eye, Pencil, RefreshCw } from 'lucide-react'
-import { App } from 'antd'
+import { Building2, CheckCircle2, PauseCircle, Eye, PenLine, RefreshCw } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Tabs } from '../components/ui/Tabs'
 import { useFitRows } from '../components/ui/useFitRows'
@@ -12,14 +11,11 @@ import { DataTable } from '../components/ui/DataTable'
 import { Badge } from '../components/ui/Badge'
 import { IconButton } from '../components/ui/IconButton'
 import { Toolbar } from '../components/ui/Toolbar'
-import { Notice } from '../components/ui/State'
-import { confirmDialog } from '../components/ui/confirmOptions'
-import { reasonDialog } from '../components/ui/reasonDialog'
 import { ChangePlanModal } from '../components/tenants/ChangePlanModal'
 import { TenantDetailsModal } from '../components/tenants/TenantDetailsModal'
 import { useData, useDataNeeds } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
-import { api, errorMessage, type Tenant } from '../api'
+import type { Tenant } from '../api'
 
 const tenantFilters = ['All', 'Active', 'Suspended'] as const
 const UNLIMITED = 999_999
@@ -35,48 +31,10 @@ export default function Tenants() {
   // Provisioning (Super Admin only) lives here as a tab: /tenants?tab=provisioning
   const tab = canManage && params.get('tab') === 'provisioning' ? 'Provisioning' : 'Tenants'
   const setTab = (t: string) => setParams(t === 'Provisioning' ? { tab: 'provisioning' } : {}, { replace: true })
-  const { notification } = App.useApp()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<(typeof tenantFilters)[number]>('All')
-  const [busyId, setBusyId] = useState<number | null>(null)
   const [viewTenant, setViewTenant] = useState<Tenant | null>(null)
   const [planTenant, setPlanTenant] = useState<Tenant | null>(null)
-  const [actionError, setActionError] = useState('')
-
-  // Suspend an active tenant / reactivate a suspended one; the server also keeps its subscription in step.
-  const toggleStatus = async (t: Tenant, reason?: string) => {
-    setBusyId(t.id)
-    setActionError('')
-    try {
-      await api.setTenantStatus(t.id, t.status === 'Active' ? 'Suspended' : 'Active', reason)
-      await refresh()
-      notification.success({ title: t.status === 'Active' ? 'Tenant Suspended' : 'Tenant Activated', description: t.name })
-    } catch (e) {
-      notification.error({ title: 'Action Failed', description: `${t.name}: ${errorMessage(e)}` })
-      setActionError(`${t.name}: ${errorMessage(e)}`)
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  const confirmToggle = (t: Tenant) => {
-    if (t.status === 'Active') {
-      reasonDialog({
-        title: 'Suspend Tenant?',
-        content: `Are you sure you want to suspend ${t.name}?`,
-        okText: 'Suspend Tenant',
-        label: 'Reason for suspending',
-        onOk: (reason) => toggleStatus(t, reason),
-      })
-      return
-    }
-    confirmDialog({
-      title: 'Activate Tenant?',
-      content: `Are you sure you want to activate ${t.name}?`,
-      okText: 'Activate Tenant',
-      onOk: () => toggleStatus(t),
-    })
-  }
 
   const rows = useMemo(
     () =>
@@ -99,23 +57,15 @@ export default function Tenants() {
         <>
       <div className="row row-cols-2 row-cols-lg-3 g-3">
         <div className="col">
-          <StatCard icon={<Building2 size={20} />} label="Total Tenants" value={tenants.length} tone="purple" />
+          <StatCard icon={<Building2 size={20} />} label="Total Tenants" value={tenants.length} hint="all organisations" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={tenants.filter((t) => t.status === 'Active').length} tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={tenants.filter((t) => t.status === 'Active').length} hint="currently running" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<PauseCircle size={20} />} label="Suspended" value={tenants.filter((t) => t.status === 'Suspended').length} tone="amber" />
+          <StatCard icon={<PauseCircle size={20} />} label="Suspended" value={tenants.filter((t) => t.status === 'Suspended').length} hint="on hold" tone="amber" />
         </div>
       </div>
-
-      {actionError && (
-        <div className="mt-3">
-          <Notice tone="error" onDismiss={() => setActionError('')}>
-            {actionError}
-          </Notice>
-        </div>
-      )}
 
       <ListCard className="mt-4">
         <Toolbar
@@ -176,19 +126,8 @@ export default function Tenants() {
               key: 'actions',
               render: (_: unknown, t: Tenant) => (
                 <div className="d-flex align-items-center gap-2">
-                  <IconButton icon={<Eye size={16} />} onClick={() => setViewTenant(t)} title="Preview tenant" tone="blue" />
-                  {canManage && (
-                    <>
-                      <IconButton icon={<Pencil size={16} />} onClick={() => navigate(`/tenants/${t.id}/edit`)} title="Edit tenant" tone="purple" />
-                      <IconButton
-                        icon={t.status === 'Active' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
-                        onClick={() => confirmToggle(t)}
-                        title={t.status === 'Active' ? 'Suspend' : 'Activate'}
-                        tone={t.status === 'Active' ? 'amber' : 'green'}
-                        disabled={busyId === t.id}
-                      />
-                    </>
-                  )}
+                  {canManage && <IconButton icon={<PenLine size={17} />} onClick={() => navigate(`/tenants/${t.id}/edit`)} title="Edit tenant" tone="neutral" />}
+                  <IconButton icon={<Eye size={17} />} onClick={() => setViewTenant(t)} title="Preview tenant" tone="neutral" />
                 </div>
               ),
             },

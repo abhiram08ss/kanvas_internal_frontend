@@ -403,28 +403,25 @@ textarea:focus::placeholder,
   &.is-amber { color: #a96a09; background: #fff6e5; }
   &.is-slate { color: #475569; background: #f1f5f9; }
 }
+// Every row action icon (all tones) shares one look: white fill with a grey icon; hover turns the fill lavender
+// and lifts the button; pressed deepens it. IconButton's `tone` prop is kept for callers but no longer changes colours.
 .tenant-action {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #fff;
-  border: 1px solid #e8e5ef;
-  border-radius: 12px;
+  border: 1px solid #e5e2ea;
+  border-radius: 10px;
+  color: #5f5a68;
   cursor: pointer;
-  transition: background 140ms ease, box-shadow 140ms ease;
-  &:hover:not(:disabled) { background: #faf8fe; box-shadow: 0 2px 8px rgba(92, 45, 145, 0.12); }
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  &:hover:not(:disabled) { background: #eae0f6; border-color: #b79fda; color: #4a2474; box-shadow: 0 3px 10px rgba(92, 45, 145, 0.18); transform: translateY(-1px); }
+  &:active:not(:disabled) { background: #d9c8ee; border-color: #4a2474; color: #4a2474; box-shadow: none; transform: none; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
-  &.is-view { color: #62309c; }
-  &.is-pause { color: #a96a09; }
-  &.is-play { color: #16804a; }
-  &.is-delete { color: #d33b48; }
-  &.is-blue, &.is-purple { color: #62309c; }
-  &.is-amber { color: #a96a09; }
-  &.is-green { color: #16804a; }
-  &.is-red { color: #d33b48; }
-  &.is-slate { color: #475569; }
+  // One icon size everywhere, whatever size the caller passed.
+  svg { width: 17px; height: 17px; }
 }
 .tenant-footer {
   display: flex;
@@ -557,23 +554,37 @@ textarea:focus::placeholder,
   .ant-notification-notice-progress::-moz-progress-bar { background: var(--toast-c); }
 }
 
-// Shared table pager (DataTable) styled like the Tenants footer: total on the left, page buttons on the right.
+// Shared table pager (DataTable): "Showing 1-10 of 57 items" on the left, rounded page buttons on the right.
+// Buttons share the row-action icon palette (white / grey border; grey fill on hover); the current page is a
+// solid Kanvas-purple pill with a soft glow.
 .ant-table-wrapper.tenant-table .ant-pagination {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 10px;
   margin: 0;
   padding: 10px 20px;
   border-top: 1px solid #e8e5ef;
+  background: linear-gradient(180deg, #fff, #faf8fd);
+  border-radius: 0 0 16px 16px;
   .ant-pagination-total-text { margin-inline-end: auto; color: #727587; font-size: 14px; }
-  .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next {
-    min-width: 32px; height: 32px; line-height: 30px; margin: 0 0 0 8px;
-    border: 1px solid #e8e5ef; border-radius: 10px; background: #fff;
-    a, button { color: #727587; font-size: 14px; }
-    &:hover { border-color: #c9b3e6; a, button { color: #5c2d91; } }
+  .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next, .ant-pagination-jump-prev, .ant-pagination-jump-next {
+    min-width: 34px; height: 34px; line-height: 32px; margin: 0 0 0 6px;
+    border: 1px solid #e5e2ea; border-radius: 10px; background: #fff;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+    a, button { color: #5f5a68; font-size: 14px; }
+    &:hover { background: #bfbac6; border-color: #a598b7; a, button { color: #4a2474; } }
   }
   .ant-pagination-item a { font-weight: 600; }
-  .ant-pagination-item-active { background: #f1ebfa; border-color: #f1ebfa; a { color: #62309c; } }
+  .ant-pagination-item-active,
+  .ant-pagination-item-active:hover {
+    background: linear-gradient(135deg, #5c2d91, #7b3fa0); border-color: #5c2d91; box-shadow: 0 4px 12px rgba(92, 45, 145, 0.32);
+    a { color: #fff; }
+  }
+  .ant-pagination-jump-prev, .ant-pagination-jump-next { border-color: transparent; background: transparent; &:hover { background: #efe8f7; border-color: #cdbce4; } }
   .ant-pagination-prev .ant-pagination-item-link, .ant-pagination-next .ant-pagination-item-link { border: 0; background: transparent; }
+  .ant-pagination-disabled { background: #faf9fc; border-color: #eeebf3; opacity: 0.6; &:hover { background: #faf9fc; border-color: #eeebf3; } }
+  @media (max-width: 575px) { .ant-pagination-total-text { flex-basis: 100%; } }
 }
 
 // Header and cells always share one alignment (left), whatever a column's `align` says, so headers sit

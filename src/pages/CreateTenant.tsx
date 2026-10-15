@@ -21,7 +21,9 @@ import {
 } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Card } from '../components/ui/Card'
-import { COUNTRIES } from '../data/countries'
+import { CountrySelect } from '../components/ui/CountrySelect'
+import { PhoneField } from '../components/ui/PhoneField'
+import { displayPhone, parseStoredPhone, toStoredPhone, validatePhone, type PhoneParts } from '../utils/phone'
 import { ReviewStep } from '../components/tenants/ReviewStep'
 import { CourseSelectStep } from '../components/tenants/CourseSelectStep'
 import { TenantStatusCard, suspendReasonText, type TenantStatusChoice } from '../components/tenants/TenantStatusCard'
@@ -46,7 +48,6 @@ const industries = ['IT Services', 'Manufacturing', 'Healthcare', 'Education', '
 
 const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/
-const PHONE_RE = /^[0-9]{10}$/
 
 type OrgField =
   | 'orgName'
@@ -83,7 +84,8 @@ export default function CreateTenant() {
   const [userLimit, setUserLimit] = useState('100')
   const [billingContactName, setBillingContactName] = useState('')
   const [billingEmail, setBillingEmail] = useState('')
-  const [billingPhone, setBillingPhone] = useState('')
+  const [phone, setPhone] = useState<PhoneParts>(parseStoredPhone(''))
+  const billingPhone = phone.national
   const [lmsAdminName, setLmsAdminName] = useState('')
   const [lmsAdminEmail, setLmsAdminEmail] = useState('')
   const [orgError, setOrgError] = useState('')
@@ -116,8 +118,8 @@ export default function CreateTenant() {
     if (!billingEmail.trim()) e.billingEmail = 'Billing email is required.'
     else if (!EMAIL_RE.test(billingEmail.trim())) e.billingEmail = 'Enter a valid email address.'
 
-    if (!billingPhone.trim()) e.billingPhone = 'Contact number is required.'
-    else if (!PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Contact number must be exactly 10 digits.'
+    const phoneProblem = validatePhone(phone)
+    if (phoneProblem) e.billingPhone = phoneProblem
 
     if (!lmsAdminName.trim()) e.lmsAdminName = 'Admin name is required.'
     else if (!NAME_RE.test(lmsAdminName.trim())) e.lmsAdminName = 'Name can only contain letters, spaces, . - and \'.'
@@ -201,7 +203,7 @@ export default function CreateTenant() {
         address,
         billingContactName,
         billingEmail: billingEmail.trim(),
-        billingPhone,
+        billingPhone: toStoredPhone(phone),
         lmsAdminName: lmsAdminName.trim(),
         lmsAdminEmail: lmsAdminEmail.trim(),
         userLimit: Number(userLimit),
@@ -462,18 +464,13 @@ export default function CreateTenant() {
                       <Select size="middle" value={industry} onChange={setIndustry} options={industries.map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
                     </Form.Item>
                     <Form.Item label="Country" validateStatus={fieldErrors.country ? 'error' : ''} help={fieldErrors.country}>
-                      <Select
+                      <CountrySelect
                         size="middle"
-                        showSearch
-                        value={country || undefined}
+                        value={country}
                         onChange={(v) => {
                           setCountry(v)
                           clearField('country')
                         }}
-                        options={COUNTRIES.map((c) => ({ value: c, label: c }))}
-                        placeholder="Select country"
-                        optionFilterProp="label"
-                        style={{ width: '100%' }}
                       />
                     </Form.Item>
                     <div className="tc-span2">
@@ -578,17 +575,13 @@ export default function CreateTenant() {
                         validateStatus={fieldErrors.billingPhone ? 'error' : ''}
                         help={fieldErrors.billingPhone}
                       >
-                        <Input
-                          size="middle"
-                          addonBefore="+91"
-                          inputMode="tel"
-                          value={billingPhone}
-                          maxLength={10}
-                          onChange={(e) => {
-                            setBillingPhone(e.target.value.replace(/\D/g, ''))
+                        <PhoneField
+                          value={phone}
+                          status={fieldErrors.billingPhone ? 'error' : undefined}
+                          onChange={(v) => {
+                            setPhone(v)
                             clearField('billingPhone')
                           }}
-                          placeholder="Enter 10-digit mobile number"
                         />
                       </Form.Item>
                     </div>
@@ -715,7 +708,7 @@ export default function CreateTenant() {
             billing={[
               ['Name', billingContactName],
               ['Email', billingEmail],
-              ['Phone', billingPhone ? `+91 ${billingPhone}` : ''],
+              ['Phone', displayPhone(phone)],
             ]}
             admin={[
               ['Name', lmsAdminName],

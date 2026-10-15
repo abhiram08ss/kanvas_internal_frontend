@@ -107,10 +107,10 @@ export default function PlatformUsers() {
         <>
           <div className="row row-cols-1 row-cols-sm-2 g-3">
             <div className="col">
-              <StatCard icon={<ShieldCheck size={20} />} label="Super Admin" value={countRole(all, 'Super Admin')} tone="purple" />
+              <StatCard icon={<ShieldCheck size={20} />} label="Super Admin" value={countRole(all, 'Super Admin')} hint="full access" tone="purple" />
             </div>
             <div className="col">
-              <StatCard icon={<Headset size={20} />} label="Content User" value={countRole(all, 'Support Admin')} tone="green" />
+              <StatCard icon={<Headset size={20} />} label="Content User" value={countRole(all, 'Support Admin')} hint="content access" tone="green" />
             </div>
           </div>
 
@@ -136,10 +136,6 @@ export default function PlatformUsers() {
               rowKey="id"
               dataSource={rows}
               locale={{ emptyText: 'No users match your search.' }}
-              // Only 5 short columns here - letting them size to content (DataTable's default, meant for
-              // wide/many-column tables that need horizontal scroll on narrow screens) left them all bunched
-              // into the left third of the card with a dead gap on the right. Full width spreads them out.
-              scroll={undefined}
               columns={[
                 {
                   title: 'User Name',

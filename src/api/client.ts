@@ -9,10 +9,21 @@ export const API_ORIGIN: string = new URL(BASE_URL, window.location.origin).orig
 /** Fired when the server rejects our token (expired, revoked, user deactivated). */
 export const UNAUTHORIZED_EVENT = 'kanvas:unauthorized'
 
+/**
+ * The sign-in token. "Remember me" keeps it in localStorage (survives closing the browser); otherwise it lives in
+ * sessionStorage (gone when the tab closes). Reads check both; clearing removes both.
+ */
 export const tokenStore = {
-  get: () => sessionStorage.getItem(TOKEN_KEY),
-  set: (token: string) => sessionStorage.setItem(TOKEN_KEY, token),
-  clear: () => sessionStorage.removeItem(TOKEN_KEY),
+  get: () => sessionStorage.getItem(TOKEN_KEY) ?? localStorage.getItem(TOKEN_KEY),
+  set: (token: string, remember = false) => {
+    sessionStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+    ;(remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token)
+  },
+  clear: () => {
+    sessionStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+  },
 }
 
 export class ApiError extends Error {

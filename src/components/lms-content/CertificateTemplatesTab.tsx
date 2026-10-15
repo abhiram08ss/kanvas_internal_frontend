@@ -85,13 +85,13 @@ export function CertificateTemplatesTab() {
     <div>
       <div className="row row-cols-2 row-cols-lg-3 g-3 mb-4">
         <div className="col">
-          <StatCard icon={<Award size={20} />} label="Total Templates" value={certificateTemplates.length} tone="purple" />
+          <StatCard icon={<Award size={20} />} label="Total Templates" value={certificateTemplates.length} hint="all templates" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={certificateTemplates.filter((t) => t.status === 'Active').length} tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={certificateTemplates.filter((t) => t.status === 'Active').length} hint="available to use" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<Ban size={20} />} label="Inactive" value={certificateTemplates.filter((t) => t.status === 'Inactive').length} tone="slate" />
+          <StatCard icon={<Ban size={20} />} label="Inactive" value={certificateTemplates.filter((t) => t.status === 'Inactive').length} hint="turned off" tone="slate" />
         </div>
       </div>
 

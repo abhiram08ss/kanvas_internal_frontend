@@ -8,7 +8,9 @@ import { Notice } from '../components/ui/State'
 import { ReviewStep } from '../components/tenants/ReviewStep'
 import { CourseSelectStep } from '../components/tenants/CourseSelectStep'
 import { TenantStatusCard, suspendReasonText, type TenantStatusChoice } from '../components/tenants/TenantStatusCard'
-import { COUNTRIES } from '../data/countries'
+import { CountrySelect } from '../components/ui/CountrySelect'
+import { PhoneField } from '../components/ui/PhoneField'
+import { displayPhone, parseStoredPhone, toStoredPhone, validatePhone, type PhoneParts } from '../utils/phone'
 import { useData, useDataNeeds } from '../context/DataContext'
 import { api, errorMessage, type Tenant, type TenantCourse } from '../api'
 import './CreateTenant.css'
@@ -20,7 +22,6 @@ const INDUSTRIES = ['IT Services', 'Manufacturing', 'Healthcare', 'Education', '
 const UNLIMITED = 999_999
 const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/
-const PHONE_RE = /^[0-9]{10}$/
 const STEP_LABELS = ['Organization', 'Select courses', 'Review & proceed']
 const LIMIT_PRESETS = [50, 100, 250, 500]
 
@@ -45,7 +46,8 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
   const [userLimit, setUserLimit] = useState(tenant.userLimit >= UNLIMITED ? '' : String(tenant.userLimit))
   const [billingContactName, setBillingContactName] = useState(tenant.billingContactName)
   const [billingEmail, setBillingEmail] = useState(tenant.billingEmail)
-  const [billingPhone, setBillingPhone] = useState(tenant.billingPhone)
+  const [phone, setPhone] = useState<PhoneParts>(parseStoredPhone(tenant.billingPhone))
+  const billingPhone = phone.national
   const [lmsAdminName, setLmsAdminName] = useState(tenant.lmsAdminName)
   const [lmsAdminEmail, setLmsAdminEmail] = useState(tenant.lmsAdminEmail)
   const [errors, setErrors] = useState<Errors>({})
@@ -106,8 +108,8 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
     else if (!NAME_RE.test(billingContactName.trim())) e.billingContactName = "Name can only contain letters, spaces, . - and '"
     if (!billingEmail.trim()) e.billingEmail = 'Billing email is required.'
     else if (!EMAIL_RE.test(billingEmail.trim())) e.billingEmail = 'Enter a valid email address.'
-    if (!billingPhone.trim()) e.billingPhone = 'Contact number is required.'
-    else if (!PHONE_RE.test(billingPhone.trim())) e.billingPhone = 'Contact number must be exactly 10 digits.'
+    const phoneProblem = validatePhone(phone)
+    if (phoneProblem) e.billingPhone = phoneProblem
     if (!lmsAdminName.trim()) e.lmsAdminName = 'Admin name is required.'
     else if (!NAME_RE.test(lmsAdminName.trim())) e.lmsAdminName = "Name can only contain letters, spaces, . - and '"
     if (!lmsAdminEmail.trim()) e.lmsAdminEmail = 'Admin email is required.'
@@ -141,7 +143,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
         address,
         billingContactName: billingContactName.trim(),
         billingEmail: billingEmail.trim(),
-        billingPhone: billingPhone.trim(),
+        billingPhone: toStoredPhone(phone),
         lmsAdminName: lmsAdminName.trim(),
         lmsAdminEmail: lmsAdminEmail.trim(),
         ...(userLimit.trim() ? { userLimit: Number(userLimit) } : {}),
@@ -258,16 +260,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                     />
                   </Field>
                   <Field label="Country">
-                    <Select
-                      size="middle"
-                      showSearch
-                      value={country || undefined}
-                      onChange={setCountry}
-                      options={[...new Set([...COUNTRIES, country].filter(Boolean))].map((c) => ({ value: c, label: c }))}
-                      optionFilterProp="label"
-                      placeholder="Select country"
-                      style={{ width: '100%' }}
-                    />
+                    <CountrySelect size="middle" value={country} onChange={setCountry} />
                   </Field>
                   <div className="tc-span2">
                   <Field
@@ -364,18 +357,13 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                     </Field>
                     <div>
                       <Field label="Contact Number" required error={errors.billingPhone}>
-                      <Input
-                        size="middle"
-                        addonBefore="+91"
-                        inputMode="tel"
-                        maxLength={10}
-                        value={billingPhone}
+                      <PhoneField
+                        value={phone}
                         status={status('billingPhone')}
-                        onChange={(e) => {
-                          setBillingPhone(e.target.value.replace(/\D/g, ''))
+                        onChange={(v) => {
+                          setPhone(v)
                           clear('billingPhone')
                         }}
-                        placeholder="Enter 10-digit mobile number"
                       />
                     </Field>
                     </div>
@@ -532,7 +520,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
             billing={[
               ['Name', billingContactName],
               ['Email', billingEmail],
-              ['Phone', billingPhone ? `+91 ${billingPhone}` : ''],
+              ['Phone', displayPhone(phone)],
             ]}
             admin={[
               ['Name', lmsAdminName],

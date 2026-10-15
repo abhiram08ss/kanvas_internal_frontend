@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
-import { Alert, Button, Result, Spin } from 'antd'
+import { Alert, Button, Result } from 'antd'
+import { KLoader } from './KLoader'
 
 export function LoadingBlock({ label = 'Loading…' }: { label?: string }) {
   return (
-    <div className="d-flex align-items-center justify-content-center py-5">
-      <Spin description={label} size="large">
-        <div style={{ padding: '32px 64px' }} />
-      </Spin>
+    <div className="kloader-block" role="status" aria-live="polite">
+      <KLoader size="md" />
+      <strong>{label}</strong>
+      <small>This usually takes a few seconds</small>
     </div>
   )
 }

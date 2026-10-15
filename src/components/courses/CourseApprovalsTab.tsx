@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { App, Button, Input } from 'antd'
-import { CheckCircle2, ClipboardCheck, Eye, Pencil, Trash2, XCircle } from 'lucide-react'
+import { CheckCircle2, ClipboardCheck, Eye, Layers, Pencil, Trash2, XCircle } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { ListCard } from '../ui/ListCard'
 import { DataTable } from '../ui/DataTable'
@@ -162,17 +162,20 @@ export function CourseApprovalsTab() {
 
   return (
     <div>
-      <div className={`row row-cols-2 ${isSuper && draftCount === 0 ? '' : 'row-cols-md-3'} g-3 mb-4`}>
+      <div className={`row row-cols-2 ${isSuper && draftCount === 0 ? 'row-cols-md-3' : 'row-cols-md-4'} g-3 mb-4`}>
+        <div className="col">
+          <StatCard icon={<Layers size={20} />} label="All" value={courses.length} hint="all submissions" tone="purple" />
+        </div>
         {(!isSuper || draftCount > 0) && (
           <div className="col">
-            <StatCard icon={<Pencil size={20} />} label="Draft" value={draftCount} tone="slate" />
+            <StatCard icon={<Pencil size={20} />} label="Draft" value={draftCount} hint="not yet submitted" tone="slate" />
           </div>
         )}
         <div className="col">
-          <StatCard icon={<ClipboardCheck size={20} />} label="Awaiting Approval" value={pendingCount} tone="amber" />
+          <StatCard icon={<ClipboardCheck size={20} />} label="Awaiting Approval" value={pendingCount} hint="needs review" tone="amber" />
         </div>
         <div className="col">
-          <StatCard icon={<XCircle size={20} />} label="Rejected" value={rejectedCount} tone="red" />
+          <StatCard icon={<XCircle size={20} />} label="Rejected" value={rejectedCount} hint="sent back to creator" tone="red" />
         </div>
       </div>
 
