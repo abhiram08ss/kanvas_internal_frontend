@@ -119,7 +119,7 @@ export function CertificateTemplatesTab() {
               render: (raw: string) => {
                 const logo = resolveLogo(raw, defaultLogo)
                 return isLogoImage(logo) ? (
-                  <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 28, maxWidth: 140, objectFit: 'contain' }} />
+                  <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 22, maxWidth: 96, objectFit: 'contain' }} />
                 ) : (
                   <span className="d-inline-flex align-items-center justify-content-center gap-2" style={{ color: '#3d3450' }}>
                     <Award size={15} style={{ color: '#7c3fc0' }} />

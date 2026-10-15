@@ -103,8 +103,8 @@
   background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent); transition: left 600ms ease;
 }
 .login-submit.ant-btn:hover::after { left: 160%; }
-.login-submit.ant-btn svg { transition: transform 200ms ease; }
-.login-submit.ant-btn:hover svg { transform: translateX(3px); }
+.login-submit.ant-btn .login-arrow { transition: transform 200ms ease; }
+.login-submit.ant-btn:hover .login-arrow { transform: translateX(3px); }
 
 .login-secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 22px 0 0; padding-top: 18px; border-top: 1px dashed #e6dcf3; font-size: 12px; color: #8f82a8; }
 .login-secure svg { color: #16a34a; }

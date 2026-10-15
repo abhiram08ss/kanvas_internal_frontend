@@ -8,7 +8,7 @@ import { ListCard } from '../components/ui/ListCard'
 import { DataTable } from '../components/ui/DataTable'
 import { useFitRows } from '../components/ui/useFitRows'
 import { Toolbar } from '../components/ui/Toolbar'
-import { Button, DatePicker } from 'antd'
+import { Button, DatePicker, Tooltip } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { api, errorMessage, type AuditCategory, type AuditLog } from '../api'
 import { useApi } from '../api/useApi'
@@ -166,7 +166,7 @@ export default function AuditLogs() {
               { title: 'Action', width: 220, dataIndex: 'action', render: (a: string) => <span>{a}</span> },
               { title: 'Category', width: 130, dataIndex: 'category', render: (c: string) => <Badge tone="purple">{c}</Badge> },
               { title: 'Performed By', width: 210, dataIndex: 'performedBy' },
-              { title: 'Details', dataIndex: 'details', render: (d: string) => <span style={{ color: '#727587' }}>{d}</span> },
+              { title: 'Details', dataIndex: 'details', render: (d: string) => <Tooltip title={d} placement="topLeft" overlayStyle={{ maxWidth: 520 }}><span className="audit-details">{d}</span></Tooltip> },
               { title: 'IP Address', width: 140, dataIndex: 'ip', render: (ip: string) => <span className="tenant-muted">{ip}</span> },
             ]}
           />

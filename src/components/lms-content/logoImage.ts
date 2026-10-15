@@ -5,11 +5,14 @@ import { api, API_ORIGIN } from '../../api'
 const IMAGE_ID = /^[0-9a-f]{32}\.(png|jpe?g|gif|webp)$/i
 export const DEFAULT_LOGO = 'Company Default'
 
-export const isLogoImage = (logo: string) => IMAGE_ID.test(logo)
-export const logoImageUrl = (logo: string) => `${API_ORIGIN}/courses/covers/${logo}`
+/** The built-in Kanvas logo (a file in /public): the company default until a different default logo is uploaded. */
+export const KANVAS_LOGO = '/kanvas-logo.png'
 
-/** "Company Default" becomes the company's default logo image once one has been uploaded; anything else is returned as-is. */
-export const resolveLogo = (logo: string, defaultLogo: string | null) => (logo === DEFAULT_LOGO && defaultLogo ? defaultLogo : logo)
+export const isLogoImage = (logo: string) => logo === KANVAS_LOGO || IMAGE_ID.test(logo)
+export const logoImageUrl = (logo: string) => (logo === KANVAS_LOGO ? KANVAS_LOGO : `${API_ORIGIN}/courses/covers/${logo}`)
+
+/** "Company Default" becomes the uploaded default logo, or the Kanvas logo when none was uploaded; anything else is returned as-is. */
+export const resolveLogo = (logo: string, defaultLogo: string | null) => (logo === DEFAULT_LOGO ? (defaultLogo ?? KANVAS_LOGO) : logo)
 
 // The default logo is shared app-wide: fetched once, and every user of the hook updates when it is changed.
 let current: string | null = null
