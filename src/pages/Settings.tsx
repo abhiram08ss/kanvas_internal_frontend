@@ -32,7 +32,7 @@ export default function Settings() {
   const updateField = (key: keyof PlatformConfig, value: string | number) => setForm((f) => (f ? { ...f, [key]: value } : f))
 
   const save = async () => {
-    if (!form) return
+    if (!form || saving) return
     setSaving(true)
     setMessage(null)
     try {

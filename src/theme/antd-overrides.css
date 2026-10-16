@@ -2,11 +2,11 @@
 
 /* Primary buttons carry the Kanvas gradient everywhere, as on the LMS Content page. */
 .ant-btn-primary:not(:disabled):not(.ant-btn-dangerous) {
-  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%); /* the brand gradient, left to right like the login panel */
   box-shadow: 0 2px 8px rgba(92, 45, 145, 0.3);
 }
 .ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):hover {
-  background: linear-gradient(135deg, #6b36a6, #8a4bb0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
 }
 
 /* Table sits flush inside its rounded list card; header uppercase like the rest of the app. */
@@ -34,7 +34,7 @@
 .app-menu .ant-menu-item-selected,
 .app-menu .ant-menu-item-selected:hover {
   font-weight: 600; color: #fff !important;
-  background: linear-gradient(135deg, #5c2d91, #8a4bb0) !important;
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%) !important;
   box-shadow: 0 6px 16px rgba(92, 45, 145, 0.35);
 }
 .app-menu .ant-menu-item-selected::after {
@@ -103,7 +103,7 @@
   position: absolute; top: 50%; right: -9px; transform: translateY(-50%); z-index: 60;
   width: 18px; height: 40px; padding: 0 0 0 1px; border: 0; border-radius: 0 10px 10px 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center; color: #fff;
-  background: linear-gradient(180deg, #5c2d91, #8a4bb0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
   box-shadow: 3px 0 10px rgba(92, 45, 145, 0.28);
   transition: width 200ms ease, right 200ms ease, box-shadow 200ms ease;
 }
@@ -376,7 +376,7 @@ label.d-block.fw-semibold,
 .ant-layout-sider { position: relative; }
 .ant-layout-sider::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2;
-  background: linear-gradient(90deg, #5c2d91, #8a4bb0, #c79bf0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
 }
 .ant-layout-sider-children {
   background-image: radial-gradient(rgba(92, 45, 145, 0.07) 1px, transparent 1px); background-size: 14px 14px;
@@ -399,7 +399,7 @@ label.d-block.fw-semibold,
 .sidebar-user.is-collapsed { justify-content: center; padding: 8px 0; margin: 8px 12px 10px; }
 .sidebar-user-avatar {
   position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
-  border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #5c2d91, #8a4bb0);
+  border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
 }
 .sidebar-user-dot { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid #fff; }
 .sidebar-user-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
@@ -413,12 +413,12 @@ label.d-block.fw-semibold,
 }
 .ant-layout-header.app-header::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, #c79bf0, #8a4bb0, #5c2d91);
+  background: linear-gradient(90deg, #c79bf0, #8246ab, #683599);
 }
 .app-header h1 { position: relative; padding-left: 10px; }
 .app-header h1::before {
   content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 3px;
-  background: linear-gradient(180deg, #5c2d91, #8a4bb0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
 }
 .app-header .app-header-subtitle { padding-left: 10px; }
 
@@ -461,9 +461,10 @@ label.d-block.fw-semibold,
 .ant-layout-sider-collapsed .app-menu .ant-menu-item .ant-menu-item-icon { margin: 0 !important; }
 
 /* ---- Rejected badge with a reason popover (Approvals) ---- */
-.rj-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #c0272d; background: #fdeff0; border: 1px solid #f3b9bc; cursor: help; outline: none; }
+.rj-badge { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 10px; border-radius: 999px; font-size: 13px; line-height: 20px; font-weight: 600; color: #c0272d; background: #fdeff0; border: 0; cursor: help; outline: none; } /* same size as the Draft / Pending pills */
+.rj-badge svg { width: 12px; height: 12px; }
 .rj-badge:focus-visible { box-shadow: 0 0 0 3px rgba(192, 39, 45, 0.18); }
-.rj-dot { width: 7px; height: 7px; border-radius: 50%; background: #d33b48; }
+.rj-dot { width: 6px; height: 6px; border-radius: 50%; background: #d33b48; }
 .rj-popover .ant-popover-inner { padding: 12px 14px; border-radius: 12px; box-shadow: 0 12px 30px -10px rgba(26, 18, 40, 0.26); }
 .rj-card { width: 230px; max-width: 80vw; }
 .rj-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #b42323; }
@@ -483,3 +484,70 @@ label.d-block.fw-semibold,
 .tenant-action svg { width: 17px; height: 17px; }
 .app-menu .nav-icon svg { width: 18px; height: 18px; }
 .ant-modal-header svg, .stat-card svg { width: 20px; height: 20px; }
+
+/* ======== Dropdown fields: one polished look everywhere ======== */
+.ant-select .ant-select-selector { transition: border-color 160ms ease, box-shadow 160ms ease; }
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector { border-color: #b79fda !important; }
+.ant-select-focused .ant-select-selector, .ant-select-open .ant-select-selector { border-color: #5c2d91 !important; box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.12) !important; }
+.ant-select-disabled .ant-select-selector { background: #f6f4fa !important; color: #9b8fb3 !important; cursor: not-allowed; }
+.ant-select-selection-search-input { font-size: 14px !important; }
+.ant-select-selection-placeholder { color: #b5aac4 !important; }
+/* the list: capped height with a slim scrollbar, tidy "no results" line, selected row marked with a purple tick */
+.ant-select-dropdown .rc-virtual-list-holder, .ant-select-dropdown .ant-select-item-empty { scrollbar-width: thin; scrollbar-color: #d6c8ec transparent; }
+.ant-select-dropdown .ant-select-item-empty { padding: 14px 12px; color: #9b87b5; font-size: 13.5px; text-align: center; }
+.ant-select-dropdown .ant-select-item-option-content { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ant-select-dropdown .ant-select-item-option-selected .ant-select-item-option-state { color: #5c2d91; }
+.ant-select-dropdown .ant-select-item-group { padding: 8px 12px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9b87b5; }
+@media (prefers-reduced-motion: reduce) { .ant-select-dropdown { animation: none; } }
+
+/* Phone field: the country-code dropdown and the number box read as ONE joined field - square where they meet,
+   rounded on the outer ends, a single shared border line. (Placed last so the general 10px-corner rule can't undo it.) */
+:is(.ant-modal-body, .tc-card, .tc-status, .ant-form, .wz-section-fields) .phone-field .phone-dial .ant-select-selector {
+  border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;
+}
+:is(.ant-modal-body, .tc-card, .tc-status, .ant-form, .wz-section-fields) .phone-field > .ant-input {
+  border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; margin-left: -1px;
+}
+.phone-field .phone-dial.ant-select-focused, .phone-field > .ant-input:focus { position: relative; z-index: 2; }
+
+/* ---- Approvals count: pill on the row when the sidebar is open, bubble on the icon when it is collapsed ---- */
+.app-menu .ant-menu-item a { display: flex; align-items: center; width: 100%; }
+.nav-count {
+  margin-left: auto; min-width: 22px; height: 20px; padding: 0 7px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1; color: #fff;
+}
+.nav-count.is-red, .nav-dot.is-red { background: #dc2626; }
+.nav-count.is-amber, .nav-dot.is-amber { background: #d97706; }
+.app-menu .ant-menu-item-selected .nav-count { background: #fff; color: #5c2d91; }
+.nav-dot {
+  position: absolute; top: -5px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; display: none; align-items: center; justify-content: center;
+  border-radius: 999px; border: 2px solid #fff; box-sizing: content-box; font-size: 9px; font-style: normal; font-weight: 700; line-height: 1; color: #fff;
+}
+.app-menu .nav-icon { position: relative; }
+.ant-layout-sider-collapsed .nav-dot { display: inline-flex; }
+
+/* ======== Brand gradient everywhere: buttons and active tabs/filters/pagination ======== */
+:root { --brand-gradient: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous),
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):hover,
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):active,
+.pill-toolbar .ant-btn-primary,
+.pill-toolbar .ant-btn-primary:hover { background: var(--brand-gradient) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 6px 16px -6px rgba(92, 45, 145, 0.55); }
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):hover { filter: brightness(1.08); }
+
+/* Active tabs, filters, pagination */
+.ant-segmented .ant-segmented-thumb,
+.ant-segmented-item-selected,
+.pill-filters .ant-segmented-thumb,
+.pill-filter-pill.active,
+.pagination-btn.is-active,
+.ant-pagination-item-active,
+.ant-pagination-item-active:hover { background: var(--brand-gradient) !important; border-color: transparent !important; }
+.ant-segmented .ant-segmented-item-selected,
+.ant-segmented .ant-segmented-item-selected .ant-segmented-item-label,
+.pill-filters .ant-segmented-item-selected-text,
+.pill-filter-pill.active,
+.ant-pagination-item-active a { color: #fff !important; }
+
+.tenant-page-btn.is-active { background: var(--brand-gradient) !important; color: #fff !important; border-color: transparent !important; }

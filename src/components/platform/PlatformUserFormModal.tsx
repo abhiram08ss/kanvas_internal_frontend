@@ -29,6 +29,7 @@ export function PlatformUserFormModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     const found: { name?: string; email?: string; password?: string; confirm?: string } = {}
     if (!name.trim()) found.name = 'Full name is required.'
     else if (name.trim().length < 2) found.name = 'Full name must be at least 2 characters.'

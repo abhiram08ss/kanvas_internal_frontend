@@ -45,7 +45,7 @@
 }
 
 .ct-wizard-header .ant-steps-item-finish .ant-steps-item-tail::after {
-  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
 }
 
 .ct-wizard-card .ant-form-item-label > label {
@@ -104,7 +104,7 @@
   transition: all 140ms ease;
 }
 .ct-chip:hover { border-color: #b89be0; color: #5c2d91; }
-.ct-chip.is-active { background: #5c2d91; border-color: #5c2d91; color: #fff; }
+.ct-chip.is-active { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: #5c2d91; color: #fff; }
 
 .ct-course-card {
   display: flex;
@@ -135,7 +135,7 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
 }
 
 .ct-course-name { font-size: 14.5px; font-weight: 600; color: #1a1228; }
@@ -154,7 +154,7 @@
   background: #fff;
   transition: all 140ms ease;
 }
-.ct-course-card.is-selected .ct-course-check { background: #5c2d91; border-color: #5c2d91; }
+.ct-course-card.is-selected .ct-course-check { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: #5c2d91; }
 
 /* Step 3: review */
 .ct-review-card {
@@ -234,14 +234,14 @@
   content: ''; position: absolute; top: 19px; right: 50%; width: 100%; height: 3px; border-radius: 3px; background: #ede8f5; z-index: 0;
 }
 .ws-step:first-child::before { display: none; }
-.ws-step.is-done::before, .ws-step.is-current::before { background: linear-gradient(90deg, #5c2d91, #7b3fa0); }
+.ws-step.is-done::before, .ws-step.is-current::before { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
 .ws-dot {
   position: relative; z-index: 1; width: 40px; height: 40px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
   background: #fff; color: #9b87b5; border: 2px solid #ede8f5; transition: all 160ms ease;
 }
-.ws-step.is-done .ws-dot { background: linear-gradient(135deg, #5c2d91, #7b3fa0); border-color: transparent; color: #fff; }
-.ws-step.is-current .ws-dot { background: linear-gradient(135deg, #5c2d91, #7b3fa0); border-color: transparent; color: #fff; box-shadow: 0 0 0 5px rgba(92, 45, 145, 0.15); }
+.ws-step.is-done .ws-dot { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: transparent; color: #fff; }
+.ws-step.is-current .ws-dot { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: transparent; color: #fff; box-shadow: 0 0 0 5px rgba(92, 45, 145, 0.15); }
 .ws-label { font-size: 14px; font-weight: 500; color: #9b87b5; }
 .ws-step.is-current .ws-label { color: #1a1228; font-weight: 700; }
 .ws-step.is-done .ws-label { color: #5c2d91; }
@@ -306,13 +306,13 @@
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 18px; font-weight: 700; background: #f6f4fb; color: #8a7ba3; border: 1px solid #ebe5f4;
 }
-.wz-step.is-current .wz-dot, .wz-step.is-done .wz-dot { background: #62309c; border-color: #62309c; color: #fff; }
+.wz-step.is-current .wz-dot, .wz-step.is-done .wz-dot { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: #62309c; color: #fff; }
 .wz-step-text { display: flex; flex-direction: column; line-height: 1.25; }
 .wz-step-label { font-size: 17px; font-weight: 600; color: #727587; }
 .wz-step.is-current .wz-step-label, .wz-step.is-done .wz-step-label { color: #62309c; }
 .wz-step-caption { font-size: 13px; color: #8a7ba3; margin-top: 2px; }
 .wz-line { flex: 1 1 auto; height: 2px; margin: 0 28px; background: #e8e5ef; border-radius: 2px; }
-.wz-line.is-done { background: #62309c; }
+.wz-line.is-done { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
 
 .wz-section { display: grid; grid-template-columns: 300px 1fr; gap: 32px; padding: 32px 36px; border-bottom: 1px solid #ede8f5; }
 .wz-section:last-child { border-bottom: 0; }

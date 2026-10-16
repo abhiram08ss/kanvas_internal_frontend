@@ -49,13 +49,13 @@
     radial-gradient(520px 360px at 100% 0%, rgba(167, 112, 220, 0.16), transparent 70%),
     linear-gradient(180deg, #faf7fd, #f5f4f8);
 }
-.login-form-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #c79bf0, #8a4bb0, #5c2d91); }
+.login-form-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #c79bf0, #8246ab, #683599); }
 .login-form-wrap {
   max-width: 400px; padding: 36px 32px 32px; background: #fff; border: 1px solid #ede8f5; border-radius: 20px;
   box-shadow: 0 18px 48px -18px rgba(92, 45, 145, 0.28);
 }
 .login-form-title { position: relative; padding-left: 12px; }
-.login-form-title::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, #5c2d91, #8a4bb0); }
+.login-form-title::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 4px; border-radius: 4px; background: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
 .login-form-subtitle { margin-bottom: 26px; padding-left: 12px; }
 .login-form-wrap .ant-form-item-label > label { font-size: 13px; font-weight: 600; color: #1a1228; }
 .login-form-wrap .ant-btn-lg { height: 44px; border-radius: 12px; font-weight: 600; }
@@ -69,7 +69,7 @@
 .login-form-wrap .ant-form-item { margin-bottom: 20px; }
 .login-form-wrap .ant-input-affix-wrapper input::placeholder, .login-form-wrap .ant-input::placeholder { color: #b5aac4 !important; opacity: 1 !important; }
 .login-form-wrap .ant-checkbox-inner { border-color: #c9b9e0; border-radius: 5px; }
-.login-form-wrap .ant-checkbox-checked .ant-checkbox-inner { background: #5c2d91; border-color: #5c2d91; }
+.login-form-wrap .ant-checkbox-checked .ant-checkbox-inner { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: #5c2d91; }
 .login-form-wrap .ant-checkbox-wrapper:hover .ant-checkbox-inner { border-color: #5c2d91; }
 .login-form-wrap .ant-btn-lg { height: 48px; font-size: 15px; }
 @media (max-width: 575px) { .login-form-wrap { padding: 32px 22px 28px; border-radius: 20px; } }
@@ -85,7 +85,7 @@
 .login-mark-ring { position: absolute; inset: -6px; border-radius: 24px; background: conic-gradient(from 0deg, #c79bf0, #5c2d91, #e9defa, #c79bf0); filter: blur(10px); opacity: 0.55; animation: login-mark-spin 6s linear infinite; }
 .login-mark-tile {
   position: relative; width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #5c2d91, #8a4bb0); color: #fff; font-size: 30px; font-weight: 800; border: 3px solid #fff;
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%); color: #fff; font-size: 30px; font-weight: 800; border: 3px solid #fff;
   box-shadow: 0 12px 28px -8px rgba(92, 45, 145, 0.6);
 }
 @keyframes login-mark-spin { to { transform: rotate(360deg); } }
@@ -94,7 +94,7 @@
 .login-form-subtitle { text-align: center; padding-left: 0; margin-bottom: 28px; }
 
 .login-remember { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; color: #3d3450; cursor: pointer; user-select: none; }
-.login-form-wrap .ant-switch.ant-switch-checked { background: #5c2d91; }
+.login-form-wrap .ant-switch.ant-switch-checked { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
 .login-caps { display: flex; align-items: center; gap: 6px; margin: -10px 0 14px; font-size: 12.5px; font-weight: 600; color: #b45309; }
 
 .login-submit.ant-btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.01em; }
@@ -140,6 +140,7 @@
   background: #fff !important; border-color: #5c2d91 !important; box-shadow: 0 0 0 4px rgba(92, 45, 145, 0.12) !important;
 }
 .login-form-wrap .ant-input-prefix { margin-inline-end: 12px; }
+.login-submit.ant-btn:not(:disabled), .login-submit.ant-btn:not(:disabled):hover { background: linear-gradient(90deg, #683599 0%, #8246ab 100%) !important; border-color: transparent !important; } /* same gradient as .login-hero */
 .login-submit.ant-btn { height: 54px !important; border-radius: 14px !important; font-size: 16px; box-shadow: 0 14px 28px -10px rgba(92, 45, 145, 0.65) !important; }
 .login-secure { justify-content: flex-start; margin-top: 26px; padding-top: 0; border-top: 0; font-size: 13px; color: #7b6b94; }
 .login-form-foot { text-align: center; padding-top: 18px; }
@@ -179,7 +180,7 @@
   display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; font-size: 12.5px; color: #6f6288;
   background: rgba(255, 255, 255, 0.75); border: 1px solid #e6dcf3; box-shadow: 0 6px 18px -10px rgba(92, 45, 145, 0.4); backdrop-filter: blur(6px);
 }
-.login-foot-pill strong { font-weight: 700; background: linear-gradient(90deg, #5c2d91, #8a4bb0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.login-foot-pill strong { font-weight: 700; background: linear-gradient(90deg, #683599 0%, #8246ab 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .login-foot-dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, #5c2d91, #c79bf0); box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.12); }
 .login-foot-sep { width: 1px; height: 12px; background: #d9cdea; }
 

@@ -21,7 +21,7 @@
 .cs-chip { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border: 1px solid #e2dcee; border-radius: 999px; background: #fff; color: #3d3450; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 140ms ease; }
 .cs-chip span { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: #f1ebfa; color: #62309c; font-size: 11.5px; }
 .cs-chip:hover { border-color: #b79ae0; }
-.cs-chip.is-active { background: #5c2d91; border-color: #5c2d91; color: #fff; }
+.cs-chip.is-active { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: #5c2d91; color: #fff; }
 .cs-chip.is-active span { background: rgba(255, 255, 255, 0.22); color: #fff; }
 
 .cs-group { background: #fff; border: 1px solid #ede8f5; border-radius: 14px; overflow: hidden; }
@@ -42,14 +42,14 @@
 .cs-card-name em { margin-left: 6px; padding: 0 6px; border-radius: 5px; background: #e3f7ef; color: #059669; font-size: 10.5px; font-style: normal; font-weight: 700; vertical-align: middle; }
 .cs-card-code { margin-top: 1px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; color: #8a7ba3; }
 .cs-check { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 20px; height: 20px; border: 1.5px solid #d6cde6; border-radius: 6px; background: #fff; color: #fff; transition: all 140ms ease; }
-.cs-card.is-on .cs-check { background: #5c2d91; border-color: #5c2d91; }
+.cs-card.is-on .cs-check { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); border-color: #5c2d91; }
 .cs-empty { padding: 36px 16px; text-align: center; color: #727587; background: #fff; border: 1px solid #ede8f5; border-radius: 14px; font-size: 14px; }
 
 .cs-aside { position: sticky; top: 0; display: flex; flex-direction: column; gap: 10px; }
 .cs-summary { background: #fff; border: 1px solid #ede8f5; border-radius: 14px; padding: 14px 16px; }
 .cs-summary-head { display: flex; align-items: center; justify-content: space-between; }
 .cs-summary-head h3 { margin: 0; font-size: 15px; font-weight: 700; color: #1a1228; }
-.cs-summary-head span { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 8px; border-radius: 999px; background: #5c2d91; color: #fff; font-size: 13px; font-weight: 700; }
+.cs-summary-head span { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 8px; border-radius: 999px; background: linear-gradient(90deg, #683599 0%, #8246ab 100%); color: #fff; font-size: 13px; font-weight: 700; }
 .cs-summary-for { margin: 6px 0 10px; font-size: 12.5px; color: #727587; word-break: break-word; }
 .cs-summary-for strong { color: #1a1228; }
 .cs-summary-for code { padding: 0; background: none; color: #727587; font-size: 11.5px; }

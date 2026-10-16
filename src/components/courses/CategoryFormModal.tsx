@@ -33,6 +33,7 @@ export function CategoryFormModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     const nextErrors: Errors = {}
     if (!name.trim()) nextErrors.name = 'Please enter a name.'
     if (!type) nextErrors.type = 'Please select a type.'
