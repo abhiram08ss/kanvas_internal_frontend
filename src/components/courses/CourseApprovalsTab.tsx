@@ -15,7 +15,7 @@ import { useFitRows } from '../ui/useFitRows'
 import { ManualCourseModal } from './ManualCourseModal'
 import { CoursePreviewModal } from '../lms-content/CoursePreviewModal'
 import { useAuth } from '../../context/AuthContext'
-import { useDataNeeds } from '../../context/DataContext'
+import { useData, useDataNeeds } from '../../context/DataContext'
 import { api, errorMessage, type Course, type CourseInput } from '../../api'
 
 const statusFilters = ['All', 'Draft', 'Pending', 'Rejected'] as const
@@ -100,6 +100,7 @@ export function CourseApprovalsTab() {
   const { notification } = App.useApp()
   // CoursePreviewModal reads these from useData() itself - loaded here so Preview has them ready.
   useDataNeeds('courseModules', 'quizQuestions', 'certificateTemplates')
+  const { refresh } = useData()
 
   const [courses, setCourses] = useState<Course[] | null>(null)
   const [error, setError] = useState('')
@@ -129,6 +130,7 @@ export function CourseApprovalsTab() {
       await api.approveCourse(course.id)
       notification.success({ title: 'Course Approved', description: course.name })
       load()
+      void refresh(['courses', 'editableCourses']) // the Courses / Modules / Quiz pickers show the newly approved course without a page reload
     } catch (e) {
       notification.error({ title: 'Could Not Approve', description: `${course.name}: ${errorMessage(e)}` })
       setActionError(`${course.name}: ${errorMessage(e)}`)
@@ -190,7 +192,7 @@ export function CourseApprovalsTab() {
     <div>
       <div className={`row row-cols-2 ${isSuper && draftCount === 0 ? 'row-cols-md-3' : 'row-cols-md-4'} g-3 mb-4`}>
         <div className="col">
-          <StatCard icon={<Layers size={20} />} label="All" value={courses.length} hint="all submissions" tone="purple" />
+          <StatCard icon={<Layers size={20} />} label="Total Submissions" value={courses.length} hint="All submitted items" tone="purple" />
         </div>
         {(!isSuper || draftCount > 0) && (
           <div className="col">
@@ -198,10 +200,10 @@ export function CourseApprovalsTab() {
           </div>
         )}
         <div className="col">
-          <StatCard icon={<ClipboardCheck size={20} />} label="Awaiting Approval" value={pendingCount} hint="needs review" tone="amber" />
+          <StatCard icon={<ClipboardCheck size={20} />} label="Pending Approval" value={pendingCount} hint="Awaiting admin review" tone="amber" />
         </div>
         <div className="col">
-          <StatCard icon={<XCircle size={20} />} label="Rejected" value={rejectedCount} hint="sent back to creator" tone="red" />
+          <StatCard icon={<XCircle size={20} />} label="Rejected Submissions" value={rejectedCount} hint="Returned to the creator" tone="red" />
         </div>
       </div>
 

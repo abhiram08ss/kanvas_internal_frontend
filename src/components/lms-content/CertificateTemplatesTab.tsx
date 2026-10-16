@@ -85,13 +85,13 @@ export function CertificateTemplatesTab() {
     <div>
       <div className="row row-cols-2 row-cols-lg-3 g-3 mb-4">
         <div className="col">
-          <StatCard icon={<Award size={20} />} label="Total Templates" value={certificateTemplates.length} hint="all templates" tone="purple" />
+          <StatCard icon={<Award size={20} />} label="Total Templates" value={certificateTemplates.length} hint="All templates in the system" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={certificateTemplates.filter((t) => t.status === 'Active').length} hint="available to use" tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active Templates" value={certificateTemplates.filter((t) => t.status === 'Active').length} hint="Available to use" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<Ban size={20} />} label="Inactive" value={certificateTemplates.filter((t) => t.status === 'Inactive').length} hint="turned off" tone="slate" />
+          <StatCard icon={<Ban size={20} />} label="Inactive Templates" value={certificateTemplates.filter((t) => t.status === 'Inactive').length} hint="Unavailable to use" tone="slate" />
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export function CertificateTemplatesTab() {
               render: (raw: string) => {
                 const logo = resolveLogo(raw, defaultLogo)
                 return isLogoImage(logo) ? (
-                  <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 22, maxWidth: 96, objectFit: 'contain' }} />
+                  <img src={logoImageUrl(logo)} alt="Logo" style={{ height: 22, maxWidth: 80, objectFit: 'contain' }} />
                 ) : (
                   <span className="d-inline-flex align-items-center justify-content-center gap-2" style={{ color: '#3d3450' }}>
                     <Award size={15} style={{ color: '#7c3fc0' }} />

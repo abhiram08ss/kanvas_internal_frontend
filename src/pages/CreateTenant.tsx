@@ -26,13 +26,12 @@ import { PhoneField } from '../components/ui/PhoneField'
 import { displayPhone, parseStoredPhone, toStoredPhone, validatePhone, type PhoneParts } from '../utils/phone'
 import { ReviewStep } from '../components/tenants/ReviewStep'
 import { CourseSelectStep } from '../components/tenants/CourseSelectStep'
-import { TenantStatusCard, suspendReasonText, type TenantStatusChoice } from '../components/tenants/TenantStatusCard'
 import { scrollToFirstError } from '../components/ui/scrollToError'
 import { TENANT_CODE_MAX, validateTenantCode } from '../utils/validation'
 import { useData, useDataNeeds } from '../context/DataContext'
 import { api, errorMessage, type Credentials, type ProvisioningRecord } from '../api'
 
-const KANVAS_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
+const KANVAS_GRADIENT = 'linear-gradient(90deg, #683599 0%, #8246ab 100%)'
 
 const formSteps = ['Organization', 'Select courses', 'Review & proceed']
 const LIMIT_PRESETS = [50, 100, 250, 500]
@@ -75,9 +74,6 @@ export default function CreateTenant() {
   // Step 1 — Organization / Billing / LMS Admin
   const [orgName, setOrgName] = useState('')
   const [tenantCode, setTenantCode] = useState('')
-  const [tenantStatus, setTenantStatus] = useState<TenantStatusChoice>('Active')
-  const [statusReason, setStatusReason] = useState('')
-  const [statusNote, setStatusNote] = useState('')
   const [industry, setIndustry] = useState(industries[0])
   const [country, setCountry] = useState('India')
   const [address, setAddress] = useState('')
@@ -126,7 +122,6 @@ export default function CreateTenant() {
 
     if (!lmsAdminEmail.trim()) e.lmsAdminEmail = 'Admin email is required.'
     else if (!EMAIL_RE.test(lmsAdminEmail.trim())) e.lmsAdminEmail = 'Enter a valid email address.'
-    if (tenantStatus === 'Suspended' && !statusReason) e.statusReason = 'Select a reason for suspending this tenant.'
     return e
   }
 
@@ -209,13 +204,6 @@ export default function CreateTenant() {
         userLimit: Number(userLimit),
         courseIds: selectedCourseIds,
       })
-      if (tenantStatus === 'Suspended') {
-        try {
-          await api.setTenantStatus(created.tenant.id, 'Suspended', suspendReasonText(statusReason, statusNote))
-        } catch (e) {
-          notification.warning({ title: 'Tenant Created, But Not Suspended', description: errorMessage(e) })
-        }
-      }
       setProvisioning(created.provisioning)
       setCredentials(created.credentials)
       setPhase('provisioning')
@@ -461,7 +449,7 @@ export default function CreateTenant() {
                       />
                     </Form.Item>
                     <Form.Item label="Industry">
-                      <Select size="middle" value={industry} onChange={setIndustry} options={industries.map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
+                      <Select size="middle" value={industry} showSearch optionFilterProp="label" notFoundContent="No matches found" onChange={setIndustry} options={industries.map((i) => ({ value: i, label: i }))} style={{ width: '100%' }} />
                     </Form.Item>
                     <Form.Item label="Country" validateStatus={fieldErrors.country ? 'error' : ''} help={fieldErrors.country}>
                       <CountrySelect
@@ -663,21 +651,6 @@ export default function CreateTenant() {
                     <span>{lmsAdminEmail.trim() || 'Not set'}</span>
                   </div>
                 </div>
-                <TenantStatusCard
-                  status={tenantStatus}
-                  onStatusChange={(v) => {
-                    setTenantStatus(v)
-                    clearField('statusReason')
-                  }}
-                  reason={statusReason}
-                  onReasonChange={(r) => {
-                    setStatusReason(r)
-                    clearField('statusReason')
-                  }}
-                  note={statusNote}
-                  onNoteChange={setStatusNote}
-                  reasonError={fieldErrors.statusReason}
-                />
               </aside>
             </div>
           </Form>
@@ -696,7 +669,7 @@ export default function CreateTenant() {
         {step === 3 && (
           <ReviewStep
             mode="create"
-            summary={{ name: orgName.trim(), code: tenantCode, industry, country, users: userLimit, status: tenantStatus === 'Suspended' ? `Suspended (${statusReason})` : 'Active' }}
+            summary={{ name: orgName.trim(), code: tenantCode, industry, country, users: userLimit, status: 'Active' }}
             organization={[
               ['Organization name', orgName],
               ['Tenant code', tenantCode, { mono: true }],

@@ -25,6 +25,7 @@ export function ResetPasswordModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     const found: { password?: string; confirm?: string } = {}
     const passwordError = validatePassword(password)
     if (passwordError) found.password = passwordError
@@ -44,7 +45,7 @@ export function ResetPasswordModal({
   }
 
   return (
-    <Modal title="Reset Password" subtitle={`${user.name} · ${user.email}`} onClose={onClose} tone="brand" icon={<KeyRound size={20} />}>
+    <Modal title="Reset Password" subtitle={`${user.name} · signs in as “${user.username}”`} onClose={onClose} tone="brand" icon={<KeyRound size={20} />}>
       <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3">
         {error && <Notice tone="error">{error}</Notice>}
         <Field label="New Password" required error={errors.password} hint={PASSWORD_HINT}>

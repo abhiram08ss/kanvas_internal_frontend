@@ -187,6 +187,7 @@ export function ModuleFormModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     if (saving || uploadingMedia) return // never submit twice
     const nextErrors = validate()
     setErrors(nextErrors)
@@ -235,8 +236,9 @@ export function ModuleFormModal({
       icon={<FileText size={20} />}
     >
       {/* Same popup size for every Content Type: the form never gets shorter than the tallest one (Hybrid), and the
-          buttons stay pinned to the bottom. */}
-      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3" style={showMedia ? { height: 'min(678px, calc(100vh - 240px))' } : { minHeight: 'min(678px, calc(100vh - 240px))' }}>
+          buttons stay pinned to the bottom. It is a MINIMUM height: with error messages showing, the form grows instead of
+          squeezing the upload box over the text below it. */}
+      <form onSubmit={handleSubmit} noValidate className="d-flex flex-column gap-3" style={{ minHeight: 'min(678px, calc(100vh - 240px))' }}>
         {error && <Notice tone="error">{error}</Notice>}
 
         <div className="row g-3">

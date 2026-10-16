@@ -1,6 +1,6 @@
 .splash {
   position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(600px 400px at 50% 40%, #3b1a66 0%, #2f1350 60%, #28104a 100%);
+  background: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1.5px) 0 0 / 26px 26px, #5c2d91; /* flat brand purple with a faint dot grid */
   color: #fff; animation: splash-in 240ms ease both;
 }
 .splash-center { display: flex; flex-direction: column; align-items: center; }

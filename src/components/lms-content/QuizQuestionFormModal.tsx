@@ -9,9 +9,9 @@ import { errorMessage, type Course, type QuizQuestion, type QuizQuestionInput, t
 
 const MAX_OPTIONS = 6
 const TYPE_OPTIONS: { value: QuizQuestionType; label: string }[] = [
-  { value: 'true false', label: 'True false' },
-  { value: 'single choice', label: 'Single choice' },
-  { value: 'multi choice', label: 'Multi choice' },
+  { value: 'true false', label: 'True / False' },
+  { value: 'single choice', label: 'Single Choice' },
+  { value: 'multi choice', label: 'Multiple Choice' },
 ]
 
 export function QuizQuestionFormModal({
@@ -47,6 +47,18 @@ export function QuizQuestionFormModal({
   const [error, setError] = useState('')
   const [errors, setErrors] = useState<{ text?: string; marks?: string; category?: string; explanation?: string; options?: string; optionRows: Record<number, string> }>({ optionRows: {} })
   const clearError = (key: 'text' | 'marks' | 'category' | 'explanation' | 'options') => setErrors((p) => ({ ...p, [key]: undefined }))
+
+  // Switching type must not carry a stale answer across: True/False only allows 0 or 1, and multi choice needs its own ticks.
+  const changeType = (next: QuizQuestionType) => {
+    if (next === type) return
+    if (next === 'true false') setCorrectIndex(0)
+    else if (type === 'multi choice') setCorrectIndex(Math.min(correctSet[0] ?? 0, options.length - 1))
+    else if (next === 'multi choice') setCorrectSet(type !== 'true false' && correctIndex < options.length ? [correctIndex] : [])
+    else setCorrectIndex(0)
+    setType(next)
+    setErrors((p) => ({ ...p, options: undefined, optionRows: {} }))
+    setError('')
+  }
 
   const updateOption = (i: number, value: string) => setOptions((prev) => prev.map((o, idx) => (idx === i ? value : o)))
   const addOption = () => setOptions((prev) => [...prev, ''])
@@ -143,7 +155,7 @@ export function QuizQuestionFormModal({
         <div className="row g-3">
           <div className="col-md-6">
             <Field label="Type">
-              <Select value={type} onChange={setType} options={TYPE_OPTIONS} style={{ width: '100%' }} />
+              <Select value={type} onChange={changeType} options={TYPE_OPTIONS} style={{ width: '100%' }} />
             </Field>
           </div>
           <div className="col-md-6">

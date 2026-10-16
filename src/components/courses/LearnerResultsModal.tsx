@@ -61,6 +61,7 @@ export function LearnerResultsModal({ course, onClose }: { course: Course; onClo
                 rowKey="scoId"
                 size="small"
                 pagination={false}
+                locale={{ emptyText: 'No module results yet.' }}
                 dataSource={l.modules}
                 columns={[
                   { title: 'Module', key: 'title', render: (_, m) => m.moduleTitle ?? data.title },

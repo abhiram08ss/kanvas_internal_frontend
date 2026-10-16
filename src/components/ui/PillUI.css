@@ -59,7 +59,7 @@
   transition: all 0.15s;
 }
 .pill-filter-pill.active {
-  background: #5c2d91;
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
   color: #fff;
   border-color: #5c2d91;
 }
@@ -75,7 +75,7 @@
   font-weight: 600;
   color: #fff;
   border: 0;
-  background: linear-gradient(135deg, #5c2d91, #7b3fa0);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
   box-shadow: 0 2px 8px rgba(92, 45, 145, 0.3);
   white-space: nowrap;
 }
@@ -178,10 +178,10 @@
   padding: 0 16px;
   font-weight: 600;
   border-radius: 10px;
-  background: #62309c !important;
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%) !important;
   box-shadow: 0 2px 6px rgba(98, 48, 156, 0.25);
 }
-.pill-toolbar .ant-btn-primary:hover { background: #764aa8 !important; }
+.pill-toolbar .ant-btn-primary:hover { background: linear-gradient(90deg, #683599 0%, #8246ab 100%) !important; }
 
 /* Toolbar controls on the right (date range, Export) share the search box's height and look. */
 .pill-toolbar .ant-picker {
@@ -197,13 +197,13 @@
 .pill-toolbar .ant-picker input { font-size: 14px; color: #1a1228; font-weight: 500; text-align: center; }
 .pill-toolbar .ant-picker .ant-picker-range-separator { color: #9b87b5; }
 .pill-toolbar .ant-picker .ant-picker-suffix { color: #62309c; }
-.pill-toolbar .ant-picker .ant-picker-active-bar { background: #62309c; }
+.pill-toolbar .ant-picker .ant-picker-active-bar { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
 .pill-toolbar .ant-btn-default { height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid #e8e5ef; font-weight: 600; color: #1a1228; box-shadow: none; }
 .pill-toolbar .ant-btn-default:hover { border-color: #b89be0; color: #62309c; }
 /* Calendar popup: purple selected days and range */
 .ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
 .ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
-.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner { background: #62309c; }
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); }
 .ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-in-range::before,
 .ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start::before,
 .ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end::before { background: #f1ebfa; }
@@ -277,7 +277,7 @@
 .doc-pages .docx-wrapper > section.docx { box-shadow: 0 2px 10px rgba(60, 29, 112, 0.12); margin-bottom: 12px; padding: 28px 32px; width: 100% !important; min-height: 0 !important; background: #fff; }
 .doc-loading { display: flex; align-items: center; gap: 8px; padding: 18px; color: #7b6b94; font-size: 14px; }
 .doc-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #e2d9f0; border-radius: 14px; background: #faf8fd; }
-.doc-card-badge { flex: none; width: 46px; height: 46px; border-radius: 12px; background: #5c2d91; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.doc-card-badge { flex: none; width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(90deg, #683599 0%, #8246ab 100%); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .doc-card-meta { flex: 1; min-width: 0; }
 .doc-card-name { font-weight: 700; font-size: 15px; color: #1a1228; }
 .doc-card-note { font-size: 12.5px; color: #7b6b94; margin-top: 2px; }

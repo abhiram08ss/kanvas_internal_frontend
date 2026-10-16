@@ -101,7 +101,7 @@ export function ReviewStep({
               <b>{courses.length}</b>
             </div>
             <div>
-              <span>Users</span>
+              <span>User limit</span>
               <b>{summary.users}</b>
             </div>
           </div>

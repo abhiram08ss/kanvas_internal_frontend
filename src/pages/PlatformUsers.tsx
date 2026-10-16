@@ -72,8 +72,16 @@ export default function PlatformUsers() {
     })
   }
 
-  const resetPassword = (u: PlatformUser, password: string) =>
-    act(u, () => api.resetPlatformUserPassword(u.id, password), 'Password reset')
+  // Errors are NOT swallowed here (unlike `act`): they reach the Reset Password popup, which stays open and shows the reason.
+  const resetPassword = async (u: PlatformUser, password: string) => {
+    await api.resetPlatformUserPassword(u.id, password)
+    notification.success({
+      title: 'Password Reset',
+      description: `${u.name} can now sign in with the username "${u.username}" (or the email ${u.email}) and the new password.`,
+      duration: 10,
+    })
+    reload()
+  }
 
   const removeUser = (u: PlatformUser) =>
     confirmDialog({
@@ -143,11 +151,12 @@ export default function PlatformUsers() {
                   align: 'left',
                   render: (name: string, u) => (
                     <div className="d-flex align-items-center gap-3">
-                      <Avatar style={{ background: '#5c2d91', fontSize: 12 }}>{u.initials}</Avatar>
+                      <Avatar style={{ background: 'linear-gradient(90deg, #683599 0%, #8246ab 100%)', fontSize: 12 }}>{u.initials}</Avatar>
                       <span>{name}</span>
                     </div>
                   ),
                 },
+                { title: 'Username', width: 160, dataIndex: 'username', render: (username: string) => <span className="tenant-muted">{username}</span> },
                 { title: 'Email', width: 260, dataIndex: 'email', render: (email: string) => <span className="tenant-muted">{email}</span> },
                 { title: 'Role', width: 150, dataIndex: 'role', render: (role: PlatformRole) => <Badge tone="purple">{roleLabel(role)}</Badge> },
                 { title: 'Status', width: 130, dataIndex: 'status', render: (status: PlatformUser['status']) => <Badge>{status}</Badge> },

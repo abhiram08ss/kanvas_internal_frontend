@@ -20,6 +20,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     const errs: typeof fieldErrors = {}
     if (!currentPassword) errs.current = 'Enter your current password.'
     const nextError = validatePassword(newPassword)

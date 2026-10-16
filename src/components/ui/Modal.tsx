@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Modal as AntModal } from 'antd'
 
-const BRAND_GRADIENT = 'linear-gradient(135deg, #5c2d91, #7b3fa0)'
+const BRAND_GRADIENT = 'linear-gradient(90deg, #683599 0%, #8246ab 100%)'
 // 'full' stays just short of 100vw: a truly edge-to-edge centered modal would sit its edge under the
 // app's own left sidebar (256px) on typical screens. 96vw leaves a sliver of margin (clearing the sidebar
 // on anything but a quite narrow window) while still reading as "full screen".

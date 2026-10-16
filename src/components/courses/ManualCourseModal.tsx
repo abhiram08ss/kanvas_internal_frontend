@@ -169,6 +169,7 @@ export function ManualCourseModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     if (saving || uploadingCover) return // never submit twice
     const nextErrors = validate()
     setErrors(nextErrors)
@@ -465,7 +466,7 @@ export function ManualCourseModal({
           <div id="field-certificateTemplate">
           <Field label="Certificate Template" error={errors.certificateTemplate}>
             <Select
-              value={certificateTemplate}
+              value={certificateTemplate} showSearch optionFilterProp="label" notFoundContent="No matches found"
               status={errors.certificateTemplate ? 'error' : undefined}
               onChange={(v) => { setCertificateTemplate(v); setErrors((prev) => ({ ...prev, certificateTemplate: validateCertificateTemplate(v, certificateTemplateOptions) ?? undefined })) }}
               options={certificateTemplateOptions.map((t) => ({ value: t, label: t }))}
