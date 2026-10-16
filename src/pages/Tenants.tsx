@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Building2, CheckCircle2, PauseCircle, Eye, PenLine, RefreshCw } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
@@ -25,6 +25,11 @@ export default function Tenants() {
   const canManage = user?.role === 'Super Admin'
   const { tenants, plans, refresh } = useData()
   useDataNeeds('tenants', 'plans', 'courses')
+  // The users column is the tenant's live active-user count, which changes in the LMS while this list stays cached:
+  // refetch it quietly each time the page opens (a first load is already in flight, which refresh skips).
+  useEffect(() => {
+    void refresh(['tenants'])
+  }, [refresh])
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const pageSize = useFitRows(canManage ? 470 : 400)

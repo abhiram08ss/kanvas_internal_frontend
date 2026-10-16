@@ -557,8 +557,12 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
 export default function EditTenant() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { tenants } = useData()
+  const { tenants, refresh } = useData()
   useDataNeeds('tenants', 'courses', 'courseOptions')
+  // `tenant.users` (the live active-user count) feeds the user-limit check below, so don't trust a stale cache.
+  useEffect(() => {
+    void refresh(['tenants'])
+  }, [refresh])
   const tenant = tenants.find((t) => String(t.id) === id)
   if (!tenant) {
     return (
