@@ -11,7 +11,7 @@
 
 /* summary */
 .rv-summary { display: flex; align-items: center; gap: 16px; padding: 14px 20px !important; }
-.rv-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #5c2d91, #7b3fa0); color: #fff; font-size: 18px; font-weight: 800; box-shadow: 0 6px 14px rgba(92, 45, 145, 0.26); }
+.rv-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(90deg, #683599 0%, #8246ab 100%); color: #fff; font-size: 18px; font-weight: 800; box-shadow: 0 6px 14px rgba(92, 45, 145, 0.26); }
 .rv-summary-text { flex: 1; min-width: 0; }
 .rv-summary-name { font-size: 19px; font-weight: 800; color: #1b1230; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .rv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

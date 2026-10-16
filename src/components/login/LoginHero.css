@@ -7,7 +7,7 @@
   padding: 40px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(160deg, #5c2d91 0%, #7b3fa0 100%);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%); /* wide and mostly horizontal, like the Sign In button, so the panel shows the button's full dark-to-light range */
 }
 @media (min-width: 992px) {
   .login-hero {

@@ -18,7 +18,7 @@ export const TENANT_CODE_REGEX = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/
 /** What the course search accepts while typing: the course-name characters, and an empty box. */
 export const COURSE_SEARCH_REGEX = /^[\p{L}\p{M}\p{N} &'’()[\],.:;!?\-_/+#@%]*$/u
 /** At least one lowercase, one uppercase, one digit and one special character, no whitespace, PASSWORD_MIN-PASSWORD_MAX long. */
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,64}$/
+export const PASSWORD_REGEX = /^(?=.*\p{Ll})(?=.*\p{Lu})(?=.*\p{Nd})(?=.*[^\p{L}\p{N}\s])\S{8,64}$/u
 export const PASSWORD_HINT = '8-64 characters with an uppercase letter, a lowercase letter, a number and a special character. No spaces.'
 
 // ---------------------------------------------------------------- validators
@@ -48,9 +48,9 @@ export function validatePassword(value: string): string | null {
   if (/\s/.test(value)) return 'Password cannot contain spaces.'
   if (value.length < PASSWORD_MIN) return `Password must be at least ${PASSWORD_MIN} characters.`
   if (value.length > PASSWORD_MAX) return `Password must be ${PASSWORD_MAX} characters or fewer.`
-  if (!/[a-z]/.test(value)) return 'Password must include a lowercase letter.'
-  if (!/[A-Z]/.test(value)) return 'Password must include an uppercase letter.'
-  if (!/\d/.test(value)) return 'Password must include a number.'
+  if (!/\p{Ll}/u.test(value)) return 'Password must include a lowercase letter.'
+  if (!/\p{Lu}/u.test(value)) return 'Password must include an uppercase letter.'
+  if (!/\p{Nd}/u.test(value)) return 'Password must include a number.'
   if (!PASSWORD_REGEX.test(value)) return 'Password must include a special character (e.g. ! @ # $).'
   return null
 }

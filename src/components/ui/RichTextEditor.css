@@ -34,7 +34,7 @@
   background: #ede8f5;
 }
 .rte-btn.active {
-  background: #5c2d91;
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%);
   color: #fff;
 }
 .rte-btn:disabled {
@@ -172,7 +172,7 @@
 .rte-insert {
   height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; cursor: pointer;
   font-size: 13px; font-weight: 700; color: #fff; border: 0; border-radius: 10px;
-  background: linear-gradient(135deg, #5c2d91, #7b3fa0); box-shadow: 0 3px 8px rgba(92, 45, 145, 0.28);
+  background: linear-gradient(90deg, #683599 0%, #8246ab 100%); box-shadow: 0 3px 8px rgba(92, 45, 145, 0.28);
 }
 .rte-insert:hover:not(:disabled) { filter: brightness(1.08); }
 .rte-insert:disabled { opacity: 0.7; cursor: progress; }
@@ -206,7 +206,7 @@
   font-size: 12px; font-weight: 600; color: #3d2260; background: #fff; border: 1px solid #e2d9f0; border-radius: 7px;
 }
 .rte-media-tools button:hover { background: #f1ebfa; }
-.rte-media-tools button.is-on { background: #5c2d91; color: #fff; border-color: #5c2d91; }
+.rte-media-tools button.is-on { background: linear-gradient(90deg, #683599 0%, #8246ab 100%); color: #fff; border-color: #5c2d91; }
 .rte-content img.ProseMirror-selectednode, .rte-content video.ProseMirror-selectednode { outline: 3px solid #8a56c4; outline-offset: 2px; }
 
 /* Dragging files over the editor */

@@ -94,27 +94,27 @@ export function ProvisioningPanel() {
         <div className="col">
           <StatCard
             icon={<CheckCircle2 size={20} />}
-            label="Successful"
+            label="Successful Provisioning"
             value={provisioningRecords.filter((r) => r.status === 'Success').length}
-            hint="provisioned"
+            hint="Tenants provisioned successfully"
             tone="green"
           />
         </div>
         <div className="col">
           <StatCard
             icon={<XCircle size={20} />}
-            label="Failed"
+            label="Failed Provisioning"
             value={provisioningRecords.filter((r) => r.status === 'Failed').length}
-            hint="needs retry"
+            hint="Requires investigation"
             tone="red"
           />
         </div>
         <div className="col">
           <StatCard
             icon={<Clock size={20} />}
-            label="Pending"
+            label="Pending Provisioning"
             value={provisioningRecords.filter((r) => r.status === 'Pending').length}
-            hint="in progress"
+            hint="Awaiting completion"
             tone="amber"
           />
         </div>
@@ -206,7 +206,7 @@ export function ProvisioningPanel() {
                 <div className="d-flex align-items-center gap-2 flex-shrink-0">
                   <span
                     className="d-flex align-items-center justify-content-center rounded-circle fw-bold flex-shrink-0"
-                    style={{ width: 26, height: 26, fontSize: 12, color: '#fff', background: 'linear-gradient(135deg, #5c2d91, #8a4bb0)', boxShadow: '0 2px 6px rgba(92, 45, 145, 0.3)' }}
+                    style={{ width: 26, height: 26, fontSize: 12, color: '#fff', background: 'linear-gradient(90deg, #683599 0%, #8246ab 100%)', boxShadow: '0 2px 6px rgba(92, 45, 145, 0.3)' }}
                   >
                     {i + 1}
                   </span>

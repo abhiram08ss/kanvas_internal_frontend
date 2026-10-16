@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test:validation": "node --test tests/courseValidation.test.mjs tests/moduleValidation.test.mjs",
+    "test:validation": "node --test tests/courseValidation.test.mjs tests/moduleValidation.test.mjs tests/commonValidation.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

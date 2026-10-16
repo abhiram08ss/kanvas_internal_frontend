@@ -22,6 +22,7 @@ export function ChangePlanModal({ tenant, plans, onClose, onSaved }: { tenant: T
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     setSaving(true)
     setError('')
     try {

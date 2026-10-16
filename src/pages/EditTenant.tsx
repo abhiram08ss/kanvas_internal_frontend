@@ -133,6 +133,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
   }
 
   const save = async () => {
+    if (saving) return
     setSaving(true)
     setError('')
     try {
@@ -252,7 +253,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
                   </Field>
                   <Field label="Industry">
                     <Select
-                      size="middle"
+                      size="middle" showSearch optionFilterProp="label" notFoundContent="No matches found"
                       value={industry}
                       onChange={setIndustry}
                       options={[...new Set([...INDUSTRIES, industry])].map((i) => ({ value: i, label: i }))}
@@ -544,7 +545,7 @@ function EditTenantForm({ tenant }: { tenant: Tenant }) {
             className={`tc-next${step === 1 && !requiredFilled ? ' is-pale' : ''}`}
             loading={saving}
             onClick={() => (step < 3 ? next() : void save())}
-            style={step === 1 && !requiredFilled ? undefined : { background: 'linear-gradient(135deg, #5c2d91, #7b3fa0)', border: 'none' }}
+            style={step === 1 && !requiredFilled ? undefined : { background: 'linear-gradient(90deg, #683599 0%, #8246ab 100%)', border: 'none' }}
           >
             {saving ? 'Saving…' : nextLabel} {step < 3 && <ArrowRight size={15} />}
           </Button>

@@ -23,7 +23,7 @@ export function ProfileMenu() {
         }}
       >
         <button type="button" className="d-flex align-items-center gap-2 border-0 bg-transparent p-0 text-start">
-          <Avatar style={{ background: '#5c2d91', fontWeight: 700 }}>{user?.initials ?? 'SA'}</Avatar>
+          <Avatar style={{ background: 'linear-gradient(90deg, #683599 0%, #8246ab 100%)', fontWeight: 700 }}>{user?.initials ?? 'SA'}</Avatar>
           <div className="d-none d-md-block lh-sm">
             <p className="mb-0 fw-semibold" style={{ fontSize: 12, color: '#1a1228' }}>
               {user?.name}

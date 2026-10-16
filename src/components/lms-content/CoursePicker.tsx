@@ -54,7 +54,6 @@ export function CoursePicker({ courses, selectedId, onSelect }: { courses: Cours
                   type="button"
                   className={`course-picker-item${c.id === selectedId ? ' is-active' : ''}`}
                   onClick={() => onSelect(c.id)}
-                  title={c.name}
                 >
                   <span className="name">{c.name}</span>
                   <span className="code">{c.code}</span>

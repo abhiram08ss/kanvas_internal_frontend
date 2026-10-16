@@ -38,7 +38,7 @@ export default function Tenants() {
 
   const rows = useMemo(
     () =>
-      tenants.filter((t) => {
+      [...tenants].sort((x, y) => y.id - x.id).filter((t) => { // newest first
         // Search by name or code; surrounding spaces never break a match.
         const needle = query.trim().toLowerCase()
         const matchesQuery = !needle || (t.name ?? '').toLowerCase().includes(needle) || (t.code ?? '').toLowerCase().includes(needle)
@@ -57,13 +57,13 @@ export default function Tenants() {
         <>
       <div className="row row-cols-2 row-cols-lg-3 g-3">
         <div className="col">
-          <StatCard icon={<Building2 size={20} />} label="Total Tenants" value={tenants.length} hint="all organisations" tone="purple" />
+          <StatCard icon={<Building2 size={20} />} label="Total Tenants" value={tenants.length} hint="All registered organizations" tone="purple" />
         </div>
         <div className="col">
-          <StatCard icon={<CheckCircle2 size={20} />} label="Active" value={tenants.filter((t) => t.status === 'Active').length} hint="currently running" tone="green" />
+          <StatCard icon={<CheckCircle2 size={20} />} label="Active Tenants" value={tenants.filter((t) => t.status === 'Active').length} hint="Currently active" tone="green" />
         </div>
         <div className="col">
-          <StatCard icon={<PauseCircle size={20} />} label="Suspended" value={tenants.filter((t) => t.status === 'Suspended').length} hint="on hold" tone="amber" />
+          <StatCard icon={<PauseCircle size={20} />} label="Suspended Tenants" value={tenants.filter((t) => t.status === 'Suspended').length} hint="Temporarily suspended" tone="amber" />
         </div>
       </div>
 

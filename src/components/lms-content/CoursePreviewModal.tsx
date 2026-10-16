@@ -9,7 +9,7 @@ import { DocumentViewer } from './DocumentViewer'
 import { parseDisplaySize, parseVideoUrl } from './displaySize'
 import { isDirectVideoUrl, toEmbedUrl } from '../ui/embedUrl'
 import { useData } from '../../context/DataContext'
-import { api, API_ORIGIN, type Course, type CourseModule, type CourseResult } from '../../api'
+import { api, API_ORIGIN, type Course, type CourseModule, type CourseResult, type QuizQuestion } from '../../api'
 
 const DEFAULT_DESIGN = { logo: 'Company Default', colors: ['#5C2D91', '#7B3FA0', '#F5F4F8'], signatures: ['Kanvas LMS'] }
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp'])
@@ -131,6 +131,38 @@ export function ModuleBody({ module, onProgressSaved }: { module: CourseModule; 
  * not a real learner attempt - and the certificate is a sample, using the same renderer as an actually-issued
  * one (CertificateModal's CertificateSheet) with placeholder learner/score values.
  */
+/** One quiz question with its options (correct ones in green) and explanation. */
+function QuestionCard({ q }: { q: QuizQuestion }) {
+  return (
+    <div className="rounded-3 p-3" style={{ border: '1.5px solid #ede8f5', background: '#fdfcff' }}>
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <Badge tone="green">{q.type}</Badge>
+        <Badge tone="purple">{q.category}</Badge>
+        <span className="small ms-auto" style={{ color: '#9b87b5' }}>
+          {q.marks} mk{q.marks === 1 ? '' : 's'}
+        </span>
+      </div>
+      <p className="fw-semibold mb-2" style={{ color: '#1a1228' }}>
+        {q.text}
+      </p>
+      <div className="d-flex flex-column gap-1">
+        {q.options.map((opt, i) => (
+          <div key={i} className="d-flex align-items-center gap-2 small" style={{ color: q.correctIndices.includes(i) ? '#16a34a' : '#7b6b94' }}>
+            {q.correctIndices.includes(i) ? <CheckCircle2 size={14} className="flex-shrink-0" /> : <XCircle size={14} className="flex-shrink-0 opacity-25" />}
+            {opt}
+          </div>
+        ))}
+      </div>
+      {q.explanation && (
+        <p className="mt-2 mb-0 small fst-italic" style={{ color: '#9b87b5' }}>
+          {q.explanation}
+        </p>
+      )}
+    </div>
+  )
+}
+
+
 export function CoursePreviewModal({ course, onClose }: { course: Course; onClose: () => void }) {
   const { courseModules, quizQuestions, certificateTemplates } = useData()
 
@@ -218,7 +250,7 @@ export function CoursePreviewModal({ course, onClose }: { course: Course; onClos
               style={{ height: 140, objectFit: 'contain', background: '#f5f4f8', display: 'block' }}
             />
           ) : (
-            <div className="d-flex align-items-center justify-content-center" style={{ height: 100, background: 'linear-gradient(135deg, #5c2d91, #7b3fa0)' }}>
+            <div className="d-flex align-items-center justify-content-center" style={{ height: 100, background: 'linear-gradient(90deg, #683599 0%, #8246ab 100%)' }}>
               <Layers size={32} color="#fff" style={{ opacity: 0.45 }} />
             </div>
           )}
@@ -329,7 +361,7 @@ export function CoursePreviewModal({ course, onClose }: { course: Course; onClos
                 style={navItemStyle(selected.type === 'quiz')}
               >
                 <HelpCircle size={14} style={{ color: '#9b87b5' }} />
-                <span style={{ color: '#1a1228' }}>Quiz</span>
+                <span style={{ color: '#1a1228' }}>Final Certification Quiz</span>
                 <span className="ms-auto" style={{ color: '#9b87b5' }}>
                   {questions.length}
                 </span>
@@ -389,35 +421,7 @@ export function CoursePreviewModal({ course, onClose }: { course: Course; onClos
                 ) : (
                   <div className="d-flex flex-column gap-2">
                     {questions.map((q) => (
-                      <div key={q.id} className="rounded-3 p-3" style={{ border: '1.5px solid #ede8f5', background: '#fdfcff' }}>
-                        <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-                          <Badge tone="green">{q.type}</Badge>
-                          <Badge tone="purple">{q.category}</Badge>
-                          <span className="small ms-auto" style={{ color: '#9b87b5' }}>
-                            {q.marks} mk{q.marks === 1 ? '' : 's'}
-                          </span>
-                        </div>
-                        <p className="fw-semibold mb-2" style={{ color: '#1a1228' }}>
-                          {q.text}
-                        </p>
-                        <div className="d-flex flex-column gap-1">
-                          {q.options.map((opt, i) => (
-                            <div key={i} className="d-flex align-items-center gap-2 small" style={{ color: q.correctIndices.includes(i) ? '#16a34a' : '#7b6b94' }}>
-                              {q.correctIndices.includes(i) ? (
-                                <CheckCircle2 size={14} className="flex-shrink-0" />
-                              ) : (
-                                <XCircle size={14} className="flex-shrink-0 opacity-25" />
-                              )}
-                              {opt}
-                            </div>
-                          ))}
-                        </div>
-                        {q.explanation && (
-                          <p className="mt-2 mb-0 small fst-italic" style={{ color: '#9b87b5' }}>
-                            {q.explanation}
-                          </p>
-                        )}
-                      </div>
+                      <QuestionCard key={q.id} q={q} />
                     ))}
                   </div>
                 ))}

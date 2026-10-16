@@ -4,6 +4,7 @@ import { Layout, Menu } from 'antd'
 import { ChevronLeft, LayoutDashboard, Building2, ClipboardCheck, FileText, Users, FileClock } from 'lucide-react'
 import { useSidebarCollapse } from './hooks/useSidebarCollapse'
 import { useAuth } from '../../context/AuthContext'
+import { useApprovalBadge } from './hooks/useApprovalBadge'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -47,6 +48,7 @@ export function Sidebar() {
   // Close the drawer after navigating.
   useEffect(() => setDrawerOpen(false), [pathname, setDrawerOpen])
   const { user } = useAuth()
+  const approvals = useApprovalBadge()
   const isSuper = user?.role === 'Super Admin'
   const items = navItems.filter((item) => isSuper || !item.superOnly)
   const selected = items.find(({ to }) => (to === '/' ? pathname === '/' : pathname.startsWith(to)))?.to
@@ -84,11 +86,27 @@ export function Sidebar() {
             label: groupLabel,
             children: items
               .filter((item) => !!item.superOnly === superOnly)
-              .map(({ to, label, icon: Icon }) => ({
-                key: to,
-                icon: <span className="nav-icon"><Icon size={16} /></span>,
-                label: <Link to={to}>{label}</Link>,
-              })),
+              .map(({ to, label, icon: Icon }) => {
+                const badge = to === '/approvals' && approvals.count > 0 ? approvals : null
+                const shown = badge ? (badge.count > 99 ? '99+' : String(badge.count)) : ''
+                return {
+                  key: to,
+                  // collapsed sidebar: a small count bubble on the icon
+                  icon: (
+                    <span className="nav-icon">
+                      <Icon size={16} />
+                      {badge && <i className={`nav-dot is-${badge.tone}`}>{shown}</i>}
+                    </span>
+                  ),
+                  // open sidebar: a count pill at the end of the row
+                  label: (
+                    <Link to={to} aria-label={badge ? `${label}, ${shown} ${badge.tone === 'red' ? 'new rejected' : 'waiting for approval'}` : undefined}>
+                      {label}
+                      {badge && <span className={`nav-count is-${badge.tone}`}>{shown}</span>}
+                    </Link>
+                  ),
+                }
+              }),
           }))
           .filter((group) => group.children.length > 0)}
       />

@@ -58,6 +58,7 @@ export function CourseFormModal({ course, onClose, onSave }: { course?: Course; 
   }, [])
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (saving) return // Enter pressed again while the first save is still running
     const nextErrors: Errors = {}
     if (!name.trim()) nextErrors.name = 'Please enter a title.'
     if (!category) nextErrors.category = 'Please select a category.'

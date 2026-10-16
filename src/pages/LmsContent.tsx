@@ -20,9 +20,14 @@ const tabNeeds: Record<string, DataKey[]> = {
 }
 
 export default function LmsContent() {
-  const { editableCourses } = useData()
+  const { editableCourses, refresh } = useData()
   const [tab, setTab] = useState(tabs[0])
   useDataNeeds('courses', ...(tabNeeds[tab] ?? []))
+  // Opening the page re-reads the course lists, so a course approved (or changed) elsewhere shows up without a browser refresh.
+  useEffect(() => {
+    void refresh(['courses', 'editableCourses'])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Shared across the Modules/Quiz Questions tabs so switching between them keeps the same course picked.
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null)
 
